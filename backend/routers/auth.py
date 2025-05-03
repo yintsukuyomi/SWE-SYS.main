@@ -31,11 +31,13 @@ fake_users_db = {
         "username": "admin",
         "hashed_password": pwd_context.hash("admin123"),
         "role": "admin",
+        "permissions": ["read", "write", "delete", "admin"]
     },
     "teacher": {
         "username": "teacher",
         "hashed_password": pwd_context.hash("teacher123"),
         "role": "teacher",
+        "permissions": ["read", "limited_write"]
     },
 }
 
@@ -61,18 +63,29 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         role: str = payload.get("role")
         if username is None or role is None:
             raise HTTPException(status_code=401, detail="Invalid token")
-        return TokenData(username=username, role=role)
+        user_data = fake_users_db.get(username, {})
+        return {"username": username, "role": role, "permissions": user_data.get("permissions", [])}
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+def check_admin_permission(current_user: dict = Depends(get_current_user)):
+    if "admin" not in current_user.get("permissions", []):
+        raise HTTPException(
+            status_code=403, 
+            detail="You do not have permission to perform this action. Admin access required."
+        )
+    return current_user
 
 @router.post("/login")
 def login(user: User):
     authenticated_user = authenticate_user(user.username, user.password)
     if not authenticated_user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    access_token = create_access_token(data={"sub": user.username, "role": authenticated_user["role"]})
+    access_token = create_access_token(
+        data={"sub": user.username, "role": authenticated_user["role"], "permissions": authenticated_user["permissions"]}
+    )
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me")
-def read_users_me(current_user: TokenData = Depends(get_current_user)):
-    return {"username": current_user.username, "role": current_user.role}
+def read_users_me(current_user: dict = Depends(get_current_user)):
+    return current_user

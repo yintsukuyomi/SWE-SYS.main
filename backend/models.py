@@ -37,6 +37,7 @@ class Course(Base):
     is_active = Column(Boolean, default=True)
     student_count = Column(Integer, default=0)  # Dersi alan öğrenci sayısı
     teacher = relationship("Teacher", back_populates="courses")
+    schedules = relationship("Schedule", back_populates="course")
 
 class Classroom(Base):
     __tablename__ = "classrooms"
@@ -46,6 +47,7 @@ class Classroom(Base):
     type = Column(String)
     faculty = Column(String)
     department = Column(String)
+    schedules = relationship("Schedule", back_populates="classroom")
 
 class Schedule(Base):
     __tablename__ = "schedule"
@@ -54,5 +56,5 @@ class Schedule(Base):
     time_range = Column(String)
     course_id = Column(Integer, ForeignKey("courses.id"))
     classroom_id = Column(Integer, ForeignKey("classrooms.id"))
-    course = relationship("Course")
-    classroom = relationship("Classroom")
+    course = relationship("Course", back_populates="schedules")
+    classroom = relationship("Classroom", back_populates="schedules")

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { generateSchedule, getScheduleStatus, getSchedules } from '../api';
+import { generateSchedule, getScheduleStatus, getSchedules, getCourses } from '../api';
 import '../styles/Scheduler.css';
 
 const Scheduler = ({ token }) => {
@@ -8,6 +8,10 @@ const Scheduler = ({ token }) => {
   const [status, setStatus] = useState(null);
   const [schedules, setSchedules] = useState([]);
   const [error, setError] = useState(null);
+  const [unscheduledCourses, setUnscheduledCourses] = useState([]);
+  const [groupedSchedules, setGroupedSchedules] = useState({});
+  const [sortedDays, setSortedDays] = useState([]);
+  const [showDetails, setShowDetails] = useState(false);
   
   useEffect(() => {
     // Fetch current schedule status when component loads
@@ -29,6 +33,23 @@ const Scheduler = ({ token }) => {
     try {
       const data = await getSchedules(token);
       setSchedules(data);
+      
+      // Group schedules by day for display
+      const grouped = {};
+      data.forEach(schedule => {
+        if (!grouped[schedule.day]) {
+          grouped[schedule.day] = [];
+        }
+        grouped[schedule.day].push(schedule);
+      });
+      
+      // Sort days according to dayOrder
+      const sorted = Object.keys(grouped).sort((a, b) => {
+        return (dayOrder[a] || 99) - (dayOrder[b] || 99);
+      });
+
+      setGroupedSchedules(grouped);
+      setSortedDays(sorted);
     } catch (err) {
       console.error('Error fetching existing schedules:', err);
       // Don't set error for this one as it's not critical
@@ -45,6 +66,15 @@ const Scheduler = ({ token }) => {
       setResult(data);
       await fetchStatus();  // Update status after generation
       await fetchExistingSchedules();  // Refresh schedule list
+      
+      // Unscheduled kurslar için detaylı bilgi göster
+      if (data.unscheduled && data.unscheduled.length > 0) {
+        const twoHourCourses = data.unscheduled.filter(c => c.total_hours === 2);
+        if (twoHourCourses.length > 0) {
+          console.log("2 saatlik programlanamayan dersler:", twoHourCourses);
+          setShowDetails(true);
+        }
+      }
     } catch (err) {
       console.error('Error generating schedule:', err);
       setError(err.detail || 'Failed to generate schedule. Please try again.');
@@ -53,20 +83,15 @@ const Scheduler = ({ token }) => {
     }
   };
   
-  // Group schedules by day for better display
-  const groupedSchedules = schedules.reduce((acc, schedule) => {
-    if (!acc[schedule.day]) {
-      acc[schedule.day] = [];
-    }
-    acc[schedule.day].push(schedule);
-    return acc;
-  }, {});
-  
-  // Sort days for consistent display
-  const sortedDays = Object.keys(groupedSchedules).sort((a, b) => {
-    const dayOrder = { 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5 };
-    return dayOrder[a] - dayOrder[b];
-  });
+  const dayOrder = {
+    "Monday": 1, 
+    "Tuesday": 2, 
+    "Wednesday": 3, 
+    "Thursday": 4, 
+    "Friday": 5, 
+    "Saturday": 6, 
+    "Sunday": 7
+  };
   
   const getCapacityStatusClass = (capacityRatio) => {
     if (capacityRatio > 90) return 'capacity-critical';
@@ -143,20 +168,30 @@ const Scheduler = ({ token }) => {
           {result.unscheduled_count > 0 && (
             <div className="unscheduled-list">
               <h4>Courses that could not be scheduled:</h4>
+              <div className="scheduler-tip">
+                <strong>Tip:</strong> For 2-hour courses that cannot be scheduled, try:
+                <ol>
+                  <li>Checking if teacher availability matches class hours</li>
+                  <li>Temporarily changing course hours to 1.5 or 3</li>
+                  <li>Setting up manual schedules for these courses</li>
+                </ol>
+              </div>
               <table>
                 <thead>
                   <tr>
                     <th>Course</th>
                     <th>Code</th>
+                    <th>Hours</th>
                     <th>Students</th>
                     <th>Reason</th>
                   </tr>
                 </thead>
                 <tbody>
                   {result.unscheduled.map(course => (
-                    <tr key={course.id}>
+                    <tr key={course.id} className={course.total_hours === 2 ? 'highlight-row' : ''}>
                       <td>{course.name}</td>
                       <td>{course.code}</td>
+                      <td>{course.total_hours}</td>
                       <td>{course.student_count}</td>
                       <td>{course.reason}</td>
                     </tr>

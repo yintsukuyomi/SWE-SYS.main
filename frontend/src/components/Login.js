@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { login } from "../api";
 import "../styles/Login.css";
 // Logo dosyası bulunamadığı için kaldırıldı
@@ -9,6 +9,12 @@ const Login = ({ onLogin }) => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Sayfa yüklendiğinde mevcut tema ayarını uygula
+  useEffect(() => {
+    const theme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

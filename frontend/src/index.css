@@ -1,0 +1,113 @@
+:root {
+  --primary-color: #3498db;
+  --secondary-color: #2ecc71;
+  --background-color: #f8f9fa;
+  --card-background: #ffffff;
+  --text-color: #333333;
+  --text-secondary: #666666;
+  --border-color: #dddddd;
+  --hover-background: #e9ecef;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --error-color: #e74c3c;
+  --success-color: #2ecc71;
+  --warning-color: #f39c12;
+  --input-background: #ffffff;
+  --header-background: #ffffff;
+  --content-bg: #f8f9fa;
+  --table-header-bg: #3498db;
+  --table-header-text: #ffffff;
+  --table-row-even: #f8f9fa;
+  --table-row-hover: #e9ecef;
+}
+
+/* Dark theme variables */
+[data-theme="dark"] {
+  --primary-color: #4dabf7;
+  --secondary-color: #40c980;
+  --background-color: #121212;
+  --card-background: #1e1e1e;
+  --text-color: #e0e0e0;
+  --text-secondary: #b0b0b0;
+  --border-color: #444444;
+  --hover-background: #2a2a2a;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --error-color: #ff6b6b;
+  --success-color: #51cf66;
+  --warning-color: #fcc419;
+  --input-background: #2a2a2a;
+  --header-background: #1a1a1a;
+  --content-bg: #121212;
+  --table-header-bg: #2980b9;
+  --table-header-text: #e0e0e0;
+  --table-row-even: #1e1e1e;
+  --table-row-hover: #2a2a2a;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.content-wrapper {
+  background-color: var(--content-bg);
+  transition: background-color 0.3s ease;
+}
+
+/* Tüm tablolar için genel stil */
+table {
+  background-color: var(--card-background);
+  border-collapse: collapse;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+table th {
+  background-color: var(--table-header-bg);
+  color: var(--table-header-text);
+  font-weight: 600;
+  text-align: left;
+  padding: 12px 15px;
+}
+
+table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+table tr:nth-child(even) {
+  background-color: var(--table-row-even);
+}
+
+table tr:hover {
+  background-color: var(--table-row-hover);
+}
+
+/* Tüm form girdileri için genel stil */
+input, select, textarea {
+  background-color: var(--input-background);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+/* Tüm kartlar için stil */
+.card {
+  background-color: var(--card-background);
+  color: var(--text-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 10px var(--shadow-color);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}

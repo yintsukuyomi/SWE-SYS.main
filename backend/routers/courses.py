@@ -144,3 +144,20 @@ def delete_course(course_id: int, db: Session = Depends(get_db)):
     db.delete(course)
     db.commit()
     return {"message": "Course deleted successfully"}
+
+@router.get("/unscheduled")
+def get_unscheduled_courses(db: Session = Depends(get_db)):
+    """
+    Get courses that are not scheduled yet
+    """
+    # Programlanmış kursların ID'lerini al
+    scheduled_course_ids = db.query(Schedule.course_id).distinct().all()
+    scheduled_ids = [id for (id,) in scheduled_course_ids]
+    
+    # Programlanmamış ve aktif olan kursları getir
+    unscheduled_courses = db.query(Course).filter(
+        Course.is_active == True,
+        ~Course.id.in_(scheduled_ids) if scheduled_ids else True
+    ).options(joinedload(Course.teacher)).all()
+    
+    return unscheduled_courses

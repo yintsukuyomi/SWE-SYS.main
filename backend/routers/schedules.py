@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session, joinedload
 from database import SessionLocal
-from models import Schedule
+from models import Schedule, Course, Classroom
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -21,7 +21,16 @@ class ScheduleCreate(BaseModel):
 
 @router.get("/")
 def get_schedules(db: Session = Depends(get_db)):
-    return db.query(Schedule).all()
+    """
+    Get all schedules with course and classroom information
+    """
+    # Using joinedload to eagerly load the related course and classroom data
+    schedules = db.query(Schedule).options(
+        joinedload(Schedule.course),
+        joinedload(Schedule.classroom)
+    ).all()
+    
+    return schedules
 
 @router.post("/")
 def create_schedule(schedule: ScheduleCreate, db: Session = Depends(get_db)):

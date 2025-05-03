@@ -88,34 +88,75 @@ def get_suitable_classrooms(course_type, available_classrooms, student_count):
     
     return suitable_rooms
 
-def is_conflict(schedule_entries, day, start_time, end_time, teacher_id, classroom_id=None, department=None, level=None):
-    """Check for conflicts in the schedule"""
-    for entry in schedule_entries:
-        if entry["day"] == day:
-            entry_start = parse_time(entry["start_time"])
-            entry_end = parse_time(entry["end_time"])
-            
-            # Check time overlap
-            time_overlap = (
-                (parse_time(start_time) <= entry_start <= parse_time(end_time)) or
-                (parse_time(start_time) <= entry_end <= parse_time(end_time)) or
-                (entry_start <= parse_time(start_time) and entry_end >= parse_time(end_time))
-            )
-            
-            if time_overlap:
-                # Teacher conflict
-                if entry["teacher_id"] == teacher_id:
-                    return True
-                
-                # Classroom conflict
-                if classroom_id and entry["classroom_id"] == classroom_id:
-                    return True
-                
-                # Department and level conflict (same department, same level classes shouldn't overlap)
-                if department and level and entry["department"] == department and entry["level"] == level:
-                    return True
+def is_conflict(schedule_entries, day, time_slot, teacher_id, classroom_id, department, level):
+    """Check if there's a scheduling conflict with the given parameters"""
+    start, end = time_slot.split('-')
     
+    for entry in schedule_entries:
+        if entry['day'] != day:
+            continue
+            
+        entry_start, entry_end = entry['time_slot'].split('-')
+        
+        # Zaman çakışması kontrolü
+        if (start <= entry_end and end >= entry_start):
+            # Aynı öğretmen çakışması
+            if entry['teacher_id'] == teacher_id:
+                return True
+                
+            # Aynı sınıf çakışması
+            if entry['classroom_id'] == classroom_id:
+                return True
+                
+            # Aynı bölüm ve sınıf seviyesi çakışması 
+            if entry['department'] == department and entry['level'] == level:
+                return True
+                
     return False
+
+def get_time_slots():
+    """Define standard time slots for scheduling"""
+    return [
+        # 1 saatlik zaman dilimleri
+        ('08:30', '09:30'),
+        ('09:45', '10:45'),
+        ('11:00', '12:00'),
+        ('13:00', '14:00'),
+        ('14:15', '15:15'),
+        ('15:30', '16:30'),
+        ('16:45', '17:45'),
+        
+        # 1.5 saatlik zaman dilimleri
+        ('08:30', '10:00'),
+        ('10:15', '11:45'),
+        ('12:00', '13:30'),
+        ('13:45', '15:15'),
+        ('15:30', '17:00'),
+        ('17:15', '18:45'),
+        
+        # 2 saatlik zaman dilimleri
+        ('08:30', '10:30'),
+        ('10:45', '12:45'),
+        ('13:00', '15:00'),
+        ('15:15', '17:15'),
+        
+        # 3 saatlik zaman dilimleri
+        ('08:30', '11:30'),
+        ('12:00', '15:00'),
+        ('15:30', '18:30')
+    ]
+
+def calculate_duration(time_range):
+    """Calculate the duration of a time slot in hours"""
+    start, end = time_range.split('-')
+    start_h, start_m = map(int, start.split(':'))
+    end_h, end_m = map(int, end.split(':'))
+    
+    start_minutes = start_h * 60 + start_m
+    end_minutes = end_h * 60 + end_m
+    
+    # Süreyi saat olarak geri döndür
+    return (end_minutes - start_minutes) / 60
 
 @router.post("/generate")
 async def generate_schedule(db: Session = Depends(get_db)):
@@ -158,67 +199,100 @@ async def generate_schedule(db: Session = Depends(get_db)):
         schedule_entries = []
         unscheduled_courses = []
         
+        # Tüm zaman dilimlerini al
+        time_slots = get_time_slots()
+        
+        # Dersler için uygun zaman dilimlerini belirle
         for course in prioritized_courses:
             teacher = teachers.get(course.teacher_id)
             if not teacher:
                 unscheduled_courses.append((course, "No teacher assigned"))
                 continue
-            
-            teacher_availability = get_teacher_availability(teacher)
-            if not teacher_availability:
-                unscheduled_courses.append((course, "Teacher has no available time slots"))
+                
+            # Öğretmenin çalışma günleri ve saatleri
+            teacher_days = teacher.working_days.split(',') if teacher.working_days else []
+            if not teacher_days:
+                unscheduled_courses.append((course, "Teacher has no available days"))
                 continue
-            
-            # Öğrenci sayısına göre uygun sınıfları filtreliyoruz
-            suitable_classrooms = get_suitable_classrooms(course.type, classrooms, course.student_count)
+                
+            # Dersin süresine göre uygun zaman dilimlerini filtrele
+            suitable_time_slots = []
+            for start, end in time_slots:
+                time_slot = f"{start}-{end}"
+                duration = calculate_duration(time_slot)
+                
+                # Ders süreleri için daha esnek eşleştirme:
+                # 1 saatlik dersler için 1 saatlik slotlar
+                # 2 saatlik dersler için 1.5-2 saat arası slotlar
+                # 3 saatlik dersler için 2.5-3 saat arası slotlar
+                if course.total_hours == 1 and 0.8 <= duration <= 1.2:
+                    suitable_time_slots.append(time_slot)
+                elif course.total_hours == 2 and 1.5 <= duration <= 2.2:
+                    suitable_time_slots.append(time_slot)
+                elif course.total_hours == 3 and 2.5 <= duration <= 3.5:
+                    suitable_time_slots.append(time_slot)
+                elif abs(duration - course.total_hours) < 0.5:  # Diğer süreler için genel eşleştirme
+                    suitable_time_slots.append(time_slot)
+                    
+            if not suitable_time_slots:
+                unscheduled_courses.append((course, f"No suitable time slots for {course.total_hours} hours"))
+                continue
+                
+            # Öğrenci sayısına göre uygun sınıfları filtrele
+            suitable_classrooms = []
+            for classroom in classrooms:
+                if classroom.capacity >= course.student_count:
+                    suitable_classrooms.append(classroom)
+                    
             if not suitable_classrooms:
-                unscheduled_courses.append((course, f"No suitable classrooms available with capacity for {course.student_count} students"))
+                unscheduled_courses.append((course, f"No classroom with capacity for {course.student_count} students"))
                 continue
-            
-            # Try to schedule the course
+                
+            # Ders için tüm olası gün ve zaman kombinasyonlarını dene
             scheduled = False
+            random.shuffle(teacher_days)  # Günleri karıştır
             
-            # Shuffle to avoid always scheduling at the same time
-            random.shuffle(teacher_availability)
-            
-            for day, start_time, end_time in teacher_availability:
+            for day in teacher_days:
                 if scheduled:
                     break
+                    
+                random.shuffle(suitable_time_slots)  # Zaman dilimlerini karıştır
                 
-                # Shuffle classrooms to distribute classes
-                random.shuffle(suitable_classrooms)
-                
-                for classroom in suitable_classrooms:
-                    if not is_conflict(
-                        schedule_entries, day, start_time, end_time, 
-                        teacher.id, classroom.id, course.department, course.level
-                    ):
-                        # Add to schedule
-                        new_schedule = Schedule(
-                            day=day.capitalize(),
-                            time_range=f"{start_time}-{end_time}",
-                            course_id=course.id,
-                            classroom_id=classroom.id
-                        )
-                        db.add(new_schedule)
-                        
-                        # Add to our tracking list
-                        schedule_entries.append({
-                            "day": day,
-                            "start_time": start_time,
-                            "end_time": end_time,
-                            "teacher_id": teacher.id,
-                            "classroom_id": classroom.id,
-                            "department": course.department,
-                            "level": course.level,
-                            "student_count": course.student_count
-                        })
-                        
-                        scheduled = True
+                for time_slot in suitable_time_slots:
+                    if scheduled:
                         break
+                        
+                    random.shuffle(suitable_classrooms)  # Sınıfları karıştır
+                    
+                    for classroom in suitable_classrooms:
+                        if not is_conflict(
+                            schedule_entries, day, time_slot, 
+                            teacher.id, classroom.id, course.department, course.level
+                        ):
+                            # Programa ekle
+                            new_schedule = Schedule(
+                                day=day.capitalize(),
+                                time_range=time_slot,
+                                course_id=course.id,
+                                classroom_id=classroom.id
+                            )
+                            db.add(new_schedule)
+                            
+                            # Takip listesine ekle
+                            schedule_entries.append({
+                                "day": day,
+                                "time_slot": time_slot,
+                                "teacher_id": teacher.id,
+                                "classroom_id": classroom.id,
+                                "department": course.department,
+                                "level": course.level
+                            })
+                            
+                            scheduled = True
+                            break
             
             if not scheduled:
-                unscheduled_courses.append((course, "Could not find suitable time slot"))
+                unscheduled_courses.append((course, "Could not find suitable time slot and classroom"))
         
         # Commit all new schedules to database
         db.commit()
@@ -236,15 +310,19 @@ async def generate_schedule(db: Session = Depends(get_db)):
             student_count = entry.course.student_count if entry.course else 0
             capacity_ratio = (student_count / classroom_capacity * 100) if classroom_capacity > 0 else 0
             
+            duration = calculate_duration(entry.time_range)
+            
             schedule_summary.append({
                 "id": entry.id,
                 "day": entry.day,
                 "time_range": entry.time_range,
+                "duration": round(duration, 1),  # Ders süresini ekle
                 "course": {
                     "id": entry.course.id if entry.course else None,
                     "name": entry.course.name if entry.course else None,
                     "code": entry.course.code if entry.course else None,
                     "teacher_id": entry.course.teacher_id if entry.course else None,
+                    "total_hours": entry.course.total_hours if entry.course else None,
                     "student_count": student_count
                 },
                 "classroom": {
@@ -263,11 +341,12 @@ async def generate_schedule(db: Session = Depends(get_db)):
                 "id": course.id,
                 "name": course.name,
                 "code": course.code,
+                "total_hours": course.total_hours,
                 "student_count": course.student_count,
                 "reason": reason
             })
         
-        # Görev başarım metrikleri
+        # Calculate metrics
         scheduled_count = len(schedule_summary)
         unscheduled_count = len(unscheduled_summary)
         total_count = scheduled_count + unscheduled_count

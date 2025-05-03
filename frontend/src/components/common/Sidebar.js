@@ -4,6 +4,8 @@ import '../../styles/Sidebar.css';
 
 const Sidebar = ({ user }) => {
   const location = useLocation();
+  // Kullanıcının admin yetkisi olup olmadığını kontrol et
+  const isAdmin = user?.role === "admin" || user?.permissions?.includes("admin");
   
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
@@ -54,12 +56,14 @@ const Sidebar = ({ user }) => {
               <span className="label">Schedules</span>
             </Link>
           </li>
-          <li className={isActive('/scheduler') ? 'active' : ''}>
-            <Link to="/scheduler">
-              <span className="icon">⚙️</span>
-              <span className="label">Scheduler</span>
-            </Link>
-          </li>
+          {isAdmin && (
+            <li className={isActive('/scheduler') ? 'active' : ''}>
+              <Link to="/scheduler">
+                <span className="icon">⚙️</span>
+                <span className="label">Scheduler</span>
+              </Link>
+            </li>
+          )}
         </ul>
       </nav>
       

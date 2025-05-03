@@ -30,6 +30,10 @@ import FacultyList from "./components/FacultyList";
 import DepartmentList from "./components/DepartmentList";
 import ProgramList from "./components/ProgramList";
 
+import Settings from "./components/Settings";
+import AdminRoute from "./components/common/AdminRoute";
+import AccessDenied from "./components/AccessDenied";
+
 const App = () => {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [user, setUser] = useState(null);
@@ -90,29 +94,85 @@ const App = () => {
               <Route path="/login" element={!token ? <Login onLogin={handleLogin} /> : <Navigate to="/" />} />
               <Route path="/" element={<PrivateRoute><Dashboard token={token} /></PrivateRoute>} />
               
+              {/* Access Denied Route */}
+              <Route path="/access-denied" element={<PrivateRoute><AccessDenied /></PrivateRoute>} />
+              
+              {/* Settings Route (Admin Only) */}
+              <Route path="/settings" element={
+                <PrivateRoute>
+                  <AdminRoute user={user}>
+                    <Settings token={token} />
+                  </AdminRoute>
+                </PrivateRoute>
+              } />
+              
               {/* Faculty and Department Routes */}
               <Route path="/faculties" element={<PrivateRoute><FacultyList /></PrivateRoute>} />
               <Route path="/faculties/:facultyId" element={<PrivateRoute><DepartmentList /></PrivateRoute>} />
               <Route path="/faculties/:facultyId/departments/:departmentId" element={<PrivateRoute><ProgramList token={token} /></PrivateRoute>} />
               
-              {/* Teacher Routes */}
-              <Route path="/teachers" element={<PrivateRoute><TeacherList token={token} /></PrivateRoute>} />
-              <Route path="/teachers/new" element={<PrivateRoute><TeacherForm token={token} /></PrivateRoute>} />
-              <Route path="/teachers/edit/:id" element={<PrivateRoute><TeacherEdit token={token} /></PrivateRoute>} />
+              {/* Admin Only Routes */}
+              <Route path="/scheduler" element={
+                <PrivateRoute>
+                  <AdminRoute user={user}>
+                    <Scheduler token={token} />
+                  </AdminRoute>
+                </PrivateRoute>
+              } />
               
-              {/* Course Routes */}
-              <Route path="/courses" element={<PrivateRoute><CourseList token={token} /></PrivateRoute>} />
-              <Route path="/courses/new" element={<PrivateRoute><CourseForm token={token} /></PrivateRoute>} />
-              <Route path="/courses/edit/:id" element={<PrivateRoute><CourseEdit token={token} /></PrivateRoute>} />
+              {/* Teacher Routes - Limited Write Access */}
+              <Route path="/teachers" element={<PrivateRoute><TeacherList token={token} user={user} /></PrivateRoute>} />
+              <Route path="/teachers/new" element={
+                <PrivateRoute>
+                  <AdminRoute user={user}>
+                    <TeacherForm token={token} />
+                  </AdminRoute>
+                </PrivateRoute>
+              } />
+              <Route path="/teachers/edit/:id" element={
+                <PrivateRoute>
+                  <AdminRoute user={user}>
+                    <TeacherEdit token={token} />
+                  </AdminRoute>
+                </PrivateRoute>
+              } />
               
-              {/* Classroom Routes */}
-              <Route path="/classrooms" element={<PrivateRoute><ClassroomList token={token} /></PrivateRoute>} />
-              <Route path="/classrooms/new" element={<PrivateRoute><ClassroomForm token={token} /></PrivateRoute>} />
-              <Route path="/classrooms/edit/:id" element={<PrivateRoute><ClassroomEdit token={token} /></PrivateRoute>} />
+              {/* Course Routes - Admin için tam yetkili, teacher için sadece görüntüleme */}
+              <Route path="/courses" element={<PrivateRoute><CourseList token={token} user={user} /></PrivateRoute>} />
+              <Route path="/courses/new" element={
+                <PrivateRoute>
+                  <AdminRoute user={user}>
+                    <CourseForm token={token} />
+                  </AdminRoute>
+                </PrivateRoute>
+              } />
+              <Route path="/courses/edit/:id" element={
+                <PrivateRoute>
+                  <AdminRoute user={user}>
+                    <CourseEdit token={token} />
+                  </AdminRoute>
+                </PrivateRoute>
+              } />
               
-              {/* Schedule Routes */}
+              {/* Classroom Routes - Admin Only */}
+              <Route path="/classrooms" element={<PrivateRoute><ClassroomList token={token} user={user} /></PrivateRoute>} />
+              <Route path="/classrooms/new" element={
+                <PrivateRoute>
+                  <AdminRoute user={user}>
+                    <ClassroomForm token={token} />
+                  </AdminRoute>
+                </PrivateRoute>
+              } />
+              <Route path="/classrooms/edit/:id" element={
+                <PrivateRoute>
+                  <AdminRoute user={user}>
+                    <ClassroomEdit token={token} />
+                  </AdminRoute>
+                </PrivateRoute>
+              } />
+              
+              {/* Schedule Routes - Read for all */}
               <Route path="/schedules" element={<PrivateRoute><ScheduleList token={token} /></PrivateRoute>} />
-              <Route path="/scheduler" element={<PrivateRoute><Scheduler token={token} /></PrivateRoute>} />
               
               {/* 404 Page */}
               <Route path="*" element={<div className="not-found">Page not found</div>} />

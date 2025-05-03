@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database import SessionLocal
-import models
+from models import Teacher, Course, Classroom, Schedule
 
 router = APIRouter()
 
@@ -15,19 +15,57 @@ def get_db():
 @router.get("/")
 def get_statistics(db: Session = Depends(get_db)):
     """
-    Get statistics about the system data - counts of teachers, courses, classrooms, and schedules
+    Get overall statistics of the system
     """
-    try:
-        teachers_count = db.query(models.Teacher).count()
-        courses_count = db.query(models.Course).count()
-        classrooms_count = db.query(models.Classroom).count()
-        schedules_count = db.query(models.Schedule).count()
+    # Count records
+    teacher_count = db.query(Teacher).count()
+    course_count = db.query(Course).count()
+    classroom_count = db.query(Classroom).count()
+    schedule_count = db.query(Schedule).count()
+    
+    # Active courses
+    active_courses = db.query(Course).filter(Course.is_active == True).count()
+    
+    # Calculate total student count across all courses
+    total_students_result = db.query(Course.student_count).all()
+    total_students = sum(count for (count,) in total_students_result)
+    
+    # Return statistics
+    return {
+        "teacherCount": teacher_count,
+        "courseCount": course_count,
+        "classroomCount": classroom_count,
+        "scheduleCount": schedule_count,
+        "activeCourses": active_courses,
+        "totalStudents": total_students
+    }
+
+@router.get("/courses-by-faculty")
+def get_courses_by_faculty(db: Session = Depends(get_db)):
+    """
+    Get course statistics grouped by faculty
+    """
+    faculties = {}
+    courses = db.query(Course).all()
+    
+    for course in courses:
+        if course.faculty not in faculties:
+            faculties[course.faculty] = {
+                "courseCount": 0,
+                "departments": {},
+                "studentCount": 0
+            }
         
-        return {
-            "teacherCount": teachers_count,
-            "courseCount": courses_count,
-            "classroomCount": classrooms_count,
-            "scheduleCount": schedules_count
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        faculties[course.faculty]["courseCount"] += 1
+        faculties[course.faculty]["studentCount"] += course.student_count
+        
+        if course.department not in faculties[course.faculty]["departments"]:
+            faculties[course.faculty]["departments"][course.department] = {
+                "courseCount": 0,
+                "studentCount": 0
+            }
+        
+        faculties[course.faculty]["departments"][course.department]["courseCount"] += 1
+        faculties[course.faculty]["departments"][course.department]["studentCount"] += course.student_count
+    
+    return faculties

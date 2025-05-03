@@ -3,22 +3,23 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--background-color), #e0f7fa);
+  background: linear-gradient(135deg, var(--background-color) 0%, var(--background-color) 100%);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .login-card {
-  background-color: #fff;
+  background-color: var(--card-background);
   border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 20px var(--shadow-color);
   padding: 40px;
   width: 100%;
   max-width: 450px;
-  transition: transform 0.3s, box-shadow 0.3s;
+  transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s ease, color 0.3s ease;
 }
 
 .login-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 12px 30px var(--shadow-color);
 }
 
 .login-header {
@@ -37,17 +38,17 @@
   color: var(--primary-color);
   margin-bottom: 15px;
   letter-spacing: 2px;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+  text-shadow: 1px 1px 3px var(--shadow-color);
 }
 
 .login-card h2 {
-  color: var(--primary-color);
+  color: var(--text-color);
   margin-bottom: 5px;
   font-size: 28px;
 }
 
 .login-subtitle {
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 20px;
   font-size: 14px;
 }
@@ -61,7 +62,7 @@
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #444;
+  color: var(--text-color);
 }
 
 .form-group input {
@@ -70,12 +71,14 @@
   border: 1px solid var(--border-color);
   border-radius: 6px;
   font-size: 16px;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  background-color: var(--input-background);
+  color: var(--text-color);
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
 }
 
 .form-group input:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+  box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.2);
   outline: none;
 }
 
@@ -105,10 +108,10 @@
 }
 
 .error-message {
-  color: #e74c3c;
+  color: var(--error-color);
   margin: 10px 0;
   padding: 8px 12px;
-  background-color: #fdecea;
+  background-color: rgba(231, 76, 60, 0.1);
   border-radius: 4px;
   font-size: 14px;
   text-align: center;
@@ -119,7 +122,7 @@
   padding-top: 20px;
   border-top: 1px solid var(--border-color);
   font-size: 14px;
-  color: #7f8c8d;
+  color: var(--text-secondary);
 }
 
 .demo-credentials {
@@ -133,9 +136,11 @@
 }
 
 .credential code {
-  background-color: #f8f9fa;
+  background-color: var(--hover-background);
   padding: 2px 6px;
   border-radius: 4px;
+  color: var(--text-color);
+  font-family: monospace;
 }
 
 .loading-spinner {
@@ -150,4 +155,22 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Dark tema özel iyileştirmeler */
+[data-theme="dark"] .login-container {
+  background: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+}
+
+[data-theme="dark"] .login-card {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .text-logo {
+  text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .credential code {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
 }

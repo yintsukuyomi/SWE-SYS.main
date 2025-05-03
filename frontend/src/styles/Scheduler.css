@@ -260,6 +260,26 @@
   color: #e74c3c;
 }
 
+.highlight-row {
+  background-color: #ffecb3 !important;
+}
+
+.scheduler-tip {
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196f3;
+  padding: 10px 15px;
+  margin: 15px 0;
+  border-radius: 4px;
+}
+
+.scheduler-tip ol {
+  margin: 10px 0 5px 20px;
+}
+
+.scheduler-tip li {
+  margin-bottom: 4px;
+}
+
 @media (max-width: 768px) {
   .scheduler-actions {
     flex-direction: column;
