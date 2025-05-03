@@ -68,3 +68,20 @@ def update_schedule(schedule_id: int, schedule: ScheduleCreate, db: Session = De
     db.commit()
     db.refresh(existing_schedule)
     return existing_schedule
+
+@router.delete("/day/{day}")
+def delete_schedules_by_day(day: str, db: Session = Depends(get_db)):
+    """
+    Delete all schedules for a specific day
+    """
+    schedules = db.query(Schedule).filter(Schedule.day == day).all()
+    if not schedules:
+        raise HTTPException(status_code=404, detail=f"No schedules found for {day}")
+    
+    count = 0
+    for schedule in schedules:
+        db.delete(schedule)
+        count += 1
+    
+    db.commit()
+    return {"message": f"Successfully deleted {count} schedules for {day}"}

@@ -87,7 +87,25 @@ const CourseList = ({ token, user }) => {
       fetchCourses();
     } catch (error) {
       console.error("Error deleting course:", error);
-      setError("Failed to delete course. " + (error.detail || ""));
+      
+      // Hatayı daha kullanıcı dostu bir şekilde göster
+      let errorMessage = "Failed to delete course.";
+      
+      // Programda kullanılan derslerin silinememesi için özel mesaj
+      if (error.detail && error.detail.includes("used in schedules")) {
+        errorMessage = "This course cannot be deleted because it is currently scheduled in the timetable. Please remove all schedule entries for this course first.";
+      } else if (error.detail) {
+        errorMessage += " " + error.detail;
+      }
+      
+      setError(errorMessage);
+      
+      // Hata olsa bile modal'ı kapat
+      setDeleteConfirm({
+        show: false,
+        courseId: null,
+        courseName: ''
+      });
     }
   };
 
@@ -317,7 +335,18 @@ const CourseList = ({ token, user }) => {
     }
     
     if (courses.length === 0) {
-      return <div className="no-data-message">No courses found. Please add some courses.</div>;
+      return (
+        <div className="empty-state">
+          <div className="no-data-message">No courses found.</div>
+          {isAdmin && (
+            <div className="empty-state-action">
+              <Link to="/courses/new" className="add-button">
+                <span className="btn-icon">+</span> Add New Course
+              </Link>
+            </div>
+          )}
+        </div>
+      );
     }
     
     if (selectedFaculty && selectedDepartment) {

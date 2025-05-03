@@ -172,7 +172,7 @@ const App = () => {
               } />
               
               {/* Schedule Routes - Read for all */}
-              <Route path="/schedules" element={<PrivateRoute><ScheduleList token={token} /></PrivateRoute>} />
+              <Route path="/schedules" element={<PrivateRoute><ScheduleList token={token} user={user} /></PrivateRoute>} />
               
               {/* 404 Page */}
               <Route path="*" element={<div className="not-found">Page not found</div>} />

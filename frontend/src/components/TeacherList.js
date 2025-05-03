@@ -300,7 +300,18 @@ const TeacherList = ({ token, user }) => {
     }
     
     if (teachers.length === 0) {
-      return <div className="no-data-message">No teachers found. Please add some teachers.</div>;
+      return (
+        <div className="empty-state">
+          <div className="no-data-message">No teachers found.</div>
+          {isAdmin && (
+            <div className="empty-state-action">
+              <Link to="/teachers/new" className="add-button">
+                <span className="btn-icon">+</span> Add New Teacher
+              </Link>
+            </div>
+          )}
+        </div>
+      );
     }
     
     if (selectedFaculty && selectedDepartment) {

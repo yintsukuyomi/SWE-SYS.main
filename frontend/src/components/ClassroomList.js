@@ -317,7 +317,18 @@ const ClassroomList = ({ token, user }) => {
     }
     
     if (classrooms.length === 0) {
-      return <div className="no-data-message">No classrooms found. Please add some classrooms.</div>;
+      return (
+        <div className="empty-state">
+          <div className="no-data-message">No classrooms found.</div>
+          {isAdmin && (
+            <div className="empty-state-action">
+              <Link to="/classrooms/new" className="add-button">
+                <span className="btn-icon">+</span> Add New Classroom
+              </Link>
+            </div>
+          )}
+        </div>
+      );
     }
     
     if (selectedFaculty && selectedDepartment) {
