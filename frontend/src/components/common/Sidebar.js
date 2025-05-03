@@ -6,7 +6,7 @@ const Sidebar = ({ user }) => {
   const location = useLocation();
   
   const isActive = (path) => {
-    return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
   return (
@@ -22,6 +22,12 @@ const Sidebar = ({ user }) => {
             <Link to="/">
               <span className="icon">🏠</span>
               <span className="label">Dashboard</span>
+            </Link>
+          </li>
+          <li className={isActive('/faculties') ? 'active' : ''}>
+            <Link to="/faculties">
+              <span className="icon">🏛️</span>
+              <span className="label">Faculties & Programs</span>
             </Link>
           </li>
           <li className={isActive('/teachers') ? 'active' : ''}>

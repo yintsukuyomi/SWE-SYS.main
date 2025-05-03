@@ -113,6 +113,13 @@ const Dashboard = ({ token }) => {
             <Link to="/scheduler" className="card-btn secondary">Scheduler</Link>
           </div>
         </div>
+        <div className="dashboard-card">
+          <h3>🏛️ Faculties & Programs</h3>
+          <p>Browse faculties, departments and academic programs</p>
+          <div className="card-actions">
+            <Link to="/faculties" className="card-btn primary">View Faculties</Link>
+          </div>
+        </div>
       </div>
       
       <div className="recent-activity">

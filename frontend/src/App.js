@@ -25,6 +25,11 @@ import Scheduler from "./components/Scheduler";
 import { getCurrentUser } from "./api";
 import "./App.css";
 
+// Faculty and Department components
+import FacultyList from "./components/FacultyList";
+import DepartmentList from "./components/DepartmentList";
+import ProgramList from "./components/ProgramList";
+
 const App = () => {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [user, setUser] = useState(null);
@@ -84,6 +89,11 @@ const App = () => {
             <Routes>
               <Route path="/login" element={!token ? <Login onLogin={handleLogin} /> : <Navigate to="/" />} />
               <Route path="/" element={<PrivateRoute><Dashboard token={token} /></PrivateRoute>} />
+              
+              {/* Faculty and Department Routes */}
+              <Route path="/faculties" element={<PrivateRoute><FacultyList /></PrivateRoute>} />
+              <Route path="/faculties/:facultyId" element={<PrivateRoute><DepartmentList /></PrivateRoute>} />
+              <Route path="/faculties/:facultyId/departments/:departmentId" element={<PrivateRoute><ProgramList token={token} /></PrivateRoute>} />
               
               {/* Teacher Routes */}
               <Route path="/teachers" element={<PrivateRoute><TeacherList token={token} /></PrivateRoute>} />
