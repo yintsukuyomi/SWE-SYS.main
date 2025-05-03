@@ -1,0 +1,57 @@
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Enum
+from sqlalchemy.orm import relationship
+from database import Base
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    password_hash = Column(String)
+    role = Column(Enum("admin", "teacher", name="user_roles"), index=True)
+
+class Teacher(Base):
+    __tablename__ = "teachers"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    email = Column(String, unique=True)
+    faculty = Column(String)
+    department = Column(String)
+    working_days = Column(String)
+    working_hours = Column(String)
+    courses = relationship("Course", back_populates="teacher")
+
+class Course(Base):
+    __tablename__ = "courses"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    code = Column(String, unique=True)
+    teacher_id = Column(Integer, ForeignKey("teachers.id"))
+    faculty = Column(String)
+    department = Column(String)
+    level = Column(String)
+    type = Column(String)
+    category = Column(String)
+    semester = Column(String)
+    ects = Column(Integer)
+    total_hours = Column(Integer)
+    is_active = Column(Boolean, default=True)
+    teacher = relationship("Teacher", back_populates="courses")
+
+class Classroom(Base):
+    __tablename__ = "classrooms"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    capacity = Column(Integer)
+    type = Column(String)
+    faculty = Column(String)
+    department = Column(String)
+
+class Schedule(Base):
+    __tablename__ = "schedule"
+    id = Column(Integer, primary_key=True, index=True)
+    day = Column(String)
+    time_range = Column(String)
+    course_id = Column(Integer, ForeignKey("courses.id"))
+    classroom_id = Column(Integer, ForeignKey("classrooms.id"))
+    course = relationship("Course")
+    classroom = relationship("Classroom")

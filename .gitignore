@@ -1,0 +1,117 @@
+# Python için
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+
+# SQLite veritabanları
+*.db
+*.sqlite3
+*.sqlite
+
+# Python için log dosyaları
+*.log
+
+# IDEs ve editörler
+.idea/
+.vscode/
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Temporary files
+*.bak
+*.tmp
+*.temp
+
+# React/Node için
+node_modules/
+/frontend/build
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+
+# Ortam değişkenleri
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Paket yöneticisi dosyaları
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# MacOS için
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows için
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Çalışabilir dosyalar
+*.exe
+*.out
+*.app
+
+# Data klasörü - veritabanı dosyalarını içerir ancak yapı korunur
+/backend/data/*
+!/backend/data/.gitkeep
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Ansible
+*.retry
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery
+celerybeat-schedule
+celerybeat.pid
