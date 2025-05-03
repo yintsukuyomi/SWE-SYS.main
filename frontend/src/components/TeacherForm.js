@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createTeacher } from '../api';
+import { FACULTIES, getDepartmentsByFaculty } from '../constants/facultiesAndDepartments';
 import '../styles/TeacherForm.css';
 
 const TeacherForm = ({ token }) => {
@@ -28,8 +29,22 @@ const TeacherForm = ({ token }) => {
     end: '17:00'
   });
   
+  const [departments, setDepartments] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Fakülte değiştiğinde ilgili bölümleri güncelle
+  useEffect(() => {
+    if (formData.faculty) {
+      setDepartments(getDepartmentsByFaculty(formData.faculty));
+      // Eğer seçilen fakülte değiştiyse ve mevcut bölüm bu fakültede yoksa, bölümü sıfırla
+      if (!getDepartmentsByFaculty(formData.faculty).find(dept => dept.id === formData.department)) {
+        setFormData(prev => ({ ...prev, department: '' }));
+      }
+    } else {
+      setDepartments([]);
+    }
+  }, [formData.faculty]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -72,10 +87,17 @@ const TeacherForm = ({ token }) => {
     const workingDays = selectedDaysArray.join(',');
     const workingHoursFormat = `${workingHours.start}-${workingHours.end}`;
     
+    // Seçilen fakülte ve bölümün adlarını al
+    const selectedFaculty = FACULTIES.find(f => f.id === formData.faculty);
+    const selectedDepartment = departments.find(d => d.id === formData.department);
+    
     const updatedFormData = {
       ...formData,
       working_days: workingDays,
-      working_hours: workingHoursFormat
+      working_hours: workingHoursFormat,
+      // ID yerine adları gönderelim
+      faculty: selectedFaculty ? selectedFaculty.name : '',
+      department: selectedDepartment ? selectedDepartment.name : ''
     };
 
     try {
@@ -131,28 +153,39 @@ const TeacherForm = ({ token }) => {
 
         <div className="form-group">
           <label htmlFor="faculty">Faculty</label>
-          <input
-            type="text"
+          <select
             id="faculty"
             name="faculty"
             value={formData.faculty}
             onChange={handleChange}
             required
-            placeholder="Enter faculty name"
-          />
+          >
+            <option value="">Select a faculty</option>
+            {FACULTIES.map(faculty => (
+              <option key={faculty.id} value={faculty.id}>
+                {faculty.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="form-group">
           <label htmlFor="department">Department</label>
-          <input
-            type="text"
+          <select
             id="department"
             name="department"
             value={formData.department}
             onChange={handleChange}
             required
-            placeholder="Enter department name"
-          />
+            disabled={!formData.faculty}
+          >
+            <option value="">Select a department</option>
+            {departments.map(department => (
+              <option key={department.id} value={department.id}>
+                {department.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="form-group days-selection">

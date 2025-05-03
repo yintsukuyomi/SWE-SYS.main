@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from database import SessionLocal
-from models import Course, Teacher
+from models import Course, Teacher, Schedule
 from pydantic import BaseModel
 from typing import Optional, List
 
@@ -27,6 +27,7 @@ class CourseCreate(BaseModel):
     ects: int
     total_hours: int
     is_active: bool = True
+    student_count: int = 0  # Varsayılan değer 0
 
 @router.get("/")
 def get_courses(db: Session = Depends(get_db)):
@@ -74,7 +75,8 @@ def create_course(course: CourseCreate, db: Session = Depends(get_db)):
         semester=course.semester,
         ects=course.ects,
         total_hours=course.total_hours,
-        is_active=course.is_active
+        is_active=course.is_active,
+        student_count=course.student_count  # Öğrenci sayısını ekliyoruz
     )
     
     db.add(new_course)
@@ -118,6 +120,7 @@ def update_course(course_id: int, course: CourseCreate, db: Session = Depends(ge
     existing_course.ects = course.ects
     existing_course.total_hours = course.total_hours
     existing_course.is_active = course.is_active
+    existing_course.student_count = course.student_count  # Öğrenci sayısını güncelliyoruz
     
     db.commit()
     db.refresh(existing_course)

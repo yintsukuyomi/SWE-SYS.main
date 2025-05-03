@@ -35,6 +35,7 @@ class Course(Base):
     ects = Column(Integer)
     total_hours = Column(Integer)
     is_active = Column(Boolean, default=True)
+    student_count = Column(Integer, default=0)  # Dersi alan öğrenci sayısı
     teacher = relationship("Teacher", back_populates="courses")
 
 class Classroom(Base):

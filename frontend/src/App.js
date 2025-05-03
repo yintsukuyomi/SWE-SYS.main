@@ -21,6 +21,7 @@ import ClassroomForm from "./components/ClassroomForm";
 import ClassroomEdit from "./components/ClassroomEdit";
 
 import ScheduleList from "./components/ScheduleList";
+import Scheduler from "./components/Scheduler";
 import { getCurrentUser } from "./api";
 import "./App.css";
 
@@ -99,7 +100,10 @@ const App = () => {
               <Route path="/classrooms/new" element={<PrivateRoute><ClassroomForm token={token} /></PrivateRoute>} />
               <Route path="/classrooms/edit/:id" element={<PrivateRoute><ClassroomEdit token={token} /></PrivateRoute>} />
               
+              {/* Schedule Routes */}
               <Route path="/schedules" element={<PrivateRoute><ScheduleList token={token} /></PrivateRoute>} />
+              <Route path="/scheduler" element={<PrivateRoute><Scheduler token={token} /></PrivateRoute>} />
+              
               {/* 404 Page */}
               <Route path="*" element={<div className="not-found">Page not found</div>} />
             </Routes>

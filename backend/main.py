@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from database import init_db
-from routers import schedule, notifications, auth, teachers, schedules, statistics, courses, classrooms
+from routers import schedule, notifications, auth, teachers, schedules, statistics, courses, classrooms, scheduler
 import time
 import logging
 
@@ -62,6 +62,7 @@ app.include_router(courses.router, prefix="/api/courses", tags=["Courses"])
 app.include_router(classrooms.router, prefix="/api/classrooms", tags=["Classrooms"])
 app.include_router(schedules.router, prefix="/api/schedules", tags=["Schedules"])
 app.include_router(statistics.router, prefix="/api/statistics", tags=["Statistics"])
+app.include_router(scheduler.router, prefix="/api/scheduler", tags=["Scheduler"])
 
 @app.get("/")
 def read_root():

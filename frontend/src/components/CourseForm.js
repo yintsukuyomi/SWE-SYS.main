@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createCourse, getTeachers } from '../api';
+import { FACULTIES, getDepartmentsByFaculty } from '../constants/facultiesAndDepartments';
 import '../styles/CourseForm.css';
 
 const CourseForm = ({ token }) => {
@@ -11,16 +12,18 @@ const CourseForm = ({ token }) => {
     teacher_id: '',
     faculty: '',
     department: '',
-    level: 'Undergraduate',
+    level: 'Preparatory Year',
     type: 'Core',
     category: '',
     semester: 'Fall',
     ects: 5,
     total_hours: 3,
-    is_active: true
+    is_active: true,
+    student_count: 0  // Öğrenci sayısı alanı eklendi
   });
   
   const [teachers, setTeachers] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -38,6 +41,19 @@ const CourseForm = ({ token }) => {
     
     fetchTeachers();
   }, [token]);
+
+  // Fakülte değiştiğinde ilgili bölümleri güncelle
+  useEffect(() => {
+    if (formData.faculty) {
+      setDepartments(getDepartmentsByFaculty(formData.faculty));
+      // Eğer seçilen fakülte değiştiyse ve mevcut bölüm bu fakültede yoksa, bölümü sıfırla
+      if (!getDepartmentsByFaculty(formData.faculty).find(dept => dept.id === formData.department)) {
+        setFormData(prev => ({ ...prev, department: '' }));
+      }
+    } else {
+      setDepartments([]);
+    }
+  }, [formData.faculty]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -69,10 +85,17 @@ const CourseForm = ({ token }) => {
     setLoading(true);
     setError(null);
 
+    // Seçilen fakülte ve bölümün adlarını al
+    const selectedFaculty = FACULTIES.find(f => f.id === formData.faculty);
+    const selectedDepartment = departments.find(d => d.id === formData.department);
+
     // teacher_id'nin sayısal olduğundan emin olalım
     const submissionData = {
       ...formData,
-      teacher_id: parseInt(formData.teacher_id, 10)
+      teacher_id: parseInt(formData.teacher_id, 10),
+      // ID yerine adları gönderelim
+      faculty: selectedFaculty ? selectedFaculty.name : '',
+      department: selectedDepartment ? selectedDepartment.name : ''
     };
 
     try {
@@ -138,28 +161,39 @@ const CourseForm = ({ token }) => {
 
         <div className="form-group">
           <label htmlFor="faculty">Faculty</label>
-          <input
-            type="text"
+          <select
             id="faculty"
             name="faculty"
             value={formData.faculty}
             onChange={handleChange}
             required
-            placeholder="Enter faculty name"
-          />
+          >
+            <option value="">Select a faculty</option>
+            {FACULTIES.map(faculty => (
+              <option key={faculty.id} value={faculty.id}>
+                {faculty.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="form-group">
           <label htmlFor="department">Department</label>
-          <input
-            type="text"
+          <select
             id="department"
             name="department"
             value={formData.department}
             onChange={handleChange}
             required
-            placeholder="Enter department name"
-          />
+            disabled={!formData.faculty}
+          >
+            <option value="">Select a department</option>
+            {departments.map(department => (
+              <option key={department.id} value={department.id}>
+                {department.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="form-group">
@@ -244,6 +278,20 @@ const CourseForm = ({ token }) => {
             min="1"
             max="40"
             value={formData.total_hours}
+            onChange={handleNumberChange}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="student_count">Student Count</label>
+          <input
+            type="number"
+            id="student_count"
+            name="student_count"
+            min="0"
+            max="1000"
+            value={formData.student_count}
             onChange={handleNumberChange}
             required
           />

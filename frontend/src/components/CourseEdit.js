@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getCourseById, updateCourse, getTeachers } from '../api';
+import { FACULTIES, getDepartmentsByFaculty } from '../constants/facultiesAndDepartments';
 import '../styles/CourseForm.css';
 
 const CourseEdit = ({ token }) => {
@@ -18,12 +19,33 @@ const CourseEdit = ({ token }) => {
     semester: '',
     ects: 0,
     total_hours: 0,
-    is_active: true
+    is_active: true,
+    student_count: 0  // Öğrenci sayısı alanı eklendi
   });
   
   const [teachers, setTeachers] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Veritabanından gelen fakülte ve bölüm adlarını ID'lere çevirmek için
+  const [originalData, setOriginalData] = useState({
+    faculty: '',
+    department: ''
+  });
+
+  // Fakülte değiştiğinde ilgili bölümleri güncelle
+  useEffect(() => {
+    if (formData.faculty) {
+      setDepartments(getDepartmentsByFaculty(formData.faculty));
+      // Eğer seçilen fakülte değiştiyse ve mevcut bölüm bu fakültede yoksa, bölümü sıfırla
+      if (!getDepartmentsByFaculty(formData.faculty).find(dept => dept.id === formData.department)) {
+        setFormData(prev => ({ ...prev, department: '' }));
+      }
+    } else {
+      setDepartments([]);
+    }
+  }, [formData.faculty]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,20 +56,37 @@ const CourseEdit = ({ token }) => {
           getTeachers(token)
         ]);
         
+        // Veritabanından gelen fakülte ve bölüm adlarını sakla
+        setOriginalData({
+          faculty: courseData.faculty || '',
+          department: courseData.department || ''
+        });
+        
+        // Fakülte ve bölüm adlarından ID'leri bul
+        const facultyId = findFacultyIdByName(courseData.faculty);
+        const departmentsForFaculty = facultyId ? getDepartmentsByFaculty(facultyId) : [];
+        const departmentId = findDepartmentIdByName(departmentsForFaculty, courseData.department);
+        
         setFormData({
           name: courseData.name || '',
           code: courseData.code || '',
           teacher_id: courseData.teacher_id || '',
-          faculty: courseData.faculty || '',
-          department: courseData.department || '',
-          level: courseData.level || 'Undergraduate',
+          faculty: facultyId || '',
+          department: departmentId || '',
+          level: courseData.level || 'Preparatory Year',
           type: courseData.type || 'Core',
           category: courseData.category || '',
           semester: courseData.semester || 'Fall',
           ects: courseData.ects || 5,
           total_hours: courseData.total_hours || 3,
-          is_active: courseData.is_active !== undefined ? courseData.is_active : true
+          is_active: courseData.is_active !== undefined ? courseData.is_active : true,
+          student_count: courseData.student_count || 0  // Öğrenci sayısını alıyoruz
         });
+        
+        // Fakültenin bölümlerini hemen ayarla
+        if (facultyId) {
+          setDepartments(getDepartmentsByFaculty(facultyId));
+        }
         
         setTeachers(teachersData);
         setLoading(false);
@@ -60,6 +99,18 @@ const CourseEdit = ({ token }) => {
 
     fetchData();
   }, [id, token]);
+  
+  // Fakülte adından ID bulan yardımcı fonksiyon
+  const findFacultyIdByName = (facultyName) => {
+    const faculty = FACULTIES.find(f => f.name === facultyName);
+    return faculty ? faculty.id : '';
+  };
+  
+  // Bölüm adından ID bulan yardımcı fonksiyon
+  const findDepartmentIdByName = (departments, departmentName) => {
+    const department = departments.find(d => d.name === departmentName);
+    return department ? department.id : '';
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -91,10 +142,17 @@ const CourseEdit = ({ token }) => {
     setLoading(true);
     setError(null);
 
+    // Seçilen fakülte ve bölümün adlarını al
+    const selectedFaculty = FACULTIES.find(f => f.id === formData.faculty);
+    const selectedDepartment = departments.find(d => d.id === formData.department);
+
     // teacher_id'nin sayısal olduğundan emin olalım
     const submissionData = {
       ...formData,
-      teacher_id: parseInt(formData.teacher_id, 10)
+      teacher_id: parseInt(formData.teacher_id, 10),
+      // ID yerine adları gönderelim
+      faculty: selectedFaculty ? selectedFaculty.name : originalData.faculty,
+      department: selectedDepartment ? selectedDepartment.name : originalData.department
     };
 
     try {
@@ -161,28 +219,39 @@ const CourseEdit = ({ token }) => {
 
         <div className="form-group">
           <label htmlFor="faculty">Faculty</label>
-          <input
-            type="text"
+          <select
             id="faculty"
             name="faculty"
             value={formData.faculty}
             onChange={handleChange}
             required
-            placeholder="Enter faculty name"
-          />
+          >
+            <option value="">Select a faculty</option>
+            {FACULTIES.map(faculty => (
+              <option key={faculty.id} value={faculty.id}>
+                {faculty.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="form-group">
           <label htmlFor="department">Department</label>
-          <input
-            type="text"
+          <select
             id="department"
             name="department"
             value={formData.department}
             onChange={handleChange}
             required
-            placeholder="Enter department name"
-          />
+            disabled={!formData.faculty}
+          >
+            <option value="">Select a department</option>
+            {departments.map(department => (
+              <option key={department.id} value={department.id}>
+                {department.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="form-group">
@@ -267,6 +336,20 @@ const CourseEdit = ({ token }) => {
             min="1"
             max="40"
             value={formData.total_hours}
+            onChange={handleNumberChange}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="student_count">Student Count</label>
+          <input
+            type="number"
+            id="student_count"
+            name="student_count"
+            min="0"
+            max="1000"
+            value={formData.student_count}
             onChange={handleNumberChange}
             required
           />

@@ -1,0 +1,279 @@
+.scheduler-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.scheduler-header {
+  margin-bottom: 25px;
+}
+
+.scheduler-header h1 {
+  color: var(--text-color);
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.scheduler-description {
+  color: #666;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.scheduler-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.scheduler-status {
+  flex: 1;
+}
+
+.scheduler-status h3 {
+  font-size: 18px;
+  color: var(--text-color);
+  margin-bottom: 15px;
+}
+
+.status-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.status-item {
+  background-color: #f8f9fa;
+  padding: 12px 15px;
+  border-radius: 6px;
+  min-width: 120px;
+}
+
+.status-label {
+  display: block;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.status-value {
+  display: block;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.scheduler-generate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-left: 20px;
+}
+
+.generate-btn {
+  padding: 12px 24px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.generate-btn:hover {
+  background-color: #2980b9;
+}
+
+.generate-btn:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.warning-text {
+  color: #e74c3c;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.scheduler-result {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.scheduler-result h3 {
+  font-size: 18px;
+  color: var(--text-color);
+  margin-bottom: 15px;
+}
+
+.result-summary {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.result-item {
+  background-color: #f8f9fa;
+  padding: 12px 15px;
+  border-radius: 6px;
+  flex: 1;
+}
+
+.result-label {
+  display: block;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.result-value {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.unscheduled-list {
+  margin-top: 20px;
+}
+
+.unscheduled-list h4 {
+  font-size: 16px;
+  color: var(--text-color);
+  margin-bottom: 10px;
+}
+
+.unscheduled-list table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.unscheduled-list th {
+  background-color: #f1f1f1;
+  padding: 10px;
+  text-align: left;
+  font-weight: 500;
+}
+
+.unscheduled-list td {
+  padding: 10px;
+  border-top: 1px solid #eee;
+}
+
+.current-schedule {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.current-schedule h3 {
+  font-size: 18px;
+  color: var(--text-color);
+  margin-bottom: 20px;
+}
+
+.no-schedule {
+  color: #777;
+  text-align: center;
+  padding: 30px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.schedule-by-day {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.day-schedule {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.day-schedule h4 {
+  font-size: 16px;
+  color: var(--primary-color);
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 8px;
+}
+
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.schedule-table th {
+  font-weight: 500;
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.schedule-table td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.schedule-table tr:last-child td {
+  border-bottom: none;
+}
+
+.capacity-good {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.capacity-medium {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.capacity-high {
+  background-color: #fff3cd;
+  color: #856404;
+  font-weight: 500;
+}
+
+.capacity-critical {
+  background-color: #f8d7da;
+  color: #721c24;
+  font-weight: bold;
+}
+
+.capacity-warning {
+  margin-left: 5px;
+  color: #e74c3c;
+}
+
+@media (max-width: 768px) {
+  .scheduler-actions {
+    flex-direction: column;
+  }
+  
+  .scheduler-status {
+    margin-bottom: 20px;
+  }
+  
+  .scheduler-generate {
+    padding-left: 0;
+  }
+  
+  .result-summary {
+    flex-direction: column;
+  }
+}

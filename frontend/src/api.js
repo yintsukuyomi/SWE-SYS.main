@@ -102,6 +102,29 @@ export const createSchedule = async (scheduleData, token) => {
   }
 };
 
+// Scheduler API calls
+export const generateSchedule = async (token) => {
+  try {
+    const response = await axios.post(`${API_URL}/scheduler/generate`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : error;
+  }
+};
+
+export const getScheduleStatus = async (token) => {
+  try {
+    const response = await axios.get(`${API_URL}/scheduler/status`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : error;
+  }
+};
+
 // Courses API calls
 export const getCourses = async (token) => {
   try {

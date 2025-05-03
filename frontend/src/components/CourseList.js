@@ -104,6 +104,7 @@ const CourseList = ({ token }) => {
               <th>Department</th>
               <th>Level</th>
               <th>ECTS</th>
+              <th>Students</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -111,7 +112,7 @@ const CourseList = ({ token }) => {
           <tbody>
             {courses.length === 0 ? (
               <tr>
-                <td colSpan="9" className="no-data">No courses found</td>
+                <td colSpan="10" className="no-data">No courses found</td>
               </tr>
             ) : (
               courses.map(course => (
@@ -123,6 +124,7 @@ const CourseList = ({ token }) => {
                   <td>{course.department}</td>
                   <td>{course.level}</td>
                   <td>{course.ects}</td>
+                  <td>{course.student_count}</td>
                   <td>
                     <span className={`status-badge ${course.is_active ? 'active' : 'inactive'}`}>
                       {course.is_active ? 'Active' : 'Inactive'}

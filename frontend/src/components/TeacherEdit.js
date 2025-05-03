@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getTeacherById, updateTeacher } from '../api';
+import { FACULTIES, getDepartmentsByFaculty } from '../constants/facultiesAndDepartments';
 import '../styles/TeacherForm.css';
 
 const TeacherEdit = ({ token }) => {
@@ -29,21 +30,58 @@ const TeacherEdit = ({ token }) => {
     end: '17:00'
   });
   
+  const [departments, setDepartments] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Veritabanından gelen fakülte ve bölüm adlarını ID'lere çevirmek için
+  const [originalData, setOriginalData] = useState({
+    faculty: '',
+    department: ''
+  });
+
+  // Fakülte değiştiğinde ilgili bölümleri güncelle
+  useEffect(() => {
+    if (formData.faculty) {
+      setDepartments(getDepartmentsByFaculty(formData.faculty));
+      // Eğer seçilen fakülte değiştiyse ve mevcut bölüm bu fakültede yoksa, bölümü sıfırla
+      if (!getDepartmentsByFaculty(formData.faculty).find(dept => dept.id === formData.department)) {
+        setFormData(prev => ({ ...prev, department: '' }));
+      }
+    } else {
+      setDepartments([]);
+    }
+  }, [formData.faculty]);
 
   useEffect(() => {
     const fetchTeacher = async () => {
       try {
         const data = await getTeacherById(id, token);
+        
+        // Veritabanından gelen fakülte ve bölüm adlarını sakla
+        setOriginalData({
+          faculty: data.faculty || '',
+          department: data.department || ''
+        });
+        
+        // Fakülte ve bölüm adlarından ID'leri bul
+        const facultyId = findFacultyIdByName(data.faculty);
+        const departmentsForFaculty = facultyId ? getDepartmentsByFaculty(facultyId) : [];
+        const departmentId = findDepartmentIdByName(departmentsForFaculty, data.department);
+        
         setFormData({
           name: data.name || '',
           email: data.email || '',
-          faculty: data.faculty || '',
-          department: data.department || '',
+          faculty: facultyId || '',
+          department: departmentId || '',
           working_days: data.working_days || '',
           working_hours: data.working_hours || ''
         });
+        
+        // Fakültenin bölümlerini hemen ayarla
+        if (facultyId) {
+          setDepartments(getDepartmentsByFaculty(facultyId));
+        }
 
         // Çalışma günlerini parse et
         if (data.working_days) {
@@ -77,6 +115,18 @@ const TeacherEdit = ({ token }) => {
 
     fetchTeacher();
   }, [id, token]);
+  
+  // Fakülte adından ID bulan yardımcı fonksiyon
+  const findFacultyIdByName = (facultyName) => {
+    const faculty = FACULTIES.find(f => f.name === facultyName);
+    return faculty ? faculty.id : '';
+  };
+  
+  // Bölüm adından ID bulan yardımcı fonksiyon
+  const findDepartmentIdByName = (departments, departmentName) => {
+    const department = departments.find(d => d.name === departmentName);
+    return department ? department.id : '';
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -117,10 +167,17 @@ const TeacherEdit = ({ token }) => {
     const workingDays = selectedDaysArray.join(',');
     const workingHoursFormat = `${workingHours.start}-${workingHours.end}`;
     
+    // Seçilen fakülte ve bölümün adlarını al
+    const selectedFaculty = FACULTIES.find(f => f.id === formData.faculty);
+    const selectedDepartment = departments.find(d => d.id === formData.department);
+    
     const updatedFormData = {
       ...formData,
       working_days: workingDays,
-      working_hours: workingHoursFormat
+      working_hours: workingHoursFormat,
+      // ID yerine adları gönderelim
+      faculty: selectedFaculty ? selectedFaculty.name : originalData.faculty,
+      department: selectedDepartment ? selectedDepartment.name : originalData.department
     };
 
     try {
@@ -176,28 +233,39 @@ const TeacherEdit = ({ token }) => {
 
         <div className="form-group">
           <label htmlFor="faculty">Faculty</label>
-          <input
-            type="text"
+          <select
             id="faculty"
             name="faculty"
             value={formData.faculty}
             onChange={handleChange}
             required
-            placeholder="Enter faculty name"
-          />
+          >
+            <option value="">Select a faculty</option>
+            {FACULTIES.map(faculty => (
+              <option key={faculty.id} value={faculty.id}>
+                {faculty.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="form-group">
           <label htmlFor="department">Department</label>
-          <input
-            type="text"
+          <select
             id="department"
             name="department"
             value={formData.department}
             onChange={handleChange}
             required
-            placeholder="Enter department name"
-          />
+            disabled={!formData.faculty}
+          >
+            <option value="">Select a department</option>
+            {departments.map(department => (
+              <option key={department.id} value={department.id}>
+                {department.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="form-group days-selection">
