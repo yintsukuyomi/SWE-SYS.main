@@ -107,3 +107,4 @@ def delete_classroom(classroom_id: int, db: Session = Depends(get_db)):
     db.delete(classroom)
     db.commit()
     return {"message": "Classroom deleted successfully"}
+
