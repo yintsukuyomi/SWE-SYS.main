@@ -1,3 +1,7 @@
+*** Acil 
+**  Gerekli 
+*   Opsiyonel
+
 # SWE-SYS Whats Coming?
 
 # Common
