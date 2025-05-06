@@ -70,7 +70,7 @@ const ClassroomEdit = ({ token }) => {
         setLoading(false);
       } catch (err) {
         console.error('Error fetching classroom:', err);
-        setError('Failed to load classroom data. Please try again.');
+        setError('Derslik bilgileri yüklenemedi. Lütfen tekrar deneyin.');
         setLoading(false);
       }
     };
@@ -127,21 +127,21 @@ const ClassroomEdit = ({ token }) => {
       navigate('/classrooms');
     } catch (err) {
       console.error('Error updating classroom:', err);
-      setError(err.detail || 'Failed to update classroom. Please try again.');
+      setError(err.detail || 'Derslik güncellenirken bir hata oluştu. Lütfen tekrar deneyin.');
       setLoading(false);
     }
   };
 
-  if (loading) return <div className="loading">Loading classroom data...</div>;
+  if (loading) return <div className="loading">Derslik bilgileri yükleniyor...</div>;
 
   return (
     <div className="classroom-form-container">
-      <h2>Edit Classroom</h2>
+      <h2>Derslik Düzenle</h2>
       {error && <div className="error-message">{error}</div>}
       
       <form onSubmit={handleSubmit} className="classroom-form">
         <div className="form-group">
-          <label htmlFor="name">Classroom Name/Number</label>
+          <label htmlFor="name">Derslik Adı/Numarası</label>
           <input
             type="text"
             id="name"
@@ -149,12 +149,12 @@ const ClassroomEdit = ({ token }) => {
             value={formData.name}
             onChange={handleChange}
             required
-            placeholder="E.g., A101, Lab 3, etc."
+            placeholder="Örn: A101, Lab 3, vb."
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="capacity">Capacity</label>
+          <label htmlFor="capacity">Kapasite</label>
           <input
             type="number"
             id="capacity"
@@ -168,7 +168,7 @@ const ClassroomEdit = ({ token }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="type">Type</label>
+          <label htmlFor="type">Tür</label>
           <select
             id="type"
             name="type"
@@ -176,18 +176,18 @@ const ClassroomEdit = ({ token }) => {
             onChange={handleChange}
             required
           >
-            <option value="Lecture Hall">Lecture Hall</option>
-            <option value="Laboratory">Laboratory</option>
-            <option value="Seminar Room">Seminar Room</option>
-            <option value="Computer Lab">Computer Lab</option>
-            <option value="Conference Room">Conference Room</option>
-            <option value="Studio">Studio</option>
-            <option value="Auditorium">Auditorium</option>
+            <option value="Lecture Hall">Amfi</option>
+            <option value="Laboratory">Laboratuvar</option>
+            <option value="Seminar Room">Seminer Salonu</option>
+            <option value="Computer Lab">Bilgisayar Laboratuvarı</option>
+            <option value="Conference Room">Konferans Salonu</option>
+            <option value="Studio">Stüdyo</option>
+            <option value="Auditorium">Oditoryum</option>
           </select>
         </div>
 
         <div className="form-group">
-          <label htmlFor="faculty">Faculty</label>
+          <label htmlFor="faculty">Fakülte</label>
           <select
             id="faculty"
             name="faculty"
@@ -195,7 +195,7 @@ const ClassroomEdit = ({ token }) => {
             onChange={handleChange}
             required
           >
-            <option value="">Select a faculty</option>
+            <option value="">Fakülte seçin</option>
             {FACULTIES.map(faculty => (
               <option key={faculty.id} value={faculty.id}>
                 {faculty.name}
@@ -205,7 +205,7 @@ const ClassroomEdit = ({ token }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="department">Department</label>
+          <label htmlFor="department">Bölüm</label>
           <select
             id="department"
             name="department"
@@ -214,7 +214,7 @@ const ClassroomEdit = ({ token }) => {
             required
             disabled={!formData.faculty}
           >
-            <option value="">Select a department</option>
+            <option value="">Bölüm seçin</option>
             {departments.map(department => (
               <option key={department.id} value={department.id}>
                 {department.name}
@@ -225,10 +225,10 @@ const ClassroomEdit = ({ token }) => {
 
         <div className="form-actions">
           <button type="button" onClick={() => navigate('/classrooms')} className="btn-cancel">
-            Cancel
+            İptal
           </button>
           <button type="submit" className="btn-submit" disabled={loading}>
-            {loading ? 'Updating...' : 'Update Classroom'}
+            {loading ? 'Güncelleniyor...' : 'Derslik Güncelle'}
           </button>
         </div>
       </form>

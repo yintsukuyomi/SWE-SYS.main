@@ -15,7 +15,7 @@ const Sidebar = ({ user }) => {
     <div className="sidebar">
       <div className="sidebar-header">
         <h3>SWE-SYS</h3>
-        <p>{user?.role || 'User'}</p>
+        <p>{user?.role === "admin" ? 'Yönetici' : 'Kullanıcı'}</p>
       </div>
       
       <nav className="sidebar-nav">
@@ -23,44 +23,44 @@ const Sidebar = ({ user }) => {
           <li className={isActive('/') ? 'active' : ''}>
             <Link to="/">
               <span className="icon">🏠</span>
-              <span className="label">Dashboard</span>
+              <span className="label">Ana Sayfa</span>
             </Link>
           </li>
           <li className={isActive('/faculties') ? 'active' : ''}>
             <Link to="/faculties">
               <span className="icon">🏛️</span>
-              <span className="label">Faculties & Programs</span>
+              <span className="label">Fakülteler & Programlar</span>
             </Link>
           </li>
           <li className={isActive('/teachers') ? 'active' : ''}>
             <Link to="/teachers">
               <span className="icon">👥</span>
-              <span className="label">Teachers</span>
+              <span className="label">Öğretmenler</span>
             </Link>
           </li>
           <li className={isActive('/courses') ? 'active' : ''}>
             <Link to="/courses">
               <span className="icon">📚</span>
-              <span className="label">Courses</span>
+              <span className="label">Dersler</span>
             </Link>
           </li>
           <li className={isActive('/classrooms') ? 'active' : ''}>
             <Link to="/classrooms">
               <span className="icon">🏫</span>
-              <span className="label">Classrooms</span>
+              <span className="label">Derslikler</span>
             </Link>
           </li>
           <li className={isActive('/schedules') ? 'active' : ''}>
             <Link to="/schedules">
               <span className="icon">📅</span>
-              <span className="label">Schedules</span>
+              <span className="label">Ders Programı</span>
             </Link>
           </li>
           {isAdmin && (
             <li className={isActive('/scheduler') ? 'active' : ''}>
               <Link to="/scheduler">
                 <span className="icon">⚙️</span>
-                <span className="label">Scheduler</span>
+                <span className="label">Program Oluşturucu</span>
               </Link>
             </li>
           )}
@@ -70,7 +70,7 @@ const Sidebar = ({ user }) => {
       <div className="sidebar-footer">
         <Link to="/settings">
           <span className="icon">⚙️</span>
-          <span className="label">Settings</span>
+          <span className="label">Ayarlar</span>
         </Link>
       </div>
     </div>

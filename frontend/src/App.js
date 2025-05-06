@@ -74,13 +74,13 @@ const App = () => {
   // Yetkilendirmeli Route bileşeni
   const PrivateRoute = ({ children }) => {
     if (loading) {
-      return <div className="loading-container">Loading...</div>;
+      return <div className="loading-container">Yükleniyor...</div>;
     }
     return token ? children : <Navigate to="/login" />;
   };
 
   if (loading && token) {
-    return <div className="loading-container">Loading...</div>;
+    return <div className="loading-container">Yükleniyor...</div>;
   }
 
   return (
@@ -175,7 +175,7 @@ const App = () => {
               <Route path="/schedules" element={<PrivateRoute><ScheduleList token={token} user={user} /></PrivateRoute>} />
               
               {/* 404 Page */}
-              <Route path="*" element={<div className="not-found">Page not found</div>} />
+              <Route path="*" element={<div className="not-found">Sayfa bulunamadı</div>} />
             </Routes>
           </div>
         </div>

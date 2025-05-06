@@ -5,13 +5,13 @@ import { getCourses, getSchedules } from '../api';
 import '../styles/ProgramList.css';
 
 const LEVELS = [
-  { id: 'prep', name: 'Preparatory Year', icon: '🔍' },
-  { id: 'year1', name: 'Year 1', icon: '1️⃣' },
-  { id: 'year2', name: 'Year 2', icon: '2️⃣' },
-  { id: 'year3', name: 'Year 3', icon: '3️⃣' },
-  { id: 'year4', name: 'Year 4', icon: '4️⃣' },
-  { id: 'graduate', name: 'Graduate', icon: '🎓' },
-  { id: 'phd', name: 'PhD', icon: '🔬' }
+  { id: 'prep', name: 'Hazırlık Sınıfı', icon: '🔍' },
+  { id: 'year1', name: '1. Sınıf', icon: '1️⃣' },
+  { id: 'year2', name: '2. Sınıf', icon: '2️⃣' },
+  { id: 'year3', name: '3. Sınıf', icon: '3️⃣' },
+  { id: 'year4', name: '4. Sınıf', icon: '4️⃣' },
+  { id: 'graduate', name: 'Yüksek Lisans', icon: '🎓' },
+  { id: 'phd', name: 'Doktora', icon: '🔬' }
 ];
 
 // Map string level values to IDs
@@ -153,7 +153,7 @@ const ProgramList = ({ token }) => {
     return 3;                      // 3 saatlik veya daha uzun dersler
   };
   
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  const days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
   
   // Haftalık programa göre dersleri düzenle
   const organizeScheduleByLevel = () => {
@@ -201,30 +201,36 @@ const ProgramList = ({ token }) => {
   
   const scheduleByLevel = organizeScheduleByLevel();
 
+  if (loading) {
+    return <div className="loading">Programlar yükleniyor...</div>;
+  } else if (error) {
+    return <div className="error-message">{error}</div>;
+  }
+
   return (
     <div className="program-list-container">
       <div className="program-header">
         <div className="navigation-breadcrumb">
-          <Link to="/faculties" className="breadcrumb-link">Faculties</Link> &gt; 
+          <Link to="/faculties" className="breadcrumb-link">Fakülteler</Link> &gt; 
           <Link to={`/faculties/${facultyId}`} className="breadcrumb-link">{faculty.name}</Link> &gt; 
           <span className="current-page">{department.name}</span>
         </div>
         
         <h1>{department.name}</h1>
-        <p className="program-subtitle">Programs and courses organized by academic year</p>
+        <p className="program-subtitle">Akademik yıla göre programlar ve dersler</p>
         
         <div className="view-toggle">
           <button 
             className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} 
             onClick={() => setViewMode('list')}
           >
-            List View
+            Liste Görünümü
           </button>
           <button 
             className={`view-btn ${viewMode === 'schedule' ? 'active' : ''}`} 
             onClick={() => setViewMode('schedule')}
           >
-            Schedule View
+            Program Görünümü
           </button>
         </div>
       </div>

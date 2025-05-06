@@ -849,3 +849,21 @@
 }
 
 /* ...existing code... */
+
+.status-badge.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.status-badge.clickable:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.status-badge.active.clickable:hover {
+  background-color: #2f8132;
+}
+
+.status-badge.inactive.clickable:hover {
+  background-color: #b53737;
+}

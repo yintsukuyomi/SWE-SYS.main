@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getTeachers, deleteTeacher } from "../api";
 import "../styles/TeacherList.css";
+import "../styles/SearchStyles.css";
 import { FACULTIES } from '../constants/facultiesAndDepartments';
 
 const TeacherList = ({ token, user }) => {
@@ -11,12 +12,13 @@ const TeacherList = ({ token, user }) => {
   const [deleteConfirm, setDeleteConfirm] = useState({
     show: false,
     teacherId: null,
-    teacherName: ''
+    teacherName: '',
   });
   const [groupedTeachers, setGroupedTeachers] = useState({});
   const [facultyList, setFacultyList] = useState([]);
   const [selectedFaculty, setSelectedFaculty] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchTeachers();
@@ -26,29 +28,23 @@ const TeacherList = ({ token, user }) => {
     try {
       const data = await getTeachers(token);
       setTeachers(data);
-
       // Fakülte ve bölümlere göre gruplayarak organize edelim
       const grouped = {};
       const faculties = new Set();
-
       data.forEach(teacher => {
         // Fakülteyi kaydedelim
         faculties.add(teacher.faculty);
-
         // Fakülte bazında grupla
         if (!grouped[teacher.faculty]) {
           grouped[teacher.faculty] = {};
         }
-
         // Bölüm bazında grupla
         if (!grouped[teacher.faculty][teacher.department]) {
           grouped[teacher.faculty][teacher.department] = [];
         }
-
         // Öğretmeni ilgili fakülte ve bölüme ekle
         grouped[teacher.faculty][teacher.department].push(teacher);
       });
-
       setGroupedTeachers(grouped);
       setFacultyList([...faculties].sort());
       setLoading(false);
@@ -71,7 +67,7 @@ const TeacherList = ({ token, user }) => {
     setDeleteConfirm({
       show: false,
       teacherId: null,
-      teacherName: ''
+      teacherName: '',
     });
   };
 
@@ -81,7 +77,7 @@ const TeacherList = ({ token, user }) => {
       setDeleteConfirm({
         show: false,
         teacherId: null,
-        teacherName: ''
+        teacherName: '',
       });
       // Öğretmen listesini yeniden yükle
       fetchTeachers();
@@ -116,51 +112,98 @@ const TeacherList = ({ token, user }) => {
     setSelectedDepartment(null);
   };
 
+  // Öğretmenleri arama fonksiyonu
+  const filteredTeachers = (teacherList) => {
+    if (!searchTerm) return teacherList;
+    return teacherList.filter(teacher => 
+      teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      teacher.working_days.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  // Fakülteleri arama fonksiyonu
+  const filteredFaculties = () => {
+    if (!searchTerm) return facultyList;
+    return facultyList.filter(faculty => 
+      faculty.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  // Bölümleri arama fonksiyonu
+  const filteredDepartments = (departments) => {
+    if (!searchTerm) return departments;
+    return departments.filter(department => 
+      department.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
   // Fakülteler sayfası
   const renderFacultiesPage = () => {
     return (
       <div className="faculties-page">
-        <h1 className="page-title">Faculties and Departments</h1>
-        <p className="page-description">Browse teachers by faculty and department</p>
+        <h1 className="page-title">Fakülteler ve Bölümler</h1>
+        <p className="page-description">Öğretmenleri fakülte ve bölüme göre inceleyin</p>
         
-        <div className="faculty-cards">
-          {facultyList.map(faculty => {
-            // Her fakültedeki toplam öğretmen sayısını hesapla
-            let totalTeachers = 0;
-            let departmentCount = 0;
-            
-            if (groupedTeachers[faculty]) {
-              departmentCount = Object.keys(groupedTeachers[faculty]).length;
-              
-              Object.values(groupedTeachers[faculty]).forEach(teachers => {
-                totalTeachers += teachers.length;
-              });
-            }
-            
-            return (
-              <div 
-                className="faculty-card-item" 
-                key={faculty}
-                onClick={() => handleFacultySelect(faculty)}
-              >
-                <div className="faculty-card-header">
-                  <h2>{faculty}</h2>
-                </div>
-                <div className="faculty-card-body">
-                  <div className="faculty-stats">
-                    <div className="stat">
-                      <span className="stat-number">{departmentCount}</span>
-                      <span className="stat-label">Departments</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-number">{totalTeachers}</span>
-                      <span className="stat-label">Teachers</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="search-container with-search-icon">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Fakülte ara..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+          {searchTerm && (
+            <button 
+              className="clear-search-btn" 
+              onClick={() => setSearchTerm('')}
+              title="Aramayı Temizle"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        
+        <div className="faculty-list">
+          <table className="list-table">
+            <thead>
+              <tr>
+                <th>Fakülte Adı</th>
+                <th>Bölüm Sayısı</th>
+                <th>Öğretmen Sayısı</th>
+                <th>İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredFaculties().map(faculty => {
+                // Her fakültedeki toplam öğretmen ve bölüm sayısını hesapla
+                let totalTeachers = 0;
+                let departmentCount = 0;
+                if (groupedTeachers[faculty]) {
+                  departmentCount = Object.keys(groupedTeachers[faculty]).length;
+                  Object.values(groupedTeachers[faculty]).forEach(teachers => {
+                    totalTeachers += teachers.length;
+                  });
+                }
+                return (
+                  <tr key={faculty}>
+                    <td>{faculty}</td>
+                    <td>{departmentCount}</td>
+                    <td>{totalTeachers}</td>
+                    <td>
+                      <button 
+                        className="view-details-btn"
+                        onClick={() => handleFacultySelect(faculty)}
+                      >
+                        Detayları Gör
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
     );
@@ -169,7 +212,7 @@ const TeacherList = ({ token, user }) => {
   // Bölümler sayfası
   const renderDepartmentsPage = () => {
     if (!selectedFaculty || !groupedTeachers[selectedFaculty]) {
-      return <div>No departments found</div>;
+      return <div>Bölüm bulunamadı</div>;
     }
     
     const departments = Object.keys(groupedTeachers[selectedFaculty]);
@@ -178,60 +221,85 @@ const TeacherList = ({ token, user }) => {
       <div className="departments-page">
         <div className="page-navigation">
           <button className="back-button" onClick={handleBackToFaculties}>
-            ← Back to Faculties
+            ← Fakültelere Dön
           </button>
         </div>
         
         <h1 className="page-title">{selectedFaculty}</h1>
-        <p className="page-description">Departments and their teachers</p>
+        <p className="page-description">Bölümler ve öğretmenleri</p>
         
-        <div className="department-cards">
-          {departments.map(department => {
-            const teachers = groupedTeachers[selectedFaculty][department];
-            
-            return (
-              <div 
-                className="department-card-item" 
-                key={department}
-                onClick={() => handleDepartmentSelect(department)}
-              >
-                <div className="department-card-header">
-                  <h2>{department}</h2>
-                </div>
-                <div className="department-card-body">
-                  <div className="department-stats">
-                    <div className="stat">
-                      <span className="stat-number">{teachers.length}</span>
-                      <span className="stat-label">Teachers</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="search-container with-search-icon">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Bölüm ara..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+          {searchTerm && (
+            <button 
+              className="clear-search-btn" 
+              onClick={() => setSearchTerm('')}
+              title="Aramayı Temizle"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        
+        <div className="department-list">
+          <table className="list-table">
+            <thead>
+              <tr>
+                <th>Bölüm Adı</th>
+                <th>Öğretmen Sayısı</th>
+                <th>İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredDepartments(departments).map(department => {
+                const teachers = groupedTeachers[selectedFaculty][department];
+                return (
+                  <tr key={department}>
+                    <td>{department}</td>
+                    <td>{teachers.length}</td>
+                    <td>
+                      <button 
+                        className="view-details-btn"
+                        onClick={() => handleDepartmentSelect(department)}
+                      >
+                        Detayları Gör
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
     );
   };
-
+  
   // Öğretmenler sayfası
   const renderTeachersPage = () => {
     if (!selectedFaculty || !selectedDepartment || 
         !groupedTeachers[selectedFaculty] || 
         !groupedTeachers[selectedFaculty][selectedDepartment]) {
-      return <div>No teachers found</div>;
+      return <div>Öğretmen bulunamadı</div>;
     }
     
-    const teachers = groupedTeachers[selectedFaculty][selectedDepartment];
+    const departmentTeachers = groupedTeachers[selectedFaculty][selectedDepartment];
     
     return (
       <div className="teachers-page">
         <div className="page-navigation">
           <button className="back-button" onClick={handleBackToFaculties}>
-            ← Back to Faculties
+            ← Fakültelere Dön
           </button>
           <button className="back-button" onClick={handleBackToDepartments}>
-            ← Back to Departments
+            ← Bölümlere Dön
           </button>
         </div>
         
@@ -243,47 +311,64 @@ const TeacherList = ({ token, user }) => {
           
           {isAdmin && (
             <Link to="/teachers/new" className="add-button">
-              <span className="btn-icon">+</span> Add New Teacher
+              <span className="btn-icon">+</span> Yeni Öğretmen Ekle
             </Link>
           )}
         </div>
         
-        <div className="teacher-cards">
-          {teachers.map(teacher => (
-            <div className="teacher-card-item" key={teacher.id}>
-              <div className="teacher-card-header">
-                <h3>{teacher.name}</h3>
-              </div>
-              <div className="teacher-card-body">
-                <div className="teacher-info">
-                  <div className="info-row">
-                    <span className="info-label">Email:</span>
-                    <span className="info-value">{teacher.email}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Working Days:</span>
-                    <span className="info-value">{teacher.working_days}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Working Hours:</span>
-                    <span className="info-value">{teacher.working_hours}</span>
-                  </div>
-                </div>
-                
-                {isAdmin && (
-                  <div className="teacher-actions">
-                    <Link to={`/teachers/edit/${teacher.id}`} className="btn-edit">Edit</Link>
-                    <button 
-                      className="btn-delete" 
-                      onClick={() => handleDeleteClick(teacher.id, teacher.name)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+        <div className="search-container with-search-icon">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Öğretmen ara..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+          {searchTerm && (
+            <button 
+              className="clear-search-btn" 
+              onClick={() => setSearchTerm('')}
+              title="Aramayı Temizle"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        
+        <div className="teacher-list">
+          <table className="list-table">
+            <thead>
+              <tr>
+                <th>İsim</th>
+                <th>Email</th>
+                <th>Çalışma Günleri</th>
+                <th>Çalışma Saatleri</th>
+                {isAdmin && <th>İşlemler</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredTeachers(departmentTeachers).map(teacher => (
+                <tr key={teacher.id}>
+                  <td>{teacher.name}</td>
+                  <td>{teacher.email}</td>
+                  <td>{teacher.working_days}</td>
+                  <td>{teacher.working_hours}</td>
+                  {isAdmin && (
+                    <td className="action-buttons">
+                      <Link to={`/teachers/edit/${teacher.id}`} className="btn-edit">Düzenle</Link>
+                      <button 
+                        className="btn-delete" 
+                        onClick={() => handleDeleteClick(teacher.id, teacher.name)}
+                      >
+                        Sil
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     );
@@ -292,7 +377,7 @@ const TeacherList = ({ token, user }) => {
   // Hangi sayfayı göstereceğimize karar ver
   const renderContent = () => {
     if (loading) {
-      return <div className="loading">Loading teachers...</div>;
+      return <div className="loading">Öğretmenler yükleniyor...</div>;
     }
     
     if (error) {
@@ -302,11 +387,11 @@ const TeacherList = ({ token, user }) => {
     if (teachers.length === 0) {
       return (
         <div className="empty-state">
-          <div className="no-data-message">No teachers found.</div>
+          <div className="no-data-message">Hiç öğretmen bulunamadı.</div>
           {isAdmin && (
             <div className="empty-state-action">
               <Link to="/teachers/new" className="add-button">
-                <span className="btn-icon">+</span> Add New Teacher
+                <span className="btn-icon">+</span> Yeni Öğretmen Ekle
               </Link>
             </div>
           )}
@@ -331,21 +416,20 @@ const TeacherList = ({ token, user }) => {
         <div className="modal-backdrop">
           <div className="delete-confirmation-modal">
             <div className="modal-header">
-              <h3>Delete Confirmation</h3>
+              <h3>Silme Onayı</h3>
               <button className="close-button" onClick={cancelDelete}>&times;</button>
             </div>
             <div className="modal-body">
-              <p>Are you sure you want to delete <strong>{deleteConfirm.teacherName}</strong>?</p>
-              <p className="warning-text">This action cannot be undone.</p>
+              <p><strong>{deleteConfirm.teacherName}</strong> adlı öğretmeni silmek istediğinizden emin misiniz?</p>
+              <p className="warning-text">Bu işlem geri alınamaz.</p>
             </div>
             <div className="modal-footer">
-              <button onClick={cancelDelete} className="btn-cancel">Cancel</button>
-              <button onClick={confirmDelete} className="btn-delete">Delete</button>
+              <button onClick={cancelDelete} className="btn-cancel">İptal</button>
+              <button onClick={confirmDelete} className="btn-delete">Sil</button>
             </div>
           </div>
         </div>
       )}
-      
       {renderContent()}
     </div>
   );

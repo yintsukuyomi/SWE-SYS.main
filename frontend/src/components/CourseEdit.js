@@ -92,7 +92,7 @@ const CourseEdit = ({ token }) => {
         setLoading(false);
       } catch (err) {
         console.error('Error fetching data:', err);
-        setError('Failed to load course data. Please try again.');
+        setError('Ders bilgileri yüklenemedi. Lütfen tekrar deneyin.');
         setLoading(false);
       }
     };
@@ -160,21 +160,21 @@ const CourseEdit = ({ token }) => {
       navigate('/courses');
     } catch (err) {
       console.error('Error updating course:', err);
-      setError(err.detail || 'Failed to update course. Please try again.');
+      setError(err.detail || 'Ders güncellenirken bir hata oluştu. Lütfen tekrar deneyin.');
       setLoading(false);
     }
   };
 
-  if (loading) return <div className="loading">Loading course data...</div>;
+  if (loading) return <div className="loading">Ders bilgileri yükleniyor...</div>;
 
   return (
     <div className="course-form-container">
-      <h2>Edit Course</h2>
+      <h2>Ders Düzenle</h2>
       {error && <div className="error-message">{error}</div>}
       
       <form onSubmit={handleSubmit} className="course-form">
         <div className="form-group">
-          <label htmlFor="name">Course Name</label>
+          <label htmlFor="name">Ders Adı</label>
           <input
             type="text"
             id="name"
@@ -182,12 +182,12 @@ const CourseEdit = ({ token }) => {
             value={formData.name}
             onChange={handleChange}
             required
-            placeholder="Enter course name"
+            placeholder="Ders adını girin"
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="code">Course Code</label>
+          <label htmlFor="code">Ders Kodu</label>
           <input
             type="text"
             id="code"
@@ -195,12 +195,12 @@ const CourseEdit = ({ token }) => {
             value={formData.code}
             onChange={handleChange}
             required
-            placeholder="E.g., CS101"
+            placeholder="Örn: CS101"
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="teacher_id">Teacher</label>
+          <label htmlFor="teacher_id">Öğretmen</label>
           <select
             id="teacher_id"
             name="teacher_id"
@@ -208,7 +208,7 @@ const CourseEdit = ({ token }) => {
             onChange={handleChange}
             required
           >
-            <option value="">Select a teacher</option>
+            <option value="">Öğretmen seçin</option>
             {teachers.map(teacher => (
               <option key={teacher.id} value={teacher.id}>
                 {teacher.name}
@@ -218,7 +218,7 @@ const CourseEdit = ({ token }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="faculty">Faculty</label>
+          <label htmlFor="faculty">Fakülte</label>
           <select
             id="faculty"
             name="faculty"
@@ -226,7 +226,7 @@ const CourseEdit = ({ token }) => {
             onChange={handleChange}
             required
           >
-            <option value="">Select a faculty</option>
+            <option value="">Fakülte seçin</option>
             {FACULTIES.map(faculty => (
               <option key={faculty.id} value={faculty.id}>
                 {faculty.name}
@@ -236,7 +236,7 @@ const CourseEdit = ({ token }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="department">Department</label>
+          <label htmlFor="department">Bölüm</label>
           <select
             id="department"
             name="department"
@@ -245,7 +245,7 @@ const CourseEdit = ({ token }) => {
             required
             disabled={!formData.faculty}
           >
-            <option value="">Select a department</option>
+            <option value="">Bölüm seçin</option>
             {departments.map(department => (
               <option key={department.id} value={department.id}>
                 {department.name}
@@ -255,66 +255,66 @@ const CourseEdit = ({ token }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="level">Level</label>
+          <label htmlFor="level">Seviye</label>
           <select
             id="level"
             name="level"
             value={formData.level}
             onChange={handleChange}
           >
-            <option value="Preparatory Year">Preparatory Year</option>
-            <option value="Year 1">Year 1</option>
-            <option value="Year 2">Year 2</option>
-            <option value="Year 3">Year 3</option>
-            <option value="Year 4">Year 4</option>
-            <option value="Graduate">Graduate</option>
-            <option value="PhD">PhD</option>
+            <option value="Preparatory Year">Hazırlık</option>
+            <option value="Year 1">1. Sınıf</option>
+            <option value="Year 2">2. Sınıf</option>
+            <option value="Year 3">3. Sınıf</option>
+            <option value="Year 4">4. Sınıf</option>
+            <option value="Graduate">Yüksek Lisans</option>
+            <option value="PhD">Doktora</option>
           </select>
         </div>
 
         <div className="form-group">
-          <label htmlFor="type">Type</label>
+          <label htmlFor="type">Tür</label>
           <select
             id="type"
             name="type"
             value={formData.type}
             onChange={handleChange}
           >
-            <option value="Core">Core</option>
-            <option value="Elective">Elective</option>
-            <option value="Lab">Lab</option>
+            <option value="Core">Zorunlu</option>
+            <option value="Elective">Seçmeli</option>
+            <option value="Lab">Laboratuvar</option>
           </select>
         </div>
 
         <div className="form-group">
-          <label htmlFor="category">Category</label>
+          <label htmlFor="category">Kategori</label>
           <input
             type="text"
             id="category"
             name="category"
             value={formData.category}
             onChange={handleChange}
-            placeholder="E.g., Computer Science"
+            placeholder="Örn: Bilgisayar Bilimleri"
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="semester">Semester</label>
+          <label htmlFor="semester">Dönem</label>
           <select
             id="semester"
             name="semester"
             value={formData.semester}
             onChange={handleChange}
           >
-            <option value="Fall">Fall</option>
-            <option value="Spring">Spring</option>
-            <option value="Summer">Summer</option>
-            <option value="Winter">Winter</option>
+            <option value="Fall">Güz</option>
+            <option value="Spring">Bahar</option>
+            <option value="Summer">Yaz</option>
+            <option value="Winter">Kış</option>
           </select>
         </div>
 
         <div className="form-group">
-          <label htmlFor="ects">ECTS Credits</label>
+          <label htmlFor="ects">AKTS Kredisi</label>
           <input
             type="number"
             id="ects"
@@ -328,7 +328,7 @@ const CourseEdit = ({ token }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="total_hours">Total Hours (Weekly)</label>
+          <label htmlFor="total_hours">Toplam Saat (Haftalık)</label>
           <input
             type="number"
             id="total_hours"
@@ -342,7 +342,7 @@ const CourseEdit = ({ token }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="student_count">Student Count</label>
+          <label htmlFor="student_count">Öğrenci Sayısı</label>
           <input
             type="number"
             id="student_count"
@@ -363,15 +363,15 @@ const CourseEdit = ({ token }) => {
             checked={formData.is_active}
             onChange={handleChange}
           />
-          <label htmlFor="is_active">Active Course</label>
+          <label htmlFor="is_active">Aktif Ders</label>
         </div>
 
         <div className="form-actions">
           <button type="button" onClick={() => navigate('/courses')} className="btn-cancel">
-            Cancel
+            İptal
           </button>
           <button type="submit" className="btn-submit" disabled={loading}>
-            {loading ? 'Updating...' : 'Update Course'}
+            {loading ? 'Güncelleniyor...' : 'Dersi Güncelle'}
           </button>
         </div>
       </form>

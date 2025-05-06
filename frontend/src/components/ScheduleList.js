@@ -19,7 +19,7 @@ const ScheduleList = ({ token, user }) => {
   const formatDateForDisplay = (dateStr) => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', options);
+    return date.toLocaleDateString('tr-TR', options);
   };
 
   // Tarihler için sıralama fonksiyonu
@@ -28,13 +28,13 @@ const ScheduleList = ({ token, user }) => {
   };
 
   const dayOrder = {
-    "Monday": 1, 
-    "Tuesday": 2, 
-    "Wednesday": 3, 
-    "Thursday": 4, 
-    "Friday": 5, 
-    "Saturday": 6, 
-    "Sunday": 7
+    "Pazartesi": 1, 
+    "Salı": 2, 
+    "Çarşamba": 3, 
+    "Perşembe": 4, 
+    "Cuma": 5, 
+    "Cumartesi": 6, 
+    "Pazar": 7
   };
 
   useEffect(() => {
@@ -198,28 +198,28 @@ const ScheduleList = ({ token, user }) => {
     );
   };
 
-  if (loading) return <div className="loading">Loading schedules...</div>;
+  if (loading) return <div className="loading">Ders programı yükleniyor...</div>;
   if (error) return <div className="error">{error}</div>;
 
   return (
     <div className="schedule-list-container">
-      <h1>Weekly Schedule</h1>
+      <h1>Haftalık Ders Programı</h1>
       
       {/* Silme onay modalı */}
       {deleteConfirm.show && (
         <div className="modal-backdrop">
           <div className="delete-confirmation-modal">
             <div className="modal-header">
-              <h3>Delete Confirmation</h3>
+              <h3>Silme Onayı</h3>
               <button className="close-button" onClick={cancelDelete}>&times;</button>
             </div>
             <div className="modal-body">
-              <p>Are you sure you want to delete <strong>ALL schedules</strong> for <strong>{deleteConfirm.dayName}</strong>?</p>
-              <p className="warning-text">This action cannot be undone and will remove all classes scheduled on this day.</p>
+              <p><strong>{deleteConfirm.dayName}</strong> günündeki <strong>TÜM dersleri</strong> silmek istediğinize emin misiniz?</p>
+              <p className="warning-text">Bu işlem geri alınamaz ve bu güne ait tüm programlanmış dersleri kaldıracaktır.</p>
             </div>
             <div className="modal-footer">
-              <button onClick={cancelDelete} className="btn-cancel">Cancel</button>
-              <button onClick={confirmDelete} className="btn-delete">Delete All</button>
+              <button onClick={cancelDelete} className="btn-cancel">İptal</button>
+              <button onClick={confirmDelete} className="btn-delete">Tümünü Sil</button>
             </div>
           </div>
         </div>
@@ -227,7 +227,7 @@ const ScheduleList = ({ token, user }) => {
       
       {schedules.length === 0 ? (
         <div className="no-schedules">
-          <p>No schedules found. Please use the Scheduler to generate a schedule.</p>
+          <p>Ders programı bulunamadı. Lütfen program oluşturmak için Program Oluşturucu kullanın.</p>
         </div>
       ) : (
         <div className="schedule-by-day">

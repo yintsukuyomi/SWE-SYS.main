@@ -17,6 +17,7 @@ const ClassroomList = ({ token, user }) => {
   const [facultyList, setFacultyList] = useState([]);
   const [selectedFaculty, setSelectedFaculty] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchClassrooms();
@@ -116,59 +117,109 @@ const ClassroomList = ({ token, user }) => {
     setSelectedDepartment(null);
   };
 
+  // Derslikleri arama fonksiyonu
+  const filteredClassrooms = (classroomList) => {
+    if (!searchTerm) return classroomList;
+    
+    return classroomList.filter(classroom => 
+      classroom.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      classroom.type.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  // Fakülteleri arama fonksiyonu
+  const filteredFaculties = () => {
+    if (!searchTerm) return facultyList;
+    
+    return facultyList.filter(faculty => 
+      faculty.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  // Bölümleri arama fonksiyonu
+  const filteredDepartments = (departments) => {
+    if (!searchTerm) return departments;
+    
+    return departments.filter(department => 
+      department.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
   // Fakülteler sayfası
   const renderFacultiesPage = () => {
     return (
       <div className="faculties-page">
-        <h1 className="page-title">Faculties and Buildings</h1>
-        <p className="page-description">Browse classrooms by faculty and department</p>
+        <h1 className="page-title">Fakülteler ve Binalar</h1>
+        <p className="page-description">Derslikleri fakülte ve bölüme göre inceleyin</p>
         
-        <div className="faculty-cards">
-          {facultyList.map(faculty => {
-            // Her fakültedeki toplam sınıf sayısını ve kapasiteyi hesapla
-            let totalClassrooms = 0;
-            let totalCapacity = 0;
-            let departmentCount = 0;
-            
-            if (groupedClassrooms[faculty]) {
-              departmentCount = Object.keys(groupedClassrooms[faculty]).length;
-              
-              Object.values(groupedClassrooms[faculty]).forEach(classrooms => {
-                totalClassrooms += classrooms.length;
-                classrooms.forEach(classroom => {
-                  totalCapacity += classroom.capacity || 0;
-                });
-              });
-            }
-            
-            return (
-              <div 
-                className="faculty-card-item" 
-                key={faculty}
-                onClick={() => handleFacultySelect(faculty)}
-              >
-                <div className="faculty-card-header">
-                  <h2>{faculty}</h2>
-                </div>
-                <div className="faculty-card-body">
-                  <div className="faculty-stats">
-                    <div className="stat">
-                      <span className="stat-number">{departmentCount}</span>
-                      <span className="stat-label">Departments</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-number">{totalClassrooms}</span>
-                      <span className="stat-label">Classrooms</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-number">{totalCapacity}</span>
-                      <span className="stat-label">Total Capacity</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="search-container with-search-icon">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Fakülte ara..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+          {searchTerm && (
+            <button 
+              className="clear-search-btn" 
+              onClick={() => setSearchTerm('')}
+              title="Aramayı Temizle"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        
+        <div className="faculty-list">
+          <table className="list-table">
+            <thead>
+              <tr>
+                <th>Fakülte Adı</th>
+                <th>Bölüm Sayısı</th>
+                <th>Derslik Sayısı</th>
+                <th>Toplam Kapasite</th>
+                <th>İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredFaculties().map(faculty => {
+                // Her fakültedeki toplam sınıf sayısını ve kapasiteyi hesapla
+                let totalClassrooms = 0;
+                let totalCapacity = 0;
+                let departmentCount = 0;
+                
+                if (groupedClassrooms[faculty]) {
+                  departmentCount = Object.keys(groupedClassrooms[faculty]).length;
+                  
+                  Object.values(groupedClassrooms[faculty]).forEach(classrooms => {
+                    totalClassrooms += classrooms.length;
+                    classrooms.forEach(classroom => {
+                      totalCapacity += classroom.capacity || 0;
+                    });
+                  });
+                }
+                
+                return (
+                  <tr key={faculty}>
+                    <td>{faculty}</td>
+                    <td>{departmentCount}</td>
+                    <td>{totalClassrooms}</td>
+                    <td>{totalCapacity}</td>
+                    <td>
+                      <button 
+                        className="view-details-btn"
+                        onClick={() => handleFacultySelect(faculty)}
+                      >
+                        Detayları Gör
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
     );
@@ -177,7 +228,7 @@ const ClassroomList = ({ token, user }) => {
   // Bölümler sayfası
   const renderDepartmentsPage = () => {
     if (!selectedFaculty || !groupedClassrooms[selectedFaculty]) {
-      return <div>No departments found</div>;
+      return <div>Bölüm bulunamadı</div>;
     }
     
     const departments = Object.keys(groupedClassrooms[selectedFaculty]);
@@ -186,46 +237,70 @@ const ClassroomList = ({ token, user }) => {
       <div className="departments-page">
         <div className="page-navigation">
           <button className="back-button" onClick={handleBackToFaculties}>
-            ← Back to Faculties
+            ← Fakültelere Dön
           </button>
         </div>
         
         <h1 className="page-title">{selectedFaculty}</h1>
-        <p className="page-description">Departments and their classrooms</p>
+        <p className="page-description">Bölümler ve derslikleri</p>
         
-        <div className="department-cards">
-          {departments.map(department => {
-            const classrooms = groupedClassrooms[selectedFaculty][department];
-            let totalCapacity = 0;
-            
-            classrooms.forEach(classroom => {
-              totalCapacity += classroom.capacity || 0;
-            });
-            
-            return (
-              <div 
-                className="department-card-item" 
-                key={department}
-                onClick={() => handleDepartmentSelect(department)}
-              >
-                <div className="department-card-header">
-                  <h2>{department}</h2>
-                </div>
-                <div className="department-card-body">
-                  <div className="department-stats">
-                    <div className="stat">
-                      <span className="stat-number">{classrooms.length}</span>
-                      <span className="stat-label">Classrooms</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-number">{totalCapacity}</span>
-                      <span className="stat-label">Total Capacity</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="search-container with-search-icon">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Bölüm ara..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+          {searchTerm && (
+            <button 
+              className="clear-search-btn" 
+              onClick={() => setSearchTerm('')}
+              title="Aramayı Temizle"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        
+        <div className="department-list">
+          <table className="list-table">
+            <thead>
+              <tr>
+                <th>Bölüm Adı</th>
+                <th>Derslik Sayısı</th>
+                <th>Toplam Kapasite</th>
+                <th>İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredDepartments(departments).map(department => {
+                const classrooms = groupedClassrooms[selectedFaculty][department];
+                let totalCapacity = 0;
+                
+                classrooms.forEach(classroom => {
+                  totalCapacity += classroom.capacity || 0;
+                });
+                
+                return (
+                  <tr key={department}>
+                    <td>{department}</td>
+                    <td>{classrooms.length}</td>
+                    <td>{totalCapacity}</td>
+                    <td>
+                      <button 
+                        className="view-details-btn"
+                        onClick={() => handleDepartmentSelect(department)}
+                      >
+                        Detayları Gör
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
     );
@@ -236,7 +311,7 @@ const ClassroomList = ({ token, user }) => {
     if (!selectedFaculty || !selectedDepartment || 
         !groupedClassrooms[selectedFaculty] || 
         !groupedClassrooms[selectedFaculty][selectedDepartment]) {
-      return <div>No classrooms found</div>;
+      return <div>Derslik bulunamadı</div>;
     }
     
     const classrooms = groupedClassrooms[selectedFaculty][selectedDepartment];
@@ -245,10 +320,10 @@ const ClassroomList = ({ token, user }) => {
       <div className="classrooms-page">
         <div className="page-navigation">
           <button className="back-button" onClick={handleBackToFaculties}>
-            ← Back to Faculties
+            ← Fakültelere Dön
           </button>
           <button className="back-button" onClick={handleBackToDepartments}>
-            ← Back to Departments
+            ← Bölümlere Dön
           </button>
         </div>
         
@@ -260,47 +335,62 @@ const ClassroomList = ({ token, user }) => {
           
           {isAdmin && (
             <Link to="/classrooms/new" className="add-button">
-              <span className="btn-icon">+</span> Add New Classroom
+              <span className="btn-icon">+</span> Yeni Derslik Ekle
             </Link>
           )}
         </div>
         
-        <div className="classroom-cards">
-          {classrooms.map(classroom => (
-            <div className="classroom-card-item" key={classroom.id}>
-              <div className="classroom-card-header">
-                <div className="classroom-type">{classroom.type}</div>
-                <h3>{classroom.name}</h3>
-              </div>
-              <div className="classroom-card-body">
-                <div className="classroom-info">
-                  <div className="capacity-indicator">
-                    <div className="capacity-value">{classroom.capacity}</div>
-                    <div className="capacity-label">Capacity</div>
-                  </div>
-                  
-                  <div className="classroom-details">
-                    <div className="info-row">
-                      <span className="info-label">Type:</span>
-                      <span className="info-value">{classroom.type}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                {isAdmin && (
-                  <div className="classroom-actions">
-                    <Link to={`/classrooms/edit/${classroom.id}`} className="btn-edit">Edit</Link>
-                    <button 
-                      className="btn-delete" 
-                      onClick={() => handleDeleteClick(classroom.id, classroom.name)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+        <div className="search-container with-search-icon">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Derslik ara..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+          {searchTerm && (
+            <button 
+              className="clear-search-btn" 
+              onClick={() => setSearchTerm('')}
+              title="Aramayı Temizle"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        
+        <div className="classroom-list">
+          <table className="list-table">
+            <thead>
+              <tr>
+                <th>Derslik Adı</th>
+                <th>Tür</th>
+                <th>Kapasite</th>
+                {isAdmin && <th>İşlemler</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredClassrooms(classrooms).map(classroom => (
+                <tr key={classroom.id}>
+                  <td>{classroom.name}</td>
+                  <td>{classroom.type}</td>
+                  <td>{classroom.capacity}</td>
+                  {isAdmin && (
+                    <td className="action-buttons">
+                      <Link to={`/classrooms/edit/${classroom.id}`} className="btn-edit">Düzenle</Link>
+                      <button 
+                        className="btn-delete" 
+                        onClick={() => handleDeleteClick(classroom.id, classroom.name)}
+                      >
+                        Sil
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     );
@@ -309,7 +399,7 @@ const ClassroomList = ({ token, user }) => {
   // Hangi sayfayı göstereceğimize karar ver
   const renderContent = () => {
     if (loading) {
-      return <div className="loading">Loading classrooms...</div>;
+      return <div className="loading">Derslikler yükleniyor...</div>;
     }
     
     if (error) {
@@ -319,11 +409,11 @@ const ClassroomList = ({ token, user }) => {
     if (classrooms.length === 0) {
       return (
         <div className="empty-state">
-          <div className="no-data-message">No classrooms found.</div>
+          <div className="no-data-message">Hiç derslik bulunamadı.</div>
           {isAdmin && (
             <div className="empty-state-action">
               <Link to="/classrooms/new" className="add-button">
-                <span className="btn-icon">+</span> Add New Classroom
+                <span className="btn-icon">+</span> Yeni Derslik Ekle
               </Link>
             </div>
           )}
@@ -348,16 +438,16 @@ const ClassroomList = ({ token, user }) => {
         <div className="modal-backdrop">
           <div className="delete-confirmation-modal">
             <div className="modal-header">
-              <h3>Delete Confirmation</h3>
+              <h3>Silme Onayı</h3>
               <button className="close-button" onClick={cancelDelete}>&times;</button>
             </div>
             <div className="modal-body">
-              <p>Are you sure you want to delete <strong>{deleteConfirm.classroomName}</strong>?</p>
-              <p className="warning-text">This action cannot be undone.</p>
+              <p><strong>{deleteConfirm.classroomName}</strong> adlı dersliği silmek istediğinizden emin misiniz?</p>
+              <p className="warning-text">Bu işlem geri alınamaz.</p>
             </div>
             <div className="modal-footer">
-              <button onClick={cancelDelete} className="btn-cancel">Cancel</button>
-              <button onClick={confirmDelete} className="btn-delete">Delete</button>
+              <button onClick={cancelDelete} className="btn-cancel">İptal</button>
+              <button onClick={confirmDelete} className="btn-delete">Sil</button>
             </div>
           </div>
         </div>

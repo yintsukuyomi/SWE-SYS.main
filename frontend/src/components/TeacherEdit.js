@@ -108,7 +108,7 @@ const TeacherEdit = ({ token }) => {
         setLoading(false);
       } catch (error) {
         console.error('Error fetching teacher:', error);
-        setError('Failed to load teacher data. Please try again.');
+        setError('Öğretmen bilgileri yüklenemedi. Lütfen tekrar deneyin.');
         setLoading(false);
       }
     };
@@ -185,7 +185,7 @@ const TeacherEdit = ({ token }) => {
       navigate('/teachers');
     } catch (err) {
       console.error('Error updating teacher:', err);
-      setError(err.detail || 'Failed to update teacher. Please try again.');
+      setError(err.detail || 'Öğretmen güncellenirken bir hata oluştu. Lütfen tekrar deneyin.');
     }
   };
   
@@ -197,16 +197,16 @@ const TeacherEdit = ({ token }) => {
     friday: 'Cuma'
   };
 
-  if (loading) return <div className="loading">Loading teacher data...</div>;
+  if (loading) return <div className="loading">Öğretmen bilgileri yükleniyor...</div>;
 
   return (
     <div className="teacher-form-container">
-      <h2>Edit Teacher</h2>
+      <h2>Öğretmen Düzenle</h2>
       {error && <div className="error-message">{error}</div>}
       
       <form onSubmit={handleSubmit} className="teacher-form">
         <div className="form-group">
-          <label htmlFor="name">Full Name</label>
+          <label htmlFor="name">Ad Soyad</label>
           <input
             type="text"
             id="name"
@@ -214,12 +214,12 @@ const TeacherEdit = ({ token }) => {
             value={formData.name}
             onChange={handleChange}
             required
-            placeholder="Enter teacher's full name"
+            placeholder="Öğretmenin tam adını girin"
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="email">Email Address</label>
+          <label htmlFor="email">E-posta Adresi</label>
           <input
             type="email"
             id="email"
@@ -227,12 +227,12 @@ const TeacherEdit = ({ token }) => {
             value={formData.email}
             onChange={handleChange}
             required
-            placeholder="Enter teacher's email address"
+            placeholder="Öğretmenin e-posta adresini girin"
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="faculty">Faculty</label>
+          <label htmlFor="faculty">Fakülte</label>
           <select
             id="faculty"
             name="faculty"
@@ -240,7 +240,7 @@ const TeacherEdit = ({ token }) => {
             onChange={handleChange}
             required
           >
-            <option value="">Select a faculty</option>
+            <option value="">Fakülte seçin</option>
             {FACULTIES.map(faculty => (
               <option key={faculty.id} value={faculty.id}>
                 {faculty.name}
@@ -250,7 +250,7 @@ const TeacherEdit = ({ token }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="department">Department</label>
+          <label htmlFor="department">Bölüm</label>
           <select
             id="department"
             name="department"
@@ -259,7 +259,7 @@ const TeacherEdit = ({ token }) => {
             required
             disabled={!formData.faculty}
           >
-            <option value="">Select a department</option>
+            <option value="">Bölüm seçin</option>
             {departments.map(department => (
               <option key={department.id} value={department.id}>
                 {department.name}
@@ -269,7 +269,7 @@ const TeacherEdit = ({ token }) => {
         </div>
 
         <div className="form-group days-selection">
-          <label>Working Days</label>
+          <label>Çalışma Günleri</label>
           <div className="checkbox-group">
             {Object.keys(selectedDays).map(day => (
               <div key={day} className="checkbox-item">
@@ -287,10 +287,10 @@ const TeacherEdit = ({ token }) => {
         </div>
 
         <div className="form-group hours-selection">
-          <label>Working Hours</label>
+          <label>Çalışma Saatleri</label>
           <div className="hours-inputs">
             <div className="time-input">
-              <label htmlFor="start">Start:</label>
+              <label htmlFor="start">Başlangıç:</label>
               <input
                 type="time"
                 id="start"
@@ -301,7 +301,7 @@ const TeacherEdit = ({ token }) => {
               />
             </div>
             <div className="time-input">
-              <label htmlFor="end">End:</label>
+              <label htmlFor="end">Bitiş:</label>
               <input
                 type="time"
                 id="end"
@@ -316,10 +316,10 @@ const TeacherEdit = ({ token }) => {
 
         <div className="form-actions">
           <button type="button" onClick={() => navigate('/teachers')} className="btn-cancel">
-            Cancel
+            İptal
           </button>
           <button type="submit" className="btn-submit">
-            Update Teacher
+            Öğretmen Güncelle
           </button>
         </div>
       </form>

@@ -77,20 +77,20 @@ const Scheduler = ({ token }) => {
       }
     } catch (err) {
       console.error('Error generating schedule:', err);
-      setError(err.detail || 'Failed to generate schedule. Please try again.');
+      setError(err.detail || 'Program oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setGenerating(false);
     }
   };
   
   const dayOrder = {
-    "Monday": 1, 
-    "Tuesday": 2, 
-    "Wednesday": 3, 
-    "Thursday": 4, 
-    "Friday": 5, 
-    "Saturday": 6, 
-    "Sunday": 7
+    "Pazartesi": 1, 
+    "Salı": 2, 
+    "Çarşamba": 3, 
+    "Perşembe": 4, 
+    "Cuma": 5, 
+    "Cumartesi": 6, 
+    "Pazar": 7
   };
   
   const getCapacityStatusClass = (capacityRatio) => {
@@ -103,10 +103,10 @@ const Scheduler = ({ token }) => {
   return (
     <div className="scheduler-container">
       <div className="scheduler-header">
-        <h1>Automatic Scheduler</h1>
+        <h1>Otomatik Program Oluşturucu</h1>
         <p className="scheduler-description">
-          This tool automatically generates an optimized schedule for all courses based on teacher availability, 
-          classroom suitability, and course requirements.
+          Bu araç, öğretmen uygunluğu, derslik uygunluğu ve ders gereksinimleri temelinde 
+          tüm dersler için otomatik olarak optimize edilmiş bir program oluşturur.
         </p>
       </div>
       
@@ -116,18 +116,18 @@ const Scheduler = ({ token }) => {
         <div className="scheduler-status">
           {status && (
             <>
-              <h3>Current Schedule Status</h3>
+              <h3>Mevcut Program Durumu</h3>
               <div className="status-details">
                 <div className="status-item">
-                  <span className="status-label">Active Courses:</span>
+                  <span className="status-label">Aktif Dersler:</span>
                   <span className="status-value">{status.total_active_courses}</span>
                 </div>
                 <div className="status-item">
-                  <span className="status-label">Scheduled:</span>
+                  <span className="status-label">Programlananlar:</span>
                   <span className="status-value">{status.scheduled_courses}</span>
                 </div>
                 <div className="status-item">
-                  <span className="status-label">Completion:</span>
+                  <span className="status-label">Tamamlanma:</span>
                   <span className="status-value">{status.completion_percentage}%</span>
                 </div>
               </div>
@@ -141,49 +141,49 @@ const Scheduler = ({ token }) => {
             disabled={generating}
             className="generate-btn"
           >
-            {generating ? 'Generating...' : 'Generate New Schedule'}
+            {generating ? 'Oluşturuluyor...' : 'Yeni Program Oluştur'}
           </button>
-          <p className="warning-text">Warning: This will replace the current schedule!</p>
+          <p className="warning-text">Uyarı: Bu işlem mevcut programın yerini alacaktır!</p>
         </div>
       </div>
       
       {result && (
         <div className="scheduler-result">
-          <h3>Generation Results</h3>
+          <h3>Oluşturma Sonuçları</h3>
           <div className="result-summary">
             <div className="result-item">
-              <span className="result-label">Successfully Scheduled:</span>
-              <span className="result-value">{result.scheduled_count} courses</span>
+              <span className="result-label">Başarıyla Programlanan:</span>
+              <span className="result-value">{result.scheduled_count} ders</span>
             </div>
             <div className="result-item">
-              <span className="result-label">Failed to Schedule:</span>
-              <span className="result-value">{result.unscheduled_count} courses</span>
+              <span className="result-label">Programlanamayan:</span>
+              <span className="result-value">{result.unscheduled_count} ders</span>
             </div>
             <div className="result-item">
-              <span className="result-label">Success Rate:</span>
+              <span className="result-label">Başarı Oranı:</span>
               <span className="result-value">{result.success_rate}%</span>
             </div>
           </div>
           
           {result.unscheduled_count > 0 && (
             <div className="unscheduled-list">
-              <h4>Courses that could not be scheduled:</h4>
+              <h4>Programlanamayan dersler:</h4>
               <div className="scheduler-tip">
-                <strong>Tip:</strong> For 2-hour courses that cannot be scheduled, try:
+                <strong>İpucu:</strong> 2 saatlik programlanamayan dersler için:
                 <ol>
-                  <li>Checking if teacher availability matches class hours</li>
-                  <li>Temporarily changing course hours to 1.5 or 3</li>
-                  <li>Setting up manual schedules for these courses</li>
+                  <li>Öğretmen müsaitlik zamanlarının ders saatleri ile uyumlu olup olmadığını kontrol edin</li>
+                  <li>Geçici olarak ders saatlerini 1.5 veya 3'e değiştirmeyi deneyin</li>
+                  <li>Bu dersler için manuel program oluşturun</li>
                 </ol>
               </div>
               <table>
                 <thead>
                   <tr>
-                    <th>Course</th>
-                    <th>Code</th>
-                    <th>Hours</th>
-                    <th>Students</th>
-                    <th>Reason</th>
+                    <th>Ders</th>
+                    <th>Kod</th>
+                    <th>Saat</th>
+                    <th>Öğrenci</th>
+                    <th>Sebep</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -204,9 +204,9 @@ const Scheduler = ({ token }) => {
       )}
       
       <div className="current-schedule">
-        <h3>Current Schedule</h3>
+        <h3>Mevcut Program</h3>
         {schedules.length === 0 ? (
-          <p className="no-schedule">No schedule has been generated yet.</p>
+          <p className="no-schedule">Henüz oluşturulmuş bir program yok.</p>
         ) : (
           <div className="schedule-by-day">
             {sortedDays.map(day => (

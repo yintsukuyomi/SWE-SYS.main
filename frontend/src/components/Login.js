@@ -26,7 +26,7 @@ const Login = ({ onLogin }) => {
       onLogin(data.access_token);
     } catch (err) {
       console.error("Login error:", err);
-      setError(err.detail || "Invalid username or password");
+      setError(err.detail || "Geçersiz kullanıcı adı veya şifre");
     } finally {
       setIsLoading(false);
     }
@@ -38,29 +38,29 @@ const Login = ({ onLogin }) => {
         <div className="login-header">
           {/* Logo yerine metin logosu kullanılıyor */}
           <div className="text-logo">SWE-SYS</div>
-          <h2>SWE-SYS Login</h2>
+          <h2>SWE-SYS Giriş</h2>
           <p className="login-subtitle">Eğitim Yönetiminde Yeni Nesil Otomasyon</p>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Username</label>
+            <label>Kullanıcı Adı</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
               autoFocus
-              placeholder="Enter your username"
+              placeholder="Kullanıcı adınızı girin"
             />
           </div>
           <div className="form-group">
-            <label>Password</label>
+            <label>Şifre</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              placeholder="Enter your password"
+              placeholder="Şifrenizi girin"
             />
           </div>
           {error && <div className="error-message">{error}</div>}
@@ -68,19 +68,19 @@ const Login = ({ onLogin }) => {
             {isLoading ? (
               <span className="loading-spinner"></span>
             ) : (
-              "Login"
+              "Giriş Yap"
             )}
           </button>
         </form>
         <div className="login-info">
-          <p>Demo Credentials:</p>
+          <p>Demo Kullanıcıları:</p>
           <div className="demo-credentials">
             <div className="credential">
-              <span>Admin:</span>
+              <span>Yönetici:</span>
               <code>admin / admin123</code>
             </div>
             <div className="credential">
-              <span>Teacher:</span>
+              <span>Öğretmen:</span>
               <code>teacher / teacher123</code>
             </div>
           </div>

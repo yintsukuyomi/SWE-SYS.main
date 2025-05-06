@@ -1,0 +1,94 @@
+/* Gelişmiş arama kutusu stilleri */
+.search-container {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 40px 12px 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 15px;
+  transition: all 0.3s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  background-color: var(--input-bg, #ffffff);
+  color: var(--text-color, #333);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color, #3498db);
+  box-shadow: 0 2px 10px rgba(52, 152, 219, 0.15);
+}
+
+.search-input::placeholder {
+  color: #aaa;
+  transition: opacity 0.3s;
+}
+
+.search-input:focus::placeholder {
+  opacity: 0.7;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.clear-search-btn:hover {
+  color: #666;
+  background-color: #f5f5f5;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #aaa;
+  font-size: 16px;
+}
+
+/* Hem arama ikonu hem de silme butonu olduğu durum için */
+.with-search-icon .search-input {
+  padding-left: 40px;
+}
+
+/* Karanlık mod desteği */
+[data-theme="dark"] .search-input {
+  background-color: var(--input-bg-dark, #2d3436);
+  color: var(--text-color-dark, #f0f0f0);
+  border-color: var(--border-color-dark, #444);
+}
+
+[data-theme="dark"] .search-input:focus {
+  border-color: var(--primary-color, #3498db);
+  box-shadow: 0 2px 10px rgba(52, 152, 219, 0.2);
+}
+
+[data-theme="dark"] .clear-search-btn:hover {
+  background-color: #3d3d3d;
+  color: #bbb;
+}
+
+/* Mobil görünüm için düzenlemeler */
+@media (max-width: 768px) {
+  .search-container {
+    max-width: 100%;
+  }
+}

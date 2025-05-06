@@ -68,7 +68,7 @@ const ClassroomForm = ({ token }) => {
       navigate('/classrooms');
     } catch (err) {
       console.error('Error creating classroom:', err);
-      setError(err.detail || 'Failed to create classroom. Please try again.');
+      setError(err.detail || 'Derslik oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
     }
@@ -76,12 +76,12 @@ const ClassroomForm = ({ token }) => {
 
   return (
     <div className="classroom-form-container">
-      <h2>Add New Classroom</h2>
+      <h2>Yeni Derslik Ekle</h2>
       {error && <div className="error-message">{error}</div>}
       
       <form onSubmit={handleSubmit} className="classroom-form">
         <div className="form-group">
-          <label htmlFor="name">Classroom Name/Number</label>
+          <label htmlFor="name">Derslik Adı/Numarası</label>
           <input
             type="text"
             id="name"
@@ -89,12 +89,12 @@ const ClassroomForm = ({ token }) => {
             value={formData.name}
             onChange={handleChange}
             required
-            placeholder="E.g., A101, Lab 3, etc."
+            placeholder="Örn: A101, Lab 3, vb."
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="capacity">Capacity</label>
+          <label htmlFor="capacity">Kapasite</label>
           <input
             type="number"
             id="capacity"
@@ -108,7 +108,7 @@ const ClassroomForm = ({ token }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="type">Type</label>
+          <label htmlFor="type">Tür</label>
           <select
             id="type"
             name="type"
@@ -116,13 +116,13 @@ const ClassroomForm = ({ token }) => {
             onChange={handleChange}
             required
           >
-            <option value="Lecture Hall">Lecture Hall</option>
-            <option value="Laboratory">Laboratory</option>
-            <option value="Seminar Room">Seminar Room</option>
-            <option value="Computer Lab">Computer Lab</option>
-            <option value="Conference Room">Conference Room</option>
-            <option value="Studio">Studio</option>
-            <option value="Auditorium">Auditorium</option>
+            <option value="Lecture Hall">Amfi</option>
+            <option value="Laboratory">Laboratuvar</option>
+            <option value="Seminar Room">Seminer Salonu</option>
+            <option value="Computer Lab">Bilgisayar Laboratuvarı</option>
+            <option value="Conference Room">Konferans Salonu</option>
+            <option value="Studio">Stüdyo</option>
+            <option value="Auditorium">Oditoryum</option>
           </select>
         </div>
 
@@ -165,10 +165,10 @@ const ClassroomForm = ({ token }) => {
 
         <div className="form-actions">
           <button type="button" onClick={() => navigate('/classrooms')} className="btn-cancel">
-            Cancel
+            İptal
           </button>
           <button type="submit" className="btn-submit" disabled={loading}>
-            {loading ? 'Adding...' : 'Add Classroom'}
+            {loading ? 'Ekleniyor...' : 'Derslik Ekle'}
           </button>
         </div>
       </form>

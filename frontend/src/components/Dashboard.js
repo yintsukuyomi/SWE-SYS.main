@@ -51,8 +51,8 @@ const Dashboard = ({ token }) => {
 
   return (
     <div className="dashboard">
-      <h1>Welcome to SWE-SYS</h1>
-      <p className="dashboard-subtitle">Education Management Automation System</p>
+      <h1>SWE-SYS'e Hoş Geldiniz</h1>
+      <p className="dashboard-subtitle">Eğitim Yönetimi Otomasyon Sistemi</p>
       
       {error && <div className="error-message">{error}</div>}
       
@@ -60,90 +60,90 @@ const Dashboard = ({ token }) => {
         <div className="stat-card">
           <div className="stat-icon">👥</div>
           <div className="stat-number">{loading ? '...' : stats.teacherCount}</div>
-          <div className="stat-label">Teachers</div>
+          <div className="stat-label">Öğretmen</div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">📚</div>
           <div className="stat-number">{loading ? '...' : stats.courseCount}</div>
-          <div className="stat-label">Courses</div>
+          <div className="stat-label">Ders</div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">🏫</div>
           <div className="stat-number">{loading ? '...' : stats.classroomCount}</div>
-          <div className="stat-label">Classrooms</div>
+          <div className="stat-label">Derslik</div>
         </div>
         <div className="stat-card">
           <div className="stat-icon">📅</div>
           <div className="stat-number">{loading ? '...' : stats.scheduleCount}</div>
-          <div className="stat-label">Scheduled Classes</div>
+          <div className="stat-label">Planlanan Dersler</div>
         </div>
       </div>
 
-      <h2>Quick Access</h2>
+      <h2>Hızlı Erişim</h2>
       <div className="dashboard-grid">
         <div className="dashboard-card">
-          <h3>👥 Teachers</h3>
-          <p>Manage teacher information and availability</p>
+          <h3>👥 Öğretmenler</h3>
+          <p>Öğretmen bilgilerini ve uygunluk durumlarını yönetin</p>
           <div className="card-actions">
-            <Link to="/teachers" className="card-btn primary">View Teachers</Link>
-            <Link to="/teachers/new" className="card-btn secondary">Add New</Link>
+            <Link to="/teachers" className="card-btn primary">Öğretmenleri Görüntüle</Link>
+            <Link to="/teachers/new" className="card-btn secondary">Yeni Ekle</Link>
           </div>
         </div>
         <div className="dashboard-card">
-          <h3>📚 Courses</h3>
-          <p>Browse and manage course offerings</p>
+          <h3>📚 Dersler</h3>
+          <p>Ders kayıtlarını inceleyin ve yönetin</p>
           <div className="card-actions">
-            <Link to="/courses" className="card-btn primary">View Courses</Link>
-            <Link to="/courses/new" className="card-btn secondary">Add New</Link>
+            <Link to="/courses" className="card-btn primary">Dersleri Görüntüle</Link>
+            <Link to="/courses/new" className="card-btn secondary">Yeni Ekle</Link>
           </div>
         </div>
         <div className="dashboard-card">
-          <h3>🏫 Classrooms</h3>
-          <p>View and manage classroom resources</p>
+          <h3>🏫 Derslikler</h3>
+          <p>Derslik kaynaklarını görüntüleyin ve yönetin</p>
           <div className="card-actions">
-            <Link to="/classrooms" className="card-btn primary">View Classrooms</Link>
-            <Link to="/classrooms/new" className="card-btn secondary">Add New</Link>
+            <Link to="/classrooms" className="card-btn primary">Derslikleri Görüntüle</Link>
+            <Link to="/classrooms/new" className="card-btn secondary">Yeni Ekle</Link>
           </div>
         </div>
         <div className="dashboard-card">
-          <h3>📅 Schedules</h3>
-          <p>View and manage class schedules</p>
+          <h3>📅 Ders Programları</h3>
+          <p>Ders programlarını görüntüleyin ve yönetin</p>
           <div className="card-actions">
-            <Link to="/schedules" className="card-btn primary">View Schedules</Link>
-            <Link to="/scheduler" className="card-btn secondary">Scheduler</Link>
+            <Link to="/schedules" className="card-btn primary">Programları Görüntüle</Link>
+            <Link to="/scheduler" className="card-btn secondary">Program Oluşturucu</Link>
           </div>
         </div>
         <div className="dashboard-card">
-          <h3>🏛️ Faculties & Programs</h3>
-          <p>Browse faculties, departments and academic programs</p>
+          <h3>🏛️ Fakülteler & Programlar</h3>
+          <p>Fakülteleri, bölümleri ve akademik programları inceleyin</p>
           <div className="card-actions">
-            <Link to="/faculties" className="card-btn primary">View Faculties</Link>
+            <Link to="/faculties" className="card-btn primary">Fakülteleri Görüntüle</Link>
           </div>
         </div>
       </div>
       
       <div className="recent-activity">
-        <h2>Recent Activity</h2>
+        <h2>Son Aktiviteler</h2>
         <div className="activity-list">
           <div className="activity-item">
             <div className="activity-icon update">🔄</div>
             <div className="activity-content">
-              <p>Schedule for <strong>CSE101</strong> was updated</p>
-              <span className="activity-time">2 hours ago</span>
+              <p><strong>CSE101</strong> dersinin programı güncellendi</p>
+              <span className="activity-time">2 saat önce</span>
             </div>
           </div>
           <div className="activity-item">
             <div className="activity-icon add">➕</div>
             <div className="activity-content">
-              <p>New course <strong>Introduction to AI</strong> was added</p>
-              <span className="activity-time">Yesterday</span>
+              <p><strong>Yapay Zekaya Giriş</strong> dersi eklendi</p>
+              <span className="activity-time">Dün</span>
             </div>
           </div>
           <div className="activity-item">
             <div className="activity-icon notification">🔔</div>
             <div className="activity-content">
-              <p>System maintenance scheduled for next weekend</p>
-              <span className="activity-time">3 days ago</span>
+              <p>Gelecek hafta sonu sistem bakımı planlandı</p>
+              <span className="activity-time">3 gün önce</span>
             </div>
           </div>
         </div>

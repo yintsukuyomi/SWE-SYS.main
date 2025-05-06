@@ -6,11 +6,11 @@ const AccessDenied = () => {
   return (
     <div className="access-denied-container">
       <div className="access-denied-content">
-        <div className="access-denied-icon">🔒</div>
-        <h1>Access Denied</h1>
-        <p>You do not have permission to access this page.</p>
-        <p>Please contact an administrator if you believe this is an error.</p>
-        <Link to="/" className="back-link">Back to Dashboard</Link>
+        <div className="access-denied-icon">🚫</div>
+        <h1>Erişim Reddedildi</h1>
+        <p>Bu sayfayı görüntülemek için yeterli yetkiye sahip değilsiniz.</p>
+        <p>Lütfen yönetici ile iletişime geçin veya ana sayfaya dönün.</p>
+        <Link to="/" className="home-button">Ana Sayfaya Dön</Link>
       </div>
     </div>
   );

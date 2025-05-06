@@ -1,0 +1,107 @@
+/* Liste görünümü ve kart görünümü arası geçiş için stil */
+.view-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.view-btn {
+  padding: 8px 12px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-left: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.view-btn.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.view-icon {
+  margin-right: 5px;
+  font-size: 16px;
+}
+
+/* Liste tablosu stilleri */
+.list-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 30px;
+  background-color: var(--card-background);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.list-table th {
+  background-color: var(--table-header-bg);
+  color: var(--table-header-text);
+  padding: 12px 15px;
+  text-align: left;
+  font-weight: 600;
+}
+
+.list-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.list-table tr:last-child td {
+  border-bottom: none;
+}
+
+.list-table tr:nth-child(even) {
+  background-color: var(--table-row-even);
+}
+
+.list-table tr:hover {
+  background-color: var(--table-row-hover);
+}
+
+.view-details-btn {
+  padding: 6px 12px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.view-details-btn:hover {
+  background-color: var(--primary-dark);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.course-code-cell {
+  font-family: monospace;
+  font-weight: 500;
+}
+
+/* Dark mode için uyarlama */
+[data-theme="dark"] .view-btn {
+  background-color: #333;
+  border-color: #444;
+  color: #ddd;
+}
+
+[data-theme="dark"] .view-btn.active {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}

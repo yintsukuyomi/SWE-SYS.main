@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { FACULTIES, getDepartmentsByFaculty } from '../constants/facultiesAndDepartments';
 import '../styles/DepartmentList.css';
@@ -7,6 +7,7 @@ const DepartmentList = () => {
   const { facultyId } = useParams();
   const faculty = FACULTIES.find(f => f.id === facultyId);
   const departments = getDepartmentsByFaculty(facultyId);
+  const [searchTerm, setSearchTerm] = useState('');
 
   if (!faculty) {
     return (
@@ -19,10 +20,33 @@ const DepartmentList = () => {
 
   return (
     <div className="department-list-container">
-      <div className="department-header">
-        <Link to="/faculties" className="back-link">← Back to Faculties</Link>
-        <h1>{faculty.name}</h1>
-        <p className="department-subtitle">Select a department to view its programs</p>
+      <div className="page-navigation">
+        <Link to="/faculties" className="back-link">
+          ← Fakültelere Dön
+        </Link>
+      </div>
+      
+      <h1>{faculty.name}</h1>
+      <p className="subtitle">Bölümler ve programları</p>
+      
+      <div className="search-container with-search-icon">
+        <span className="search-icon">🔍</span>
+        <input
+          type="text"
+          placeholder="Bölüm ara..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
+        {searchTerm && (
+          <button 
+            className="clear-search-btn" 
+            onClick={() => setSearchTerm('')}
+            title="Aramayı Temizle"
+          >
+            ×
+          </button>
+        )}
       </div>
       
       <div className="department-grid">
