@@ -1,0 +1,294 @@
+.schedule-list-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.schedule-list-container h1 {
+  margin-bottom: 20px;
+  color: var(--text-color);
+  font-size: 24px;
+}
+
+.schedule-by-day {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.day-schedule {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.day-schedule h2 {
+  margin-bottom: 15px;
+  color: var(--primary-color);
+  font-size: 20px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.day-header h2 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 20px;
+}
+
+.delete-day-btn {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.delete-day-btn:hover {
+  background-color: #c0392b;
+}
+
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.schedule-table th {
+  background-color: var(--primary-color);
+  color: white;
+  text-align: left;
+  padding: 12px 15px;
+}
+
+.schedule-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.schedule-table tr:last-child td {
+  border-bottom: none;
+}
+
+.schedule-table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.schedule-table tr:hover {
+  background-color: #e9ecef;
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #7f8c8d;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 40px;
+  color: var(--primary-color);
+}
+
+.error {
+  color: #e74c3c;
+}
+
+.no-schedules {
+  text-align: center;
+  padding: 30px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.no-schedules p {
+  margin-bottom: 20px;
+  color: #666;
+}
+
+/* Capacity status styling */
+.capacity-good {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.capacity-medium {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.capacity-high {
+  background-color: #fff3cd;
+  color: #856404;
+  font-weight: 500;
+}
+
+.capacity-critical {
+  background-color: #f8d7da;
+  color: #721c24;
+  font-weight: bold;
+}
+
+.capacity-warning {
+  margin-left: 5px;
+  color: #e74c3c;
+}
+
+.time-cell {
+  font-weight: 500;
+  color: #444;
+  text-align: center;
+  background-color: #f8f9fa;
+  white-space: nowrap;
+}
+
+.time-display {
+  font-weight: 500;
+}
+
+.time-duration {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  font-weight: normal;
+}
+
+.long-course {
+  background-color: rgba(52, 152, 219, 0.05);
+}
+
+.course-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.course-title {
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+/* Kurs kodu stili - belirgin arkaplan rengi ile */
+.course-code {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+  display: inline-block;
+  margin-top: 3px;
+  width: fit-content;  /* İçeriğe göre genişlik alması için */
+}
+
+/* Modal Styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.delete-confirmation-modal {
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  animation: modal-appear 0.3s ease-out;
+}
+
+@keyframes modal-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--text-color);
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #777;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.warning-text {
+  color: #e74c3c;
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 15px 20px;
+  border-top: 1px solid var(--border-color);
+  gap: 10px;
+}
+
+.btn-cancel {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #dee2e6;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.actions-cell {
+  width: 80px;
+}
+
+.btn-delete {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-delete:hover {
+  background-color: #c0392b;
+}

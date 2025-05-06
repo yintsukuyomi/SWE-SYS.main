@@ -1,0 +1,354 @@
+.program-list-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.program-header {
+  margin-bottom: 30px;
+}
+
+.navigation-breadcrumb {
+  margin-bottom: 15px;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.breadcrumb-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  margin: 0 5px;
+}
+
+.breadcrumb-link:first-child {
+  margin-left: 0;
+}
+
+.breadcrumb-link:hover {
+  text-decoration: underline;
+}
+
+.current-page {
+  color: #6c757d;
+  margin-left: 5px;
+}
+
+.program-list-container h1 {
+  margin-bottom: 10px;
+  color: var(--text-color);
+  font-size: 28px;
+}
+
+.program-subtitle {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.level-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.level-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border-color);
+  color: var(--text-color);
+  font-size: 20px;
+}
+
+.level-icon {
+  margin-right: 10px;
+  font-size: 24px;
+}
+
+.program-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.program-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.program-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.program-code {
+  display: inline-block;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.program-name {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
+.program-details {
+  margin-bottom: 15px;
+}
+
+.program-detail {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px dashed #eee;
+}
+
+.detail-label {
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.detail-value {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.program-link {
+  display: inline-block;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.program-link:hover {
+  text-decoration: underline;
+}
+
+.no-programs {
+  text-align: center;
+  padding: 40px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  color: #6c757d;
+}
+
+.add-course-link {
+  display: inline-block;
+  margin-top: 15px;
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.add-course-link:hover {
+  background-color: #2980b9;
+  text-decoration: none;
+}
+
+.program-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.program-table th {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 12px 15px;
+  text-align: left;
+  font-weight: 500;
+}
+
+.program-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.program-table tr:last-child td {
+  border-bottom: none;
+}
+
+.program-table tr:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.course-code {
+  font-family: monospace;
+  font-weight: 500;
+  color: var(--primary-color);
+  background-color: var(--primary-color);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.view-course-btn {
+  display: inline-block;
+  padding: 6px 10px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 4px;
+  font-size: 13px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.view-course-btn:hover {
+  background-color: #2980b9;
+  text-decoration: none;
+}
+
+.active-course {
+  background-color: rgba(46, 204, 113, 0.05);
+}
+
+.inactive-course {
+  background-color: rgba(231, 76, 60, 0.05);
+  color: #777;
+}
+
+.view-toggle {
+  display: flex;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: var(--background-color);
+  border: 1px solid var(--border-color);
+  width: fit-content;
+}
+
+.view-btn {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+  transition: all 0.2s ease;
+}
+
+.view-btn.active {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.view-btn:hover:not(.active) {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Weekly schedule styles */
+.weekly-schedule {
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.schedule-table {
+  width: 100%;
+  min-width: 800px;
+  border-collapse: collapse;
+  background-color: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.schedule-table th, 
+.schedule-table td {
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  vertical-align: top;
+}
+
+.day-header {
+  text-align: center;
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 500;
+  padding: 12px;
+}
+
+.time-header {
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 500;
+  width: 120px;
+}
+
+.time-cell {
+  font-weight: 500;
+  color: #444;
+  text-align: center;
+  background-color: #f8f9fa;
+}
+
+.schedule-cell {
+  height: 100px;
+  width: calc((100% - 120px) / 5);
+  transition: background-color 0.2s;
+}
+
+.schedule-cell.has-class {
+  background-color: rgba(52, 152, 219, 0.08);
+}
+
+.schedule-item {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-item .course-code {
+  font-weight: bold;
+  color: var(--primary-color);
+  margin-bottom: 4px;
+  font-family: monospace;
+}
+
+.schedule-item .course-name {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.schedule-item .room-info {
+  font-size: 11px;
+  background-color: #f8f9fa;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: #666;
+  margin-top: auto;
+}
+
+.no-schedule {
+  padding: 20px;
+  text-align: center;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  margin-top: 10px;
+  color: #666;
+}

@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session, joinedload
 from database import SessionLocal
-from models import Schedule
+from models import Schedule, Course, Classroom
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -21,7 +21,16 @@ class ScheduleCreate(BaseModel):
 
 @router.get("/")
 def get_schedules(db: Session = Depends(get_db)):
-    return db.query(Schedule).all()
+    """
+    Get all schedules with course and classroom information
+    """
+    # Using joinedload to eagerly load the related course and classroom data
+    schedules = db.query(Schedule).options(
+        joinedload(Schedule.course),
+        joinedload(Schedule.classroom)
+    ).all()
+    
+    return schedules
 
 @router.post("/")
 def create_schedule(schedule: ScheduleCreate, db: Session = Depends(get_db)):
@@ -59,3 +68,20 @@ def update_schedule(schedule_id: int, schedule: ScheduleCreate, db: Session = De
     db.commit()
     db.refresh(existing_schedule)
     return existing_schedule
+
+@router.delete("/day/{day}")
+def delete_schedules_by_day(day: str, db: Session = Depends(get_db)):
+    """
+    Delete all schedules for a specific day
+    """
+    schedules = db.query(Schedule).filter(Schedule.day == day).all()
+    if not schedules:
+        raise HTTPException(status_code=404, detail=f"No schedules found for {day}")
+    
+    count = 0
+    for schedule in schedules:
+        db.delete(schedule)
+        count += 1
+    
+    db.commit()
+    return {"message": f"Successfully deleted {count} schedules for {day}"}
