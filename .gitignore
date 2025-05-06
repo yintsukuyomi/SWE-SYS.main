@@ -1,0 +1,117 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.env
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# SQLite veritabanı dosyaları
+*.sqlite3
+*.db
+*.db-journal
+data/
+
+# Backend log dosyaları
+*.log
+app.log
+
+# Node.js
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.js
+
+# Frontend derleme çıktıları
+frontend/coverage/
+frontend/build/
+frontend/.DS_Store
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Editor dizinleri ve dosyaları
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# OS dosyaları
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Ortam değişkenleri
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDE meta dosyaları
+.vscode/
+.idea/
+
+# pycache klasörleri (daha spesifik)
+*/__pycache__/
+backend/__pycache__/
+backend/*/__pycache__/
+backend/*/*/__pycache__/
+
+# Statik dosya klasörü (gerekirse)
+static/
+
+# Media dosyaları (gerekirse)
+media/
+
+# Geçici dosyalar
+.temp
+.tmp
+.temp/
+tmp/
+
+# Package dosyaları
+package-lock.json
+yarn.lock
