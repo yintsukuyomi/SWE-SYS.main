@@ -38,6 +38,6 @@
 
 # Scheduler
 
-- [ ]  Ders programı oluşturma ekranında döneme göre ders, derslik hoca dönem seçilebilir olmalı.**
+- [ ]  Ders programı oluşturma ekranında _döneme_ göre ders, derslik hoca dönem seçilebilir olmalı.**
 - [ ]  Ders programı oluşturma fonksiyonu bölüm bazlı olacak şekilde küçültülerek sistem yükü azaltılmalı.**
 - [ ]  Algoritma yeni değişikliklere göre yeniden düzenlenmeli.*********
