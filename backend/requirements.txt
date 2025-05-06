@@ -1,4 +1,8 @@
 fastapi
 uvicorn
 sqlalchemy
-sqlite3
+pydantic
+passlib
+python-jose[cryptography]
+python-dotenv
+bcrypt

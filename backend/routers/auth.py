@@ -5,6 +5,10 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
 import os
+from dotenv import load_dotenv
+
+# Ortam değişkenlerini yükle
+load_dotenv()
 
 router = APIRouter()
 
@@ -12,7 +16,16 @@ router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+
+# Değişkenler için varsayılan değerler belirleme ve kontrol
+if not SECRET_KEY:
+    SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"  # Varsayılan anahtar
+    print("WARNING: Using default SECRET_KEY. Set this in your .env file for security.")
+
+if not ALGORITHM:
+    ALGORITHM = "HS256"  # Varsayılan algoritma
+    print("WARNING: Using default ALGORITHM. Set this in your .env file.")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
@@ -52,9 +65,19 @@ def authenticate_user(username: str, password: str):
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    
+    # Debug bilgileri
+    print(f"Encoding JWT with: SECRET_KEY length={len(SECRET_KEY)}, ALGORITHM={ALGORITHM}")
+    
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
@@ -81,9 +104,23 @@ def login(user: User):
     authenticated_user = authenticate_user(user.username, user.password)
     if not authenticated_user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Token süresi
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    # Token içeriği
+    token_data = {
+        "sub": user.username, 
+        "role": authenticated_user["role"], 
+        "permissions": authenticated_user["permissions"]
+    }
+    
+    # Token oluşturma
     access_token = create_access_token(
-        data={"sub": user.username, "role": authenticated_user["role"], "permissions": authenticated_user["permissions"]}
+        data=token_data,
+        expires_delta=access_token_expires
     )
+    
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me")

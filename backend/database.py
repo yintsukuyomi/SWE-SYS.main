@@ -1,10 +1,14 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
 import os
 
+# Ortam değişkenlerini yükle
+load_dotenv()
+
 # Veritabanı yolu
-DATABASE_URL = "sqlite:///./data/swesys.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Veritabanı klasörünü kontrol et ve oluştur
 os.makedirs(os.path.dirname(DATABASE_URL.split("///")[1]), exist_ok=True)
