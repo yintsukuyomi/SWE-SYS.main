@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Teacher
@@ -21,11 +21,11 @@ class TeacherCreate(BaseModel):
     working_days: str
     working_hours: str
 
-@router.get("/")  # "/" olarak değiştirdik, "/teachers" yerine
+@router.get("/")
 def get_teachers(db: Session = Depends(get_db)):
     return db.query(Teacher).all()
 
-@router.post("/")  # "/" olarak değiştirdik, "/teachers" yerine
+@router.post("/")
 def create_teacher(teacher: TeacherCreate, db: Session = Depends(get_db)):
     new_teacher = Teacher(
         name=teacher.name,
@@ -40,7 +40,7 @@ def create_teacher(teacher: TeacherCreate, db: Session = Depends(get_db)):
     db.refresh(new_teacher)
     return new_teacher
 
-@router.delete("/{teacher_id}")  # Sadece "/{teacher_id}" olarak değiştirdik
+@router.delete("/{teacher_id}")
 def delete_teacher(teacher_id: int, db: Session = Depends(get_db)):
     teacher = db.query(Teacher).filter(Teacher.id == teacher_id).first()
     if teacher:
@@ -49,7 +49,7 @@ def delete_teacher(teacher_id: int, db: Session = Depends(get_db)):
         return {"message": "Teacher deleted successfully"}
     return {"error": "Teacher not found"}
 
-@router.put("/{teacher_id}")  # Sadece "/{teacher_id}" olarak değiştirdik
+@router.put("/{teacher_id}")
 def update_teacher(teacher_id: int, teacher: TeacherCreate, db: Session = Depends(get_db)):
     existing_teacher = db.query(Teacher).filter(Teacher.id == teacher_id).first()
     if not existing_teacher:
@@ -65,13 +65,3 @@ def update_teacher(teacher_id: int, teacher: TeacherCreate, db: Session = Depend
     db.commit()
     db.refresh(existing_teacher)
     return existing_teacher
-
-@router.get("/{teacher_id}")  # Sadece "/{teacher_id}" olarak değiştirdik
-def get_teacher(teacher_id: int, db: Session = Depends(get_db)):
-    """
-    Get a specific teacher by ID
-    """
-    teacher = db.query(Teacher).filter(Teacher.id == teacher_id).first()
-    if not teacher:
-        raise HTTPException(status_code=404, detail="Teacher not found")
-    return teacher

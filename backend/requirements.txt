@@ -2,5 +2,3 @@ fastapi
 uvicorn
 sqlalchemy
 sqlite3
-python-jose
-passlib[bcrypt]
