@@ -181,6 +181,18 @@ export const createCourse = async (courseData, token) => {
   }
 };
 
+// Add teacher unavailable times
+export const updateTeacherUnavailableTimes = async (id, unavailableTimes, token) => {
+  try {
+    const response = await axios.put(`${API_URL}/teachers/${id}/unavailable-times`, unavailableTimes, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : error;
+  }
+};
+
 export const updateCourse = async (id, courseData, token) => {
   try {
     const response = await axios.put(`${API_URL}/courses/${id}`, courseData, {
