@@ -824,46 +824,259 @@
   }
 }
 
-/* ...existing code... */
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-}
-
-.empty-state-action {
-  margin-top: 20px;
-}
-
-.no-data-message {
-  text-align: center;
+/* ===================== Temel Yapı ve Grid ===================== */
+.courses-container {
   padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  font-size: 16px;
-  color: #6c757d;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 80vh;
+  background: var(--background-color);
 }
 
-/* ...existing code... */
+.page-title {
+  font-size: 2rem;
+  color: var(--text-color);
+  margin-bottom: 10px;
+}
 
+.page-description {
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.page-navigation {
+  display: flex;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.back-button {
+  background: var(--hover-background);
+  color: var(--text-color);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+.back-button:hover {
+  background: #e0e0e0;
+}
+
+/* ===================== Tablo ve Liste ===================== */
+.list-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-background);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px var(--shadow-color);
+  margin-bottom: 20px;
+}
+
+.list-table th, .list-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 15px;
+}
+
+.list-table th {
+  background: var(--table-header-bg);
+  color: var(--table-header-text);
+  font-weight: 500;
+}
+
+.list-table tr:last-child td {
+  border-bottom: none;
+}
+
+.list-table tr:hover {
+  background: var(--table-row-hover);
+}
+
+.course-code-cell {
+  font-family: monospace;
+  font-weight: 500;
+  color: var(--primary-color);
+}
+
+/* ===================== Butonlar ===================== */
+.add-button, .btn-edit, .btn-delete, .view-details-btn {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  text-decoration: none;
+  border: none;
+}
+
+.add-button {
+  background: var(--primary-color);
+  color: #fff;
+  padding: 10px 20px;
+  margin-left: 10px;
+}
+.add-button:hover { background: #2980b9; }
+
+.btn-edit {
+  background: var(--primary-color);
+  color: #fff;
+  padding: 6px 14px;
+}
+.btn-edit:hover { background: #2980b9; }
+
+.btn-delete {
+  background: #e74c3c;
+  color: #fff;
+  padding: 6px 14px;
+}
+.btn-delete:hover { background: #c0392b; }
+
+.view-details-btn {
+  background: var(--secondary-color);
+  color: #fff;
+  padding: 6px 14px;
+}
+.view-details-btn:hover { background: #27ae60; }
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* ===================== Durum Rozetleri ===================== */
+.status-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: default;
+  transition: all 0.2s;
+}
+.status-badge.active {
+  background: #d4edda;
+  color: #155724;
+}
+.status-badge.inactive {
+  background: #f8d7da;
+  color: #721c24;
+}
 .status-badge.clickable {
   cursor: pointer;
-  transition: all 0.2s ease;
 }
-
 .status-badge.clickable:hover {
   transform: scale(1.05);
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
+.status-badge.active.clickable:hover { background: #2f8132; }
+.status-badge.inactive.clickable:hover { background: #b53737; }
 
-.status-badge.active.clickable:hover {
-  background-color: #2f8132;
+/* ===================== Modal ===================== */
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 1000;
+}
+.delete-confirmation-modal {
+  background: var(--card-background);
+  border-radius: 8px;
+  width: 90%; max-width: 400px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  animation: modal-appear 0.3s ease-out;
+}
+@keyframes modal-appear {
+  from { opacity: 0; transform: translateY(-20px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+.modal-header, .modal-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 15px 20px;
+}
+.modal-header { border-bottom: 1px solid var(--border-color);}
+.modal-footer { border-top: 1px solid var(--border-color); gap: 10px;}
+.close-button {
+  background: none; border: none; color: #777;
+  font-size: 24px; cursor: pointer; padding: 0; line-height: 1;
+}
+.modal-body { padding: 20px; }
+.warning-text { color: #e74c3c; font-weight: 500; margin-top: 10px; }
+.btn-cancel {
+  background: var(--hover-background);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 8px 16px;
 }
 
-.status-badge.inactive.clickable:hover {
-  background-color: #b53737;
+/* ===================== Boş ve Hata Durumları ===================== */
+.empty-state, .no-data-message, .error-message, .loading {
+  text-align: center;
+  border-radius: 8px;
+  margin: 20px 0;
 }
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px;
+}
+.no-data-message {
+  background: #f8f9fa;
+  font-size: 16px;
+  color: #6c757d;
+  padding: 20px;
+}
+.error-message {
+  color: #e74c3c;
+  background: #fdecea;
+  padding: 15px;
+  font-size: 16px;
+}
+.loading {
+  color: var(--primary-color);
+  font-size: 18px;
+  padding: 50px;
+}
+
+/* ===================== Responsive ===================== */
+@media (max-width: 1024px) {
+  .courses-container { padding: 10px; }
+  .list-table th, .list-table td { padding: 8px 6px; }
+}
+@media (max-width: 768px) {
+  .list-table, .faculty-cards, .department-cards, .course-cards { grid-template-columns: 1fr; }
+  .course-header { flex-direction: column; align-items: flex-start; }
+  .add-button { margin-top: 15px; }
+  .action-buttons { flex-direction: column; align-items: stretch; }
+  .btn-edit, .btn-delete { width: 100%; text-align: center; }
+}
+
+/* ===================== Koyu Tema Desteği ===================== */
+[data-theme="dark"] .courses-container,
+[data-theme="dark"] .list-table,
+[data-theme="dark"] .delete-confirmation-modal {
+  background: var(--card-background);
+  color: var(--text-color);
+}
+[data-theme="dark"] .list-table th {
+  background: var(--table-header-bg);
+  color: var(--table-header-text);
+}
+[data-theme="dark"] .no-data-message,
+[data-theme="dark"] .empty-state {
+  background: #23272b;
+  color: #b0b0b0;
+}
+[data-theme="dark"] .error-message {
+  background: #3b2323;
+  color: #ff6b6b;
+}
+
+/* ===================== Diğer ===================== */
+.text-center { text-align: center; }
+.btn-icon { margin-right: 8px; font-size: 18px; font-weight: bold; }
+.empty-state-action { margin-top: 20px; }

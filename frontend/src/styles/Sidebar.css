@@ -1,7 +1,7 @@
 .sidebar {
   width: 250px;
   height: 100vh;
-  background-color: #fff;
+  background: #fff;
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
@@ -52,16 +52,15 @@
   padding: 12px 20px;
   color: var(--text-color);
   text-decoration: none;
-  transition: background-color 0.2s;
+  transition: background 0.2s;
 }
 
 .sidebar-nav li a:hover {
-  background-color: #f8f9fa;
-  text-decoration: none;
+  background: #f8f9fa;
 }
 
 .sidebar-nav li.active a {
-  background-color: #e9ecef;
+  background: #e9ecef;
   border-left: 3px solid var(--primary-color);
   font-weight: 500;
 }
@@ -85,11 +84,11 @@
   text-decoration: none;
   padding: 10px;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: background 0.2s;
 }
 
 .sidebar-footer a:hover {
-  background-color: #f8f9fa;
+  background: #f8f9fa;
 }
 
 @media (max-width: 768px) {
@@ -116,3 +115,4 @@
     margin-right: 0;
   }
 }
+

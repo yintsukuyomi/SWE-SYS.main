@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from dotenv import load_dotenv
 import os
 
@@ -14,12 +14,9 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 os.makedirs(os.path.dirname(DATABASE_URL.split("///")[1]), exist_ok=True)
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
 Base = declarative_base()
 
 def init_db():
-    try:
-        Base.metadata.create_all(bind=engine)
-        print("Database initialized successfully.")
-    except Exception as e:
-        print(f"Error initializing database: {e}")
+    Base.metadata.create_all(bind=engine)
+    print("Database initialized successfully.")

@@ -28,29 +28,32 @@ const CourseList = ({ token, user }) => {
       const data = await getCourses(token);
       setCourses(data);
 
-      // Fakülte ve bölümlere göre gruplayarak organize edelim
-      const grouped = {};
+      // Use Map for grouping for better performance
+      const grouped = new Map();
       const faculties = new Set();
 
       data.forEach(course => {
-        // Fakülteyi kaydedelim
         faculties.add(course.faculty);
-
-        // Fakülte bazında grupla
-        if (!grouped[course.faculty]) {
-          grouped[course.faculty] = {};
+        if (!grouped.has(course.faculty)) {
+          grouped.set(course.faculty, new Map());
         }
-
-        // Bölüm bazında grupla
-        if (!grouped[course.faculty][course.department]) {
-          grouped[course.faculty][course.department] = [];
+        const deptMap = grouped.get(course.faculty);
+        if (!deptMap.has(course.department)) {
+          deptMap.set(course.department, []);
         }
-
-        // Dersi ilgili fakülte ve bölüme ekle
-        grouped[course.faculty][course.department].push(course);
+        deptMap.get(course.department).push(course);
       });
 
-      setGroupedCourses(grouped);
+      // Convert Map back to plain object for compatibility
+      const groupedObj = {};
+      grouped.forEach((deptMap, faculty) => {
+        groupedObj[faculty] = {};
+        deptMap.forEach((courses, dept) => {
+          groupedObj[faculty][dept] = courses;
+        });
+      });
+
+      setGroupedCourses(groupedObj);
       setFacultyList([...faculties].sort());
       setLoading(false);
     } catch (error) {
@@ -61,10 +64,13 @@ const CourseList = ({ token, user }) => {
   };
 
   const handleDeleteClick = (id, name) => {
+    // Ensure name is a string, not an object
+    const courseName = typeof name === "object" && name !== null ? name.name : name;
+    
     setDeleteConfirm({
       show: true,
       courseId: id,
-      courseName: name
+      courseName: courseName
     });
   };
 
@@ -137,34 +143,43 @@ const CourseList = ({ token, user }) => {
 
   // Dersleri arama fonksiyonu
   const filteredCourses = (courseList) => {
-    if (!searchTerm) return courseList;
-    
-    return courseList.filter(course => 
-      course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (course.teacher && course.teacher.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      // Aktiflik durumuna göre de filtreleme yapalım
-      (searchTerm.toLowerCase() === 'aktif' && course.is_active) ||
-      (searchTerm.toLowerCase() === 'pasif' && !course.is_active)
-    );
+    // Only filter on courses page
+    let filtered = courseList;
+    if (searchTerm && selectedDepartment) {
+      filtered = courseList.filter(course =>
+        course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (course.teacher && course.teacher.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (searchTerm.toLowerCase() === 'aktif' && course.is_active) ||
+        (searchTerm.toLowerCase() === 'pasif' && !course.is_active)
+      );
+    }
+    // Sort courses alphabetically by name
+    return filtered.slice().sort((a, b) => {
+      // If name is an object (e.g. {id, name}), use .name
+      const aName = typeof a.name === "object" && a.name !== null ? a.name.name : a.name;
+      const bName = typeof b.name === "object" && b.name !== null ? b.name.name : b.name;
+      return String(aName).localeCompare(String(bName));
+    });
   };
 
   // Fakülteleri arama fonksiyonu
   const filteredFaculties = () => {
-    if (!searchTerm) return facultyList;
-    
-    return facultyList.filter(faculty => 
-      faculty.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Only filter on faculties page
+    if (!searchTerm || selectedFaculty || selectedDepartment) return facultyList.slice().sort((a, b) => a.localeCompare(b));
+    return facultyList
+      .filter(faculty => faculty.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => a.localeCompare(b));
   };
 
   // Bölümleri arama fonksiyonu
   const filteredDepartments = (departments) => {
-    if (!searchTerm) return departments;
-    
-    return departments.filter(department => 
-      department.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Filter only on departments page (when selectedFaculty is set and selectedDepartment is NOT set)
+    if (!searchTerm || !selectedFaculty || selectedDepartment)
+      return departments.slice().sort((a, b) => a.localeCompare(b));
+    return departments
+      .filter(department => department.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => a.localeCompare(b));
   };
 
   // Kurs aktivasyon durumunu değiştirme fonksiyonu
@@ -237,7 +252,7 @@ const CourseList = ({ token, user }) => {
                 <th>Fakülte Adı</th>
                 <th>Bölüm Sayısı</th>
                 <th>Ders Sayısı</th>
-                <th>İşlemler</th>
+                <th style={{ width: 160, textAlign: "center" }}>İşlemler</th>
               </tr>
             </thead>
             <tbody>
@@ -256,9 +271,10 @@ const CourseList = ({ token, user }) => {
                     <td>{faculty}</td>
                     <td>{departmentCount}</td>
                     <td>{totalCourses}</td>
-                    <td>
-                      <button 
+                    <td style={{ textAlign: "center" }}>
+                      <button
                         className="view-details-btn"
+                        style={{ minWidth: 120, display: "inline-block", textAlign: "center" }}
                         onClick={() => handleFacultySelect(faculty)}
                       >
                         Detayları Gör
@@ -316,7 +332,7 @@ const CourseList = ({ token, user }) => {
               <tr>
                 <th>Bölüm Adı</th>
                 <th>Ders Sayısı</th>
-                <th>İşlemler</th>
+                <th style={{ width: 160, textAlign: "center" }}>İşlemler</th>
               </tr>
             </thead>
             <tbody>
@@ -326,9 +342,10 @@ const CourseList = ({ token, user }) => {
                   <tr key={department}>
                     <td>{department}</td>
                     <td>{courses.length}</td>
-                    <td>
-                      <button 
+                    <td style={{ textAlign: "center" }}>
+                      <button
                         className="view-details-btn"
+                        style={{ minWidth: 120, display: "inline-block", textAlign: "center" }}
                         onClick={() => handleDepartmentSelect(department)}
                       >
                         Detayları Gör
@@ -413,7 +430,7 @@ const CourseList = ({ token, user }) => {
               {filteredCourses(courses).map(course => (
                 <tr key={course.id}>
                   <td className="course-code-cell">{course.code}</td>
-                  <td>{course.name}</td>
+                  <td>{typeof course.name === "object" && course.name !== null ? course.name.name : course.name}</td>
                   <td>{course.teacher ? course.teacher.name : 'Atanmamış'}</td>
                   <td>{course.level}</td>
                   <td>{course.type}</td>

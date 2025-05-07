@@ -24,12 +24,10 @@ def get_schedules(db: Session = Depends(get_db)):
     """
     Get all schedules with course and classroom information
     """
-    # Using joinedload to eagerly load the related course and classroom data
     schedules = db.query(Schedule).options(
         joinedload(Schedule.course),
         joinedload(Schedule.classroom)
     ).all()
-    
     return schedules
 
 @router.post("/")
@@ -59,12 +57,9 @@ def update_schedule(schedule_id: int, schedule: ScheduleCreate, db: Session = De
     existing_schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
     if not existing_schedule:
         return {"error": "Schedule not found"}
-    
-    existing_schedule.day = schedule.day
-    existing_schedule.time_range = schedule.time_range
-    existing_schedule.course_id = schedule.course_id
-    existing_schedule.classroom_id = schedule.classroom_id
-    
+    # Use setattr to update all fields
+    for field in schedule.dict():
+        setattr(existing_schedule, field, getattr(schedule, field))
     db.commit()
     db.refresh(existing_schedule)
     return existing_schedule

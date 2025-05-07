@@ -12,9 +12,9 @@ const Header = ({ user, onLogout }) => {
       {user && (
         <nav className="header-nav">
           <ul>
-            <li><Link to="/">Dashboard</Link></li>
-            <li><Link to="/teachers">Teachers</Link></li>
-            <li><Link to="/schedules">Schedules</Link></li>
+            <li><Link to="/">Ana Sayfa</Link></li>
+            <li><Link to="/faculties">Fakülteler ve Bölümler</Link></li>
+            <li><Link to="/schedules">Ders Programları</Link></li>
           </ul>
         </nav>
       )}
@@ -22,11 +22,11 @@ const Header = ({ user, onLogout }) => {
       <div className="header-actions">
         {user ? (
           <>
-            <span className="username">Welcome, {user.username}</span>
-            <button onClick={onLogout} className="logout-button">Logout</button>
+            <span className="username">Merhaba, {user.username}</span>
+            <button onClick={onLogout} className="logout-button">Çıkış</button>
           </>
         ) : (
-          <Link to="/login">Login</Link>
+          <Link to="/login">Giriş</Link>
         )}
       </div>
     </header>

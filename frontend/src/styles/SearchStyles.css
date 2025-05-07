@@ -16,7 +16,7 @@
   font-size: 15px;
   transition: all 0.3s;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  background-color: var(--input-bg, #ffffff);
+  background: var(--input-bg, #fff);
   color: var(--text-color, #333);
 }
 
@@ -54,7 +54,7 @@
 
 .clear-search-btn:hover {
   color: #666;
-  background-color: #f5f5f5;
+  background: #f5f5f5;
 }
 
 .search-icon {
@@ -71,7 +71,7 @@
 
 /* Karanlık mod desteği */
 [data-theme="dark"] .search-input {
-  background-color: var(--input-bg-dark, #2d3436);
+  background: var(--input-bg-dark, #2d3436);
   color: var(--text-color-dark, #f0f0f0);
   border-color: var(--border-color-dark, #444);
 }
@@ -82,7 +82,7 @@
 }
 
 [data-theme="dark"] .clear-search-btn:hover {
-  background-color: #3d3d3d;
+  background: #3d3d3d;
   color: #bbb;
 }
 
@@ -92,3 +92,4 @@
     max-width: 100%;
   }
 }
+

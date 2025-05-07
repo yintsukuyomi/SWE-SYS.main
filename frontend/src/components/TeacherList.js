@@ -28,24 +28,29 @@ const TeacherList = ({ token, user }) => {
     try {
       const data = await getTeachers(token);
       setTeachers(data);
-      // Fakülte ve bölümlere göre gruplayarak organize edelim
-      const grouped = {};
+      // Use Map for grouping for better performance
+      const grouped = new Map();
       const faculties = new Set();
       data.forEach(teacher => {
-        // Fakülteyi kaydedelim
         faculties.add(teacher.faculty);
-        // Fakülte bazında grupla
-        if (!grouped[teacher.faculty]) {
-          grouped[teacher.faculty] = {};
+        if (!grouped.has(teacher.faculty)) {
+          grouped.set(teacher.faculty, new Map());
         }
-        // Bölüm bazında grupla
-        if (!grouped[teacher.faculty][teacher.department]) {
-          grouped[teacher.faculty][teacher.department] = [];
+        const deptMap = grouped.get(teacher.faculty);
+        if (!deptMap.has(teacher.department)) {
+          deptMap.set(teacher.department, []);
         }
-        // Öğretmeni ilgili fakülte ve bölüme ekle
-        grouped[teacher.faculty][teacher.department].push(teacher);
+        deptMap.get(teacher.department).push(teacher);
       });
-      setGroupedTeachers(grouped);
+      // Convert Map back to plain object for compatibility
+      const groupedObj = {};
+      grouped.forEach((deptMap, faculty) => {
+        groupedObj[faculty] = {};
+        deptMap.forEach((teachers, dept) => {
+          groupedObj[faculty][dept] = teachers;
+        });
+      });
+      setGroupedTeachers(groupedObj);
       setFacultyList([...faculties].sort());
       setLoading(false);
     } catch (error) {
@@ -112,30 +117,38 @@ const TeacherList = ({ token, user }) => {
     setSelectedDepartment(null);
   };
 
-  // Öğretmenleri arama fonksiyonu
-  const filteredTeachers = (teacherList) => {
-    if (!searchTerm) return teacherList;
-    return teacherList.filter(teacher => 
-      teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.working_days.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  };
-
   // Fakülteleri arama fonksiyonu
   const filteredFaculties = () => {
-    if (!searchTerm) return facultyList;
-    return facultyList.filter(faculty => 
-      faculty.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Only filter on faculties page
+    if (!searchTerm || selectedFaculty || selectedDepartment) return facultyList.slice().sort((a, b) => a.localeCompare(b));
+    return facultyList
+      .filter(faculty => faculty.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => a.localeCompare(b));
   };
 
   // Bölümleri arama fonksiyonu
   const filteredDepartments = (departments) => {
-    if (!searchTerm) return departments;
-    return departments.filter(department => 
-      department.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Only filter on departments page
+    if (!searchTerm || selectedDepartment)
+      return departments.slice().sort((a, b) => a.localeCompare(b));
+    return departments
+      .filter(department => department.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => a.localeCompare(b));
+  };
+
+  // Öğretmenleri arama fonksiyonu
+  const filteredTeachers = (teacherList) => {
+    // Only filter on teachers page
+    let filtered = teacherList;
+    if (searchTerm && selectedDepartment) {
+      filtered = teacherList.filter(teacher =>
+        teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        teacher.working_days.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    // Sort teachers alphabetically by name
+    return filtered.slice().sort((a, b) => a.name.localeCompare(b.name));
   };
 
   // Fakülteler sayfası
@@ -172,7 +185,7 @@ const TeacherList = ({ token, user }) => {
                 <th>Fakülte Adı</th>
                 <th>Bölüm Sayısı</th>
                 <th>Öğretmen Sayısı</th>
-                <th>İşlemler</th>
+                <th style={{ width: 160, textAlign: "center" }}>İşlemler</th>
               </tr>
             </thead>
             <tbody>
@@ -191,9 +204,10 @@ const TeacherList = ({ token, user }) => {
                     <td>{faculty}</td>
                     <td>{departmentCount}</td>
                     <td>{totalTeachers}</td>
-                    <td>
-                      <button 
+                    <td style={{ textAlign: "center" }}>
+                      <button
                         className="view-details-btn"
+                        style={{ minWidth: 120, display: "inline-block", textAlign: "center" }}
                         onClick={() => handleFacultySelect(faculty)}
                       >
                         Detayları Gör
@@ -254,7 +268,7 @@ const TeacherList = ({ token, user }) => {
               <tr>
                 <th>Bölüm Adı</th>
                 <th>Öğretmen Sayısı</th>
-                <th>İşlemler</th>
+                <th style={{ width: 160, textAlign: "center" }}>İşlemler</th>
               </tr>
             </thead>
             <tbody>
@@ -264,9 +278,10 @@ const TeacherList = ({ token, user }) => {
                   <tr key={department}>
                     <td>{department}</td>
                     <td>{teachers.length}</td>
-                    <td>
-                      <button 
+                    <td style={{ textAlign: "center" }}>
+                      <button
                         className="view-details-btn"
+                        style={{ minWidth: 120, display: "inline-block", textAlign: "center" }}
                         onClick={() => handleDepartmentSelect(department)}
                       >
                         Detayları Gör

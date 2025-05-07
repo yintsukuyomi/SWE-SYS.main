@@ -2,7 +2,7 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-  background-color: white;
+  background: #fff;
   border-radius: 10px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
@@ -60,22 +60,22 @@
 }
 
 .btn-cancel {
-  background-color: #f8f9fa;
+  background: #f8f9fa;
   color: #666;
   border: 1px solid #ddd;
 }
 
 .btn-cancel:hover {
-  background-color: #e9ecef;
+  background: #e9ecef;
 }
 
 .btn-submit {
-  background-color: var(--primary-color);
-  color: white;
+  background: var(--primary-color);
+  color: #fff;
 }
 
 .btn-submit:hover {
-  background-color: #2980b9;
+  background: #2980b9;
 }
 
 button:disabled {
@@ -86,7 +86,7 @@ button:disabled {
 .error-message {
   grid-column: 1/-1;
   color: #e74c3c;
-  background-color: #fdecea;
+  background: #fdecea;
   padding: 10px;
   border-radius: 4px;
   margin-bottom: 20px;
@@ -110,15 +110,15 @@ button:disabled {
   align-items: center;
   margin: 5px;
   padding: 8px 12px;
-  background-color: #f8f9fa;
+  background: #f8f9fa;
   border-radius: 4px;
   border: 1px solid var(--border-color);
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .checkbox-item:hover {
-  background-color: #e9ecef;
+  background: #e9ecef;
 }
 
 .checkbox-item input[type="checkbox"] {
@@ -146,3 +146,4 @@ button:disabled {
 .time-input input[type="time"] {
   flex: 1;
 }
+
