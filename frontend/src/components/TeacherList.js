@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getTeachers, deleteTeacher } from "../api";
-import "../styles/TeacherList.css";
+import "../styles/ListView.css";
 import "../styles/SearchStyles.css";
 import { FACULTIES } from '../constants/facultiesAndDepartments';
 
@@ -154,9 +154,11 @@ const TeacherList = ({ token, user }) => {
   // Fakülteler sayfası
   const renderFacultiesPage = () => {
     return (
-      <div className="faculties-page">
-        <h1 className="page-title">Fakülteler ve Bölümler</h1>
-        <p className="page-description">Öğretmenleri fakülte ve bölüme göre inceleyin</p>
+      <div className="list-container">
+        <div className="list-header">
+          <h1>Öğretmenler</h1>
+          <p className="list-subtitle">Fakülte ve bölümlere göre öğretmenleri görüntüleyin</p>
+        </div>
         
         <div className="search-container with-search-icon">
           <span className="search-icon">🔍</span>
@@ -185,12 +187,11 @@ const TeacherList = ({ token, user }) => {
                 <th>Fakülte Adı</th>
                 <th>Bölüm Sayısı</th>
                 <th>Öğretmen Sayısı</th>
-                <th style={{ width: 160, textAlign: "center" }}>İşlemler</th>
+                <th className="text-center">İşlemler</th>
               </tr>
             </thead>
             <tbody>
               {filteredFaculties().map(faculty => {
-                // Her fakültedeki toplam öğretmen ve bölüm sayısını hesapla
                 let totalTeachers = 0;
                 let departmentCount = 0;
                 if (groupedTeachers[faculty]) {
@@ -204,10 +205,9 @@ const TeacherList = ({ token, user }) => {
                     <td>{faculty}</td>
                     <td>{departmentCount}</td>
                     <td>{totalTeachers}</td>
-                    <td style={{ textAlign: "center" }}>
+                    <td className="text-center">
                       <button
                         className="view-details-btn"
-                        style={{ minWidth: 120, display: "inline-block", textAlign: "center" }}
                         onClick={() => handleFacultySelect(faculty)}
                       >
                         Detayları Gör
@@ -225,22 +225,17 @@ const TeacherList = ({ token, user }) => {
 
   // Bölümler sayfası
   const renderDepartmentsPage = () => {
-    if (!selectedFaculty || !groupedTeachers[selectedFaculty]) {
-      return <div>Bölüm bulunamadı</div>;
-    }
-    
-    const departments = Object.keys(groupedTeachers[selectedFaculty]);
+    const departments = Object.keys(groupedTeachers[selectedFaculty] || {});
     
     return (
-      <div className="departments-page">
-        <div className="page-navigation">
-          <button className="back-button" onClick={handleBackToFaculties}>
+      <div className="list-container">
+        <div className="list-header">
+          <h1>{selectedFaculty}</h1>
+          <p className="list-subtitle">Bölümlere göre öğretmenleri görüntüleyin</p>
+          <button className="view-details-btn" onClick={handleBackToFaculties}>
             ← Fakültelere Dön
           </button>
         </div>
-        
-        <h1 className="page-title">{selectedFaculty}</h1>
-        <p className="page-description">Bölümler ve öğretmenleri</p>
         
         <div className="search-container with-search-icon">
           <span className="search-icon">🔍</span>
@@ -268,7 +263,7 @@ const TeacherList = ({ token, user }) => {
               <tr>
                 <th>Bölüm Adı</th>
                 <th>Öğretmen Sayısı</th>
-                <th style={{ width: 160, textAlign: "center" }}>İşlemler</th>
+                <th className="text-center">İşlemler</th>
               </tr>
             </thead>
             <tbody>
@@ -278,10 +273,9 @@ const TeacherList = ({ token, user }) => {
                   <tr key={department}>
                     <td>{department}</td>
                     <td>{teachers.length}</td>
-                    <td style={{ textAlign: "center" }}>
+                    <td className="text-center">
                       <button
                         className="view-details-btn"
-                        style={{ minWidth: 120, display: "inline-block", textAlign: "center" }}
                         onClick={() => handleDepartmentSelect(department)}
                       >
                         Detayları Gör

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FACULTIES } from '../constants/facultiesAndDepartments';
-import '../styles/FacultyList.css';
+import '../styles/ListView.css';
 
 const FacultyList = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,9 +16,11 @@ const FacultyList = () => {
   };
   
   return (
-    <div className="faculty-list-container">
-      <h1>Fakülteler</h1>
-      <p className="subtitle">Fakülteler ve bölümlerini görüntüleyin</p>
+    <div className="list-container">
+      <div className="list-header">
+        <h1>Fakülteler</h1>
+        <p className="list-subtitle">Fakülteler ve bölümlerini görüntüleyin</p>
+      </div>
       
       <div className="search-container with-search-icon">
         <span className="search-icon">🔍</span>
@@ -46,7 +48,7 @@ const FacultyList = () => {
             <tr>
               <th>Fakülte Adı</th>
               <th>Bölümler</th>
-              <th>İşlemler</th>
+              <th className="text-center">İşlemler</th>
             </tr>
           </thead>
           <tbody>
@@ -54,7 +56,7 @@ const FacultyList = () => {
               <tr key={faculty.id}>
                 <td>{faculty.name}</td>
                 <td>{faculty.departments ? faculty.departments.length : 0} bölüm</td>
-                <td>
+                <td className="text-center">
                   <Link to={`/faculties/${faculty.id}`} className="view-details-btn">
                     Detayları Gör
                   </Link>

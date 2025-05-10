@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getCourses, deleteCourse, updateCourse } from "../api"; // Eklendi: updateCourse
-import "../styles/CourseList.css";
+import "../styles/ListView.css";
+import "../styles/SearchStyles.css";
 import { FACULTIES } from '../constants/facultiesAndDepartments';
 
 const CourseList = ({ token, user }) => {
@@ -221,9 +222,11 @@ const CourseList = ({ token, user }) => {
   // Fakülteler sayfasını değiştirme fonksiyonu
   const renderFacultiesPage = () => {
     return (
-      <div className="faculties-page">
-        <h1 className="page-title">Fakülteler ve Programlar</h1>
-        <p className="page-description">Fakülteler ve bölümlere göre dersleri görüntüleyin</p>
+      <div className="list-container">
+        <div className="list-header">
+          <h1>Dersler</h1>
+          <p className="list-subtitle">Fakülte ve bölümlere göre dersleri görüntüleyin</p>
+        </div>
         
         <div className="search-container with-search-icon">
           <span className="search-icon">🔍</span>
@@ -236,7 +239,7 @@ const CourseList = ({ token, user }) => {
           />
           {searchTerm && (
             <button 
-              className="clear-search-btn"
+              className="clear-search-btn" 
               onClick={() => setSearchTerm('')}
               title="Aramayı Temizle"
             >
@@ -244,7 +247,7 @@ const CourseList = ({ token, user }) => {
             </button>
           )}
         </div>
-
+        
         <div className="faculty-list">
           <table className="list-table">
             <thead>
@@ -252,12 +255,11 @@ const CourseList = ({ token, user }) => {
                 <th>Fakülte Adı</th>
                 <th>Bölüm Sayısı</th>
                 <th>Ders Sayısı</th>
-                <th style={{ width: 160, textAlign: "center" }}>İşlemler</th>
+                <th className="text-center">İşlemler</th>
               </tr>
             </thead>
             <tbody>
               {filteredFaculties().map(faculty => {
-                // Her fakültedeki toplam ders ve bölüm sayısını hesapla
                 let totalCourses = 0;
                 let departmentCount = 0;
                 if (groupedCourses[faculty]) {
@@ -271,10 +273,9 @@ const CourseList = ({ token, user }) => {
                     <td>{faculty}</td>
                     <td>{departmentCount}</td>
                     <td>{totalCourses}</td>
-                    <td style={{ textAlign: "center" }}>
+                    <td className="text-center">
                       <button
                         className="view-details-btn"
-                        style={{ minWidth: 120, display: "inline-block", textAlign: "center" }}
                         onClick={() => handleFacultySelect(faculty)}
                       >
                         Detayları Gör
@@ -292,21 +293,18 @@ const CourseList = ({ token, user }) => {
 
   // Bölümler sayfası
   const renderDepartmentsPage = () => {
-    if (!selectedFaculty || !groupedCourses[selectedFaculty]) {
-      return <div>Bölüm bulunamadı</div>;
-    }
-
-    const departments = Object.keys(groupedCourses[selectedFaculty]);
-
+    const departments = Object.keys(groupedCourses[selectedFaculty] || {});
+    
     return (
-      <div className="departments-page">
-        <div className="page-navigation">
-          <button className="back-button" onClick={handleBackToFaculties}>
+      <div className="list-container">
+        <div className="list-header">
+          <h1>{selectedFaculty}</h1>
+          <p className="list-subtitle">Bölümlere göre dersleri görüntüleyin</p>
+          <button className="view-details-btn" onClick={handleBackToFaculties}>
             ← Fakültelere Dön
           </button>
         </div>
-        <h1 className="page-title">{selectedFaculty}</h1>
-        <p className="page-description">Bölümler ve dersleri</p>
+        
         <div className="search-container with-search-icon">
           <span className="search-icon">🔍</span>
           <input
@@ -326,13 +324,14 @@ const CourseList = ({ token, user }) => {
             </button>
           )}
         </div>
+        
         <div className="department-list">
           <table className="list-table">
             <thead>
               <tr>
                 <th>Bölüm Adı</th>
                 <th>Ders Sayısı</th>
-                <th style={{ width: 160, textAlign: "center" }}>İşlemler</th>
+                <th className="text-center">İşlemler</th>
               </tr>
             </thead>
             <tbody>
@@ -342,10 +341,9 @@ const CourseList = ({ token, user }) => {
                   <tr key={department}>
                     <td>{department}</td>
                     <td>{courses.length}</td>
-                    <td style={{ textAlign: "center" }}>
+                    <td className="text-center">
                       <button
                         className="view-details-btn"
-                        style={{ minWidth: 120, display: "inline-block", textAlign: "center" }}
                         onClick={() => handleDepartmentSelect(department)}
                       >
                         Detayları Gör

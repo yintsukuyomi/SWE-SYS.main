@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getClassrooms, deleteClassroom } from "../api";
-import "../styles/ClassroomList.css";
+import "../styles/ListView.css";
+import "../styles/SearchStyles.css";
 import { FACULTIES } from '../constants/facultiesAndDepartments';
 
 const ClassroomList = ({ token, user }) => {
@@ -156,9 +157,11 @@ const ClassroomList = ({ token, user }) => {
   // Fakülteler sayfası
   const renderFacultiesPage = () => {
     return (
-      <div className="faculties-page">
-        <h1 className="page-title">Fakülteler ve Binalar</h1>
-        <p className="page-description">Derslikleri fakülte ve bölüme göre inceleyin</p>
+      <div className="list-container">
+        <div className="list-header">
+          <h1>Derslikler</h1>
+          <p className="list-subtitle">Fakülte ve bölümlere göre derslikleri görüntüleyin</p>
+        </div>
         
         <div className="search-container with-search-icon">
           <span className="search-icon">🔍</span>
@@ -188,12 +191,11 @@ const ClassroomList = ({ token, user }) => {
                 <th>Bölüm Sayısı</th>
                 <th>Derslik Sayısı</th>
                 <th>Toplam Kapasite</th>
-                <th style={{ width: 160, textAlign: "center" }}>İşlemler</th>
+                <th className="text-center">İşlemler</th>
               </tr>
             </thead>
             <tbody>
               {filteredFaculties().map(faculty => {
-                // Her fakültedeki toplam sınıf sayısını ve kapasiteyi hesapla
                 let totalClassrooms = 0;
                 let totalCapacity = 0;
                 let departmentCount = 0;
@@ -215,10 +217,9 @@ const ClassroomList = ({ token, user }) => {
                     <td>{departmentCount}</td>
                     <td>{totalClassrooms}</td>
                     <td>{totalCapacity}</td>
-                    <td style={{ textAlign: "center" }}>
+                    <td className="text-center">
                       <button
                         className="view-details-btn"
-                        style={{ minWidth: 120, display: "inline-block", textAlign: "center" }}
                         onClick={() => handleFacultySelect(faculty)}
                       >
                         Detayları Gör
@@ -236,22 +237,17 @@ const ClassroomList = ({ token, user }) => {
 
   // Bölümler sayfası
   const renderDepartmentsPage = () => {
-    if (!selectedFaculty || !groupedClassrooms[selectedFaculty]) {
-      return <div>Bölüm bulunamadı</div>;
-    }
-    
-    const departments = Object.keys(groupedClassrooms[selectedFaculty]);
+    const departments = Object.keys(groupedClassrooms[selectedFaculty] || {});
     
     return (
-      <div className="departments-page">
-        <div className="page-navigation">
-          <button className="back-button" onClick={handleBackToFaculties}>
+      <div className="list-container">
+        <div className="list-header">
+          <h1>{selectedFaculty}</h1>
+          <p className="list-subtitle">Bölümlere göre derslikleri görüntüleyin</p>
+          <button className="view-details-btn" onClick={handleBackToFaculties}>
             ← Fakültelere Dön
           </button>
         </div>
-        
-        <h1 className="page-title">{selectedFaculty}</h1>
-        <p className="page-description">Bölümler ve derslikleri</p>
         
         <div className="search-container with-search-icon">
           <span className="search-icon">🔍</span>
@@ -280,7 +276,7 @@ const ClassroomList = ({ token, user }) => {
                 <th>Bölüm Adı</th>
                 <th>Derslik Sayısı</th>
                 <th>Toplam Kapasite</th>
-                <th style={{ width: 160, textAlign: "center" }}>İşlemler</th>
+                <th className="text-center">İşlemler</th>
               </tr>
             </thead>
             <tbody>
@@ -297,10 +293,9 @@ const ClassroomList = ({ token, user }) => {
                     <td>{department}</td>
                     <td>{classrooms.length}</td>
                     <td>{totalCapacity}</td>
-                    <td style={{ textAlign: "center" }}>
+                    <td className="text-center">
                       <button
                         className="view-details-btn"
-                        style={{ minWidth: 120, display: "inline-block", textAlign: "center" }}
                         onClick={() => handleDepartmentSelect(department)}
                       >
                         Detayları Gör
@@ -318,36 +313,16 @@ const ClassroomList = ({ token, user }) => {
 
   // Sınıflar sayfası
   const renderClassroomsPage = () => {
-    if (!selectedFaculty || !selectedDepartment || 
-        !groupedClassrooms[selectedFaculty] || 
-        !groupedClassrooms[selectedFaculty][selectedDepartment]) {
-      return <div>Derslik bulunamadı</div>;
-    }
-    
-    const classrooms = groupedClassrooms[selectedFaculty][selectedDepartment];
+    const classrooms = groupedClassrooms[selectedFaculty][selectedDepartment] || [];
     
     return (
-      <div className="classrooms-page">
-        <div className="page-navigation">
-          <button className="back-button" onClick={handleBackToFaculties}>
-            ← Fakültelere Dön
-          </button>
-          <button className="back-button" onClick={handleBackToDepartments}>
+      <div className="list-container">
+        <div className="list-header">
+          <h1>{selectedDepartment}</h1>
+          <p className="list-subtitle">Derslikleri görüntüleyin ve yönetin</p>
+          <button className="view-details-btn" onClick={handleBackToDepartments}>
             ← Bölümlere Dön
           </button>
-        </div>
-        
-        <div className="classroom-header">
-          <div>
-            <h1 className="page-title">{selectedDepartment}</h1>
-            <p className="page-description">{selectedFaculty}</p>
-          </div>
-          
-          {isAdmin && (
-            <Link to="/classrooms/new" className="add-button">
-              <span className="btn-icon">+</span> Yeni Derslik Ekle
-            </Link>
-          )}
         </div>
         
         <div className="search-container with-search-icon">
@@ -377,7 +352,7 @@ const ClassroomList = ({ token, user }) => {
                 <th>Derslik Adı</th>
                 <th>Tür</th>
                 <th>Kapasite</th>
-                {isAdmin && <th>İşlemler</th>}
+                {isAdmin && <th className="text-center">İşlemler</th>}
               </tr>
             </thead>
             <tbody>
