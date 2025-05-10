@@ -31,6 +31,7 @@
 - [ ]  Dersler teorik ve lab olarak ayrılacak.***
 - [x]  Aktif pasif gibi durumlar listview olarak yana buton olarak eklenecek.***
 - [ ]  Dersleri saat olarak ayırma seçeneği sunacak.***
+- [ ]  Derslerde lab sonra konacak.***
 
 # Classrooms
 
