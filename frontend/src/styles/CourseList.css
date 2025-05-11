@@ -126,6 +126,8 @@
   border-radius: 8px;
   background-color: #f9f9f9;
   transition: background-color 0.2s;
+  margin-bottom: 10px;
+  border: 1px solid #eee;
 }
 
 .course-item:hover {
@@ -134,12 +136,15 @@
 
 .course-details {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .course-code-name {
   display: flex;
   align-items: center;
-  margin-bottom: 5px;
+  gap: 10px;
 }
 
 .course-code {
@@ -149,24 +154,45 @@
   color: white;
   padding: 3px 8px;
   border-radius: 4px;
-  margin-right: 10px;
   font-size: 14px;
+  min-width: 80px;
+  text-align: center;
 }
 
 .course-name {
   font-weight: 500;
   color: var(--text-color);
+  font-size: 16px;
 }
 
 .course-meta {
   display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  color: #666;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .teacher-name {
   font-style: italic;
+  color: #666;
+}
+
+.course-type, .course-category {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.course-type {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.course-category {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
 }
 
 .status-badge {
@@ -190,21 +216,23 @@
 .course-actions {
   display: flex;
   gap: 8px;
+  margin-left: 20px;
 }
 
 .btn-edit, .btn-delete {
-  padding: 5px 12px;
+  padding: 6px 12px;
   font-size: 14px;
   border-radius: 4px;
   cursor: pointer;
+  text-decoration: none;
   display: inline-block;
+  min-width: 80px;
   text-align: center;
 }
 
 .btn-edit {
   background-color: var(--primary-color);
   color: white;
-  text-decoration: none;
 }
 
 .btn-edit:hover {
@@ -1080,3 +1108,32 @@
 .text-center { text-align: center; }
 .btn-icon { margin-right: 8px; font-size: 18px; font-weight: bold; }
 .empty-state-action { margin-top: 20px; }
+
+.course-type, .course-category {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.course-type {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.course-category {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.course-meta-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 4px;
+  align-items: center;
+  width: 100%;
+}

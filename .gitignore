@@ -30,12 +30,11 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
-.env
+
+# Python virtual environments
 venv/
 ENV/
-env.bak/
-venv.bak/
-# Python virtual environments
+env/
 .venv/
 virtualenv/
 [Bb]in/
@@ -48,36 +47,42 @@ pyvenv.cfg
 pip-selfcheck.json
 .python-version
 
-# SQLite veritabanı dosyaları
+# Database
 *.sqlite3
 *.db
 *.db-journal
 data/
+backend/data/
 
-# Backend log dosyaları
+# Logs
 *.log
+logs/
 app.log
 
-# Node.js
+# Node.js / Frontend
+node_modules/
 frontend/node_modules/
 frontend/.pnp
 frontend/.pnp.js
-
-# Frontend derleme çıktıları
 frontend/coverage/
 frontend/build/
-frontend/.DS_Store
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
-
-# Logs
+frontend/dist/
 frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
+frontend/package-lock.json
+frontend/yarn.lock
 
-# Editor dizinleri ve dosyaları
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+frontend/.env*
+backend/.env*
+
+# IDE and Editor files
 .idea/
 .vscode/
 *.swp
@@ -86,7 +91,7 @@ frontend/yarn-error.log*
 .project
 .settings/
 
-# OS dosyaları
+# OS generated files
 .DS_Store
 .DS_Store?
 ._*
@@ -95,84 +100,12 @@ frontend/yarn-error.log*
 ehthumbs.db
 Thumbs.db
 
-# Ortam değişkenleri
-.env
-.env.local
-.env.development
-.env.test
-.env.production
-
-# IDE meta dosyaları
-.vscode/
-.idea/
-
-# pycache klasörleri (daha spesifik)
-*/__pycache__/
-backend/__pycache__/
-backend/*/__pycache__/
-backend/*/*/__pycache__/
-
-# Statik dosya klasörü (gerekirse)
+# Static and Media files
 static/
-
-# Media dosyaları (gerekirse)
 media/
 
-# Geçici dosyalar
-.temp
-.tmp
+# Temporary files
 .temp/
+.tmp/
 tmp/
-
-# Package dosyaları
-package-lock.json
-yarn.lock
-
-# Virtual Environment
-venv/
-env/
-ENV/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Database
-*.db
-*.sqlite3
-
-# Logs
-*.log
-logs/
-
-# Frontend
-node_modules/
-/frontend/build
-/frontend/dist
-/frontend/.env
-/frontend/.env.local
-/frontend/.env.development.local
-/frontend/.env.test.local
-/frontend/.env.production.local
-
-# Backend
-/backend/__pycache__/
-/backend/*.pyc
-/backend/.env
-/backend/.env.local
-
-# System Files
-.DS_Store
-Thumbs.db
-backend/data/swesys.db
-backend/data/swesys.db
-frontend/package-lock.json
-frontend/package-lock.json
 backend/data/swesys.db

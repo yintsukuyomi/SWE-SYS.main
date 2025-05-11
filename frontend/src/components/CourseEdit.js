@@ -74,8 +74,8 @@ const CourseEdit = ({ token }) => {
           faculty: facultyId || '',
           department: departmentId || '',
           level: courseData.level || 'Preparatory Year',
-          type: courseData.type || 'Core',
-          category: courseData.category || '',
+          type: courseData.type || 'teorik',
+          category: courseData.category || 'zorunlu',
           semester: courseData.semester || 'Fall',
           ects: courseData.ects || 5,
           total_hours: courseData.total_hours || 3,
@@ -146,13 +146,14 @@ const CourseEdit = ({ token }) => {
     const selectedFaculty = FACULTIES.find(f => f.id === formData.faculty);
     const selectedDepartment = departments.find(d => d.id === formData.department);
 
-    // teacher_id'nin sayısal olduğundan emin olalım
+    // Ensure we're sending the exact values expected by the backend
     const submissionData = {
       ...formData,
       teacher_id: parseInt(formData.teacher_id, 10),
-      // ID yerine adları gönderelim
       faculty: selectedFaculty ? selectedFaculty.name : originalData.faculty,
-      department: selectedDepartment ? selectedDepartment.name : originalData.department
+      department: selectedDepartment ? selectedDepartment.name : originalData.department,
+      type: formData.type === 'teorik' ? 'teorik' : 'lab',
+      category: formData.category === 'zorunlu' ? 'zorunlu' : 'secmeli'
     };
 
     try {
@@ -160,7 +161,20 @@ const CourseEdit = ({ token }) => {
       navigate('/courses');
     } catch (err) {
       console.error('Error updating course:', err);
-      setError(err.detail || 'Ders güncellenirken bir hata oluştu. Lütfen tekrar deneyin.');
+      console.error('Submission data:', submissionData);
+      // Handle FastAPI validation errors
+      if (err.response?.data?.detail) {
+        if (Array.isArray(err.response.data.detail)) {
+          // Handle array of validation errors
+          const errorMessages = err.response.data.detail.map(error => error.msg).join(', ');
+          setError(errorMessages);
+        } else {
+          // Handle single error message
+          setError(err.response.data.detail);
+        }
+      } else {
+        setError('Ders güncellenirken bir hata oluştu. Lütfen tekrar deneyin.');
+      }
       setLoading(false);
     }
   };
@@ -280,22 +294,22 @@ const CourseEdit = ({ token }) => {
             value={formData.type}
             onChange={handleChange}
           >
-            <option value="Core">Zorunlu</option>
-            <option value="Elective">Seçmeli</option>
-            <option value="Lab">Laboratuvar</option>
+            <option value="teorik">Teorik</option>
+            <option value="lab">Laboratuvar</option>
           </select>
         </div>
 
         <div className="form-group">
           <label htmlFor="category">Kategori</label>
-          <input
-            type="text"
+          <select
             id="category"
             name="category"
             value={formData.category}
             onChange={handleChange}
-            placeholder="Örn: Bilgisayar Bilimleri"
-          />
+          >
+            <option value="zorunlu">Zorunlu</option>
+            <option value="secmeli">Seçmeli</option>
+          </select>
         </div>
 
         <div className="form-group">

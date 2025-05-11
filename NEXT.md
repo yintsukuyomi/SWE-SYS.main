@@ -8,7 +8,7 @@
 
 - [ ]  Bölüm bazlı kullanıcı girişi yapılacak ve her bölüm yalnızca kendi derslerinde düzenleme yapabilecek(sona bırakılması daha uygun).***
 - [ ]  Veri tabanı ayrılacak, gerekirse daha sağlam bir veri tabanı kullanılacak.***
-- [ ]  Responsive arayüz/mümkünse mobile uyarlama senaryosu değerlendirilecek.***
+- [x]  Responsive arayüz/mümkünse mobile uyarlama senaryosu değerlendirilecek.***
 - [x]  Dil Türkçe olarak değiştirilecek.***
 - [x]  Tüm program kartlar yerine listview kullanacak.***
 - [ ]  Excell toplu veri girişi eklenecek.(Süreci hızlandırmak, hatayı minimize etmek adına excel şablonu form kopyalanıp yapay zekaya atılarak oluşturulabilir)***

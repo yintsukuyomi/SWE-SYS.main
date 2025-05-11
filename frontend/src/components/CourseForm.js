@@ -13,13 +13,13 @@ const CourseForm = ({ token }) => {
     faculty: '',
     department: '',
     level: 'Preparatory Year',
-    type: 'Core',
-    category: '',
+    type: 'teorik',
+    category: 'zorunlu',
     semester: 'Fall',
     ects: 5,
     total_hours: 3,
     is_active: true,
-    student_count: 0  // Öğrenci sayısı alanı eklendi
+    student_count: 0
   });
   
   const [teachers, setTeachers] = useState([]);
@@ -215,29 +215,31 @@ const CourseForm = ({ token }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="type">Tür</label>
+          <label htmlFor="type">Ders Tipi</label>
           <select
             id="type"
             name="type"
             value={formData.type}
             onChange={handleChange}
+            required
           >
-            <option value="Core">Zorunlu</option>
-            <option value="Elective">Seçmeli</option>
-            <option value="Lab">Laboratuvar</option>
+            <option value="teorik">Teorik</option>
+            <option value="lab">Laboratuvar</option>
           </select>
         </div>
 
         <div className="form-group">
-          <label htmlFor="category">Kategori</label>
-          <input
-            type="text"
+          <label htmlFor="category">Ders Kategorisi</label>
+          <select
             id="category"
             name="category"
             value={formData.category}
             onChange={handleChange}
-            placeholder="Örn: Bilgisayar Bilimleri"
-          />
+            required
+          >
+            <option value="zorunlu">Zorunlu</option>
+            <option value="secmeli">Seçmeli</option>
+          </select>
         </div>
 
         <div className="form-group">

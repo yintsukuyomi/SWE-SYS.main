@@ -3,8 +3,17 @@ from sqlalchemy.orm import Session, joinedload
 from database import get_db
 from models import Course, Teacher, Schedule
 from pydantic import BaseModel
+from enum import Enum
 
 router = APIRouter()
+
+class CourseType(str, Enum):
+    teorik = "teorik"
+    lab = "lab"
+
+class CourseCategory(str, Enum):
+    zorunlu = "zorunlu"
+    secmeli = "secmeli"
 
 class CourseCreate(BaseModel):
     name: str
@@ -13,8 +22,8 @@ class CourseCreate(BaseModel):
     faculty: str
     department: str
     level: str
-    type: str
-    category: str
+    type: CourseType
+    category: CourseCategory
     semester: str
     ects: int
     total_hours: int

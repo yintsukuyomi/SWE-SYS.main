@@ -220,6 +220,52 @@ const CourseList = ({ token, user }) => {
     }
   };
 
+  // Yardımcı fonksiyon: Obje render hatasını önler
+  const safeText = (val) => {
+    if (typeof val === 'string' || typeof val === 'number') return val;
+    if (val && typeof val === 'object' && 'name' in val) return val.name;
+    if (val && typeof val === 'object' && 'msg' in val) return val.msg;
+    return '';
+  };
+
+  const renderCourseItem = (course) => {
+    return (
+      <div className="course-item" key={course.id}>
+        <div className="course-details">
+          <div className="course-code-name">
+            <span className="course-code">{safeText(course.code)}</span>
+            <span className="course-name">{safeText(course.name)}</span>
+          </div>
+          <div className="course-meta-row">
+            {course.teacher && (
+              <span className="teacher-name">{safeText(course.teacher.name || course.teacher)}</span>
+            )}
+            <span className="course-type">
+              {safeText(course.type) === 'teorik' ? 'Teorik' : safeText(course.type) === 'laboratuvar' ? 'Laboratuvar' : safeText(course.type)}
+            </span>
+            <span className="course-category">
+              {safeText(course.category) === 'zorunlu' ? 'Zorunlu' : safeText(course.category) === 'seçmeli' ? 'Seçmeli' : safeText(course.category)}
+            </span>
+            <span className={`status-badge ${course.is_active ? 'active' : 'inactive'}`}>{course.is_active ? 'Aktif' : 'Pasif'}</span>
+          </div>
+        </div>
+        {isAdmin && (
+          <div className="course-actions">
+            <Link to={`/courses/edit/${course.id}`} className="btn-edit">
+              Düzenle
+            </Link>
+            <button
+              className="btn-delete"
+              onClick={() => handleDeleteClick(course.id, course.name)}
+            >
+              Sil
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Fakülteler sayfası
   const renderFacultiesPage = () => {
     return (
@@ -427,54 +473,7 @@ const CourseList = ({ token, user }) => {
           )}
         </div>
         <div className="course-list">
-          <table className="list-table">
-            <thead>
-              <tr>
-                <th>Kod</th>
-                <th>Ders Adı</th>
-                <th>Öğretmen</th>
-                <th>Seviye</th>
-                <th>Tür</th>
-                <th>AKTS</th>
-                <th>Saat</th>
-                <th>Durum</th>
-                {isAdmin && <th>İşlemler</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCourses(courses).map(course => (
-                <tr key={course.id}>
-                  <td className="course-code-cell">{course.code}</td>
-                  <td>{typeof course.name === "object" && course.name !== null ? course.name.name : course.name}</td>
-                  <td>{course.teacher ? course.teacher.name : 'Atanmamış'}</td>
-                  <td>{course.level}</td>
-                  <td>{course.type}</td>
-                  <td className="text-center">{course.ects}</td>
-                  <td className="text-center">{course.total_hours}</td>
-                  <td>
-                    <span 
-                      onClick={() => toggleCourseStatus(course.id, course.is_active)}
-                      className={`status-badge clickable ${course.is_active ? 'active' : 'inactive'}`}
-                      title={course.is_active ? 'Dersi pasif yap' : 'Dersi aktif yap'}
-                    >
-                      {course.is_active ? 'Aktif' : 'Pasif'}
-                    </span>
-                  </td>
-                  {isAdmin && (
-                    <td className="action-buttons">
-                      <Link to={`/courses/edit/${course.id}`} className="btn-edit">Düzenle</Link>
-                      <button 
-                        className="btn-delete" 
-                        onClick={() => handleDeleteClick(course.id, course.name)}
-                      >
-                        Sil
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {filteredCourses(courses).map(course => renderCourseItem(course))}
         </div>
       </div>
     );

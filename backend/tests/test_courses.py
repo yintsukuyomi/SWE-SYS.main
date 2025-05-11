@@ -12,8 +12,8 @@ def test_create_course(client, test_teacher):
         "faculty": "Engineering",
         "department": "Computer Science",
         "level": "Bachelor",
-        "type": "Core",
-        "category": "Required",
+        "type": "teorik",
+        "category": "zorunlu",
         "semester": "Fall",
         "ects": 6,
         "total_hours": 3,
@@ -25,6 +25,48 @@ def test_create_course(client, test_teacher):
     data = response.json()
     assert data["name"] == course_data["name"]
     assert data["code"] == course_data["code"]
+    assert data["type"] == course_data["type"]
+    assert data["category"] == course_data["category"]
+
+def test_create_course_invalid_type(client, test_teacher):
+    """Test creating a course with invalid type."""
+    course_data = {
+        "name": "Test Course",
+        "code": "TEST102",
+        "teacher_id": test_teacher.id,
+        "faculty": "Engineering",
+        "department": "Computer Science",
+        "level": "Bachelor",
+        "type": "invalid_type",
+        "category": "zorunlu",
+        "semester": "Fall",
+        "ects": 6,
+        "total_hours": 3,
+        "is_active": True,
+        "student_count": 25
+    }
+    response = client.post("/api/courses", json=course_data)
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+
+def test_create_course_invalid_category(client, test_teacher):
+    """Test creating a course with invalid category."""
+    course_data = {
+        "name": "Test Course",
+        "code": "TEST103",
+        "teacher_id": test_teacher.id,
+        "faculty": "Engineering",
+        "department": "Computer Science",
+        "level": "Bachelor",
+        "type": "teorik",
+        "category": "invalid_category",
+        "semester": "Fall",
+        "ects": 6,
+        "total_hours": 3,
+        "is_active": True,
+        "student_count": 25
+    }
+    response = client.post("/api/courses", json=course_data)
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 def test_get_courses(client, test_course):
     """Test getting all courses."""
@@ -52,8 +94,8 @@ def test_update_course(client, test_course):
         "faculty": "Updated Faculty",
         "department": "Updated Department",
         "level": "Master",
-        "type": "Elective",
-        "category": "Optional",
+        "type": "teorik",
+        "category": "secmeli",
         "semester": "Spring",
         "ects": 4,
         "total_hours": 2,

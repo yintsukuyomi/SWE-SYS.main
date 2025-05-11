@@ -29,8 +29,8 @@ class Course(Base):
     faculty = Column(String)
     department = Column(String)
     level = Column(String)
-    type = Column(String)
-    category = Column(String)
+    type = Column(String)  # 'teorik' or 'lab'
+    category = Column(String)  # 'zorunlu' or 'secmeli'
     semester = Column(String)
     ects = Column(Integer)
     total_hours = Column(Integer)
