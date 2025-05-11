@@ -3,6 +3,9 @@ import { Link, useParams } from 'react-router-dom';
 import { FACULTIES, getDepartmentsByFaculty } from '../constants/facultiesAndDepartments';
 import { getCourses, getSchedules } from '../api';
 import '../styles/ProgramList.css';
+import '../styles/CourseList.css';
+import '../styles/ListView.css';
+import '../styles/SearchStyles.css';
 
 const LEVELS = [
   { id: 'prep', name: 'Hazırlık Sınıfı', icon: '🔍' },
@@ -33,6 +36,7 @@ const ProgramList = ({ token }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('list'); // 'list' veya 'schedule'
+  const [searchTerm, setSearchTerm] = useState('');
 
   const faculty = FACULTIES.find(f => f.id === facultyId);
   const departments = getDepartmentsByFaculty(facultyId);
@@ -209,120 +213,152 @@ const ProgramList = ({ token }) => {
 
   return (
     <div className="program-list-container">
-      <div className="program-header">
-        <div className="navigation-breadcrumb">
-          <Link to="/faculties" className="breadcrumb-link">Fakülteler</Link> &gt; 
-          <Link to={`/faculties/${facultyId}`} className="breadcrumb-link">{faculty.name}</Link> &gt; 
-          <span className="current-page">{department.name}</span>
+      <div className="list-header">
+        <div className="header-content">
+          <h1>{department.name}</h1>
+          <p className="list-subtitle">{faculty.name} - Akademik yıla göre programlar ve dersler</p>
         </div>
-        
-        <h1>{department.name}</h1>
-        <p className="program-subtitle">Akademik yıla göre programlar ve dersler</p>
-        
-        <div className="view-toggle">
-          <button 
-            className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} 
-            onClick={() => setViewMode('list')}
-          >
-            Liste Görünümü
-          </button>
-          <button 
-            className={`view-btn ${viewMode === 'schedule' ? 'active' : ''}`} 
-            onClick={() => setViewMode('schedule')}
-          >
-            Program Görünümü
-          </button>
+        <div className="header-actions">
+          <Link to={`/faculties/${facultyId}`} className="back-button">
+            ← Bölümlere Dön
+          </Link>
+          <Link to="/faculties" className="back-button">
+            ← Fakültelere Dön
+          </Link>
+          <div className="view-toggle">
+            <button 
+              className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} 
+              onClick={() => setViewMode('list')}
+            >
+              Liste Görünümü
+            </button>
+            <button 
+              className={`view-btn ${viewMode === 'schedule' ? 'active' : ''}`} 
+              onClick={() => setViewMode('schedule')}
+            >
+              Program Görünümü
+            </button>
+          </div>
         </div>
       </div>
       
+      <div className="search-container with-search-icon">
+        <span className="search-icon">🔍</span>
+        <input
+          type="text"
+          placeholder="Ders ara..."
+          value={searchTerm || ''}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
+        {searchTerm && (
+          <button 
+            className="clear-search-btn" 
+            onClick={() => setSearchTerm('')}
+            title="Aramayı Temizle"
+          >
+            ×
+          </button>
+        )}
+      </div>
+      
       {loading ? (
-        <div className="loading">Loading programs...</div>
+        <div className="loading">Programlar yükleniyor...</div>
       ) : error ? (
         <div className="error-message">{error}</div>
       ) : (
         <div className="level-sections">
-          {LEVELS.map(level => {
-            const levelCourses = coursesByLevel[level.id] || [];
-            const levelSchedule = scheduleByLevel[level.id];
-            
-            // Bu seviyede hiçbir kurs yoksa, gösterme
-            if (levelCourses.length === 0) return null;
-            
-            return (
-              <div className="level-section" key={level.id}>
-                <h2 className="level-title">
-                  <span className="level-icon">{level.icon}</span>
-                  {level.name}
-                </h2>
-                
-                {viewMode === 'list' ? (
-                  <table className="program-table">
-                    <thead>
-                      <tr>
-                        <th>Course Code</th>
-                        <th>Course Name</th>
-                        <th>Type</th>
-                        <th>ECTS</th>
-                        <th>Hours</th>
-                        <th>Students</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+          {Object.keys(coursesByLevel).length > 0 ? (
+            Object.keys(coursesByLevel).map(level => {
+              const levelCourses = coursesByLevel[level] || [];
+              const levelSchedule = scheduleByLevel[level];
+              
+              // Bu seviyede hiçbir kurs yoksa, gösterme
+              if (levelCourses.length === 0) return null;
+              
+              const levelInfo = LEVELS.find(l => l.id === level) || {};
+              
+              return (
+                <div key={level} className="level-section">
+                  <h2 className="level-title">
+                    <span className="level-icon">{levelInfo.icon}</span> {levelInfo.name}
+                  </h2>
+                  
+                  {viewMode === 'list' ? (
+                    <div className="course-list">
                       {levelCourses.map(course => (
-                        <tr key={course.id} className={course.is_active ? 'active-course' : 'inactive-course'}>
-                          <td className="course-code">{course.code}</td>
-                          <td>{course.name}</td>
-                          <td>{course.type}</td>
-                          <td className="text-center">{course.ects}</td>
-                          <td className="text-center">{course.total_hours}</td>
-                          <td className="text-center">{course.student_count || 0}</td>
-                          <td>
-                            <Link to={`/courses/edit/${course.id}`} className="view-course-btn">
-                              View Details
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <>
-                    {levelSchedule.hasSchedules ? (
-                      <div className="weekly-schedule">
-                        <table className="schedule-table">
-                          <thead>
-                            <tr>
-                              <th className="time-header">Time / Day</th>
-                              {days.map(day => (
-                                <th key={day} className="day-header">{day}</th>
+                        <div className="course-item" key={course.id}>
+                          <div className="course-details">
+                            <div className="course-code-name">
+                              <span className="course-code">{course.code}</span>
+                              <span className="course-name">{course.name}</span>
+                            </div>
+                            <div className="course-meta-row">
+                              {course.teacher && (
+                                <span className="teacher-name">{course.teacher.name}</span>
+                              )}
+                              <span className="course-category">
+                                {course.category === 'zorunlu' ? 'Zorunlu' : 'Seçmeli'}
+                              </span>
+                              {course.sessions.map((session, index) => (
+                                <span key={index} className="session-info">
+                                  {session.type === 'teorik' ? 'Teorik' : 'Lab'}: {session.hours} saat
+                                </span>
                               ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {timeSlots.map(slot => (
-                              <tr key={slot} className="time-slot">
-                                <td className="time-cell">{slot}</td>
-                                {days.map(day => renderScheduleCell(day, slot, levelSchedule))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <p className="no-schedule">No schedule has been generated for this level yet.</p>
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          })}
-          
-          {Object.values(coursesByLevel).every(courses => courses.length === 0) && (
-            <div className="no-programs">
-              <p>No programs found for this department.</p>
-              <Link to="/courses/new" className="add-course-link">Add New Course</Link>
-            </div>
+                              <span className={`status-badge ${course.is_active ? 'active' : 'inactive'}`}>
+                                {course.is_active ? 'Aktif' : 'Pasif'}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="course-actions">
+                            <Link to={`/courses/edit/${course.id}`} className="view-details-btn">
+                              Detaylar
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <table className="program-table">
+                      <thead>
+                        <tr>
+                          <th>Ders Kodu</th>
+                          <th>Ders Adı</th>
+                          <th>Oturumlar</th>
+                          <th>ECTS</th>
+                          <th>Öğrenci</th>
+                          <th>İşlemler</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {levelCourses.map(course => (
+                          <tr key={course.id} className={course.is_active ? 'active-course' : 'inactive-course'}>
+                            <td className="course-code">{course.code}</td>
+                            <td>{course.name}</td>
+                            <td>
+                              {course.sessions.map((session, index) => (
+                                <div key={index} className="session-info">
+                                  {session.type === 'teorik' ? 'T' : 'L'}: {session.hours} saat
+                                </div>
+                              ))}
+                            </td>
+                            <td className="text-center">{course.ects}</td>
+                            <td className="text-center">{course.student_count || 0}</td>
+                            <td>
+                              <Link to={`/courses/edit/${course.id}`} className="view-course-btn">
+                                Detaylar
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              );
+            })
+          ) : (
+            <div className="no-data-message">Henüz ders eklenmemiş.</div>
           )}
         </div>
       )}

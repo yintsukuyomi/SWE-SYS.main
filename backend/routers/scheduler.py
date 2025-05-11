@@ -160,11 +160,11 @@ async def generate_schedule(db: Session = Depends(get_db)):
             joinedload(Course.teacher)
         ).all()
         if not active_courses:
-            return {"message": "No active courses found to schedule"}
+            return {"message": "Programlanacak aktif ders bulunamadı"}
         teachers = {teacher.id: teacher for teacher in db.query(Teacher).all()}
         classrooms = db.query(Classroom).all()
         if not classrooms:
-            return {"message": "No classrooms available for scheduling"}
+            return {"message": "Programlama için uygun derslik bulunamadı"}
         db.query(Schedule).delete()
         db.commit()
         prioritized_courses = sorted(
@@ -182,11 +182,11 @@ async def generate_schedule(db: Session = Depends(get_db)):
         for course in prioritized_courses:
             teacher = teachers.get(course.teacher_id)
             if not teacher:
-                unscheduled_courses.append((course, "No teacher assigned"))
+                unscheduled_courses.append((course, "Derse atanmış öğretmen yok"))
                 continue
             teacher_days = teacher.working_days.split(',') if teacher.working_days else []
             if not teacher_days:
-                unscheduled_courses.append((course, "Teacher has no available days"))
+                unscheduled_courses.append((course, "Öğretmenin uygun günü yok"))
                 continue
             suitable_time_slots = []
             for start, end in time_slots:
@@ -201,11 +201,11 @@ async def generate_schedule(db: Session = Depends(get_db)):
                 elif abs(duration - course.total_hours) < 0.5:
                     suitable_time_slots.append(time_slot)
             if not suitable_time_slots:
-                unscheduled_courses.append((course, f"No suitable time slots for {course.total_hours} hours"))
+                unscheduled_courses.append((course, f"{course.total_hours} saatlik derse uygun zaman dilimi yok"))
                 continue
             suitable_classrooms = [classroom for classroom in classrooms if classroom.capacity >= course.student_count]
             if not suitable_classrooms:
-                unscheduled_courses.append((course, f"No classroom with capacity for {course.student_count} students"))
+                unscheduled_courses.append((course, f"{course.student_count} öğrenci kapasitesine sahip derslik yok"))
                 continue
             scheduled = False
             random.shuffle(teacher_days)
@@ -240,7 +240,7 @@ async def generate_schedule(db: Session = Depends(get_db)):
                             scheduled = True
                             break
             if not scheduled:
-                unscheduled_courses.append((course, "Could not find suitable time slot and classroom"))
+                unscheduled_courses.append((course, "Uygun zaman dilimi ve derslik bulunamadı"))
         db.commit()
         new_schedule = db.query(Schedule).options(
             joinedload(Schedule.course),
@@ -289,7 +289,7 @@ async def generate_schedule(db: Session = Depends(get_db)):
         success_rate = (scheduled_count / total_count * 100) if total_count > 0 else 0
         return {
             "success": True,
-            "message": f"Schedule generated with {scheduled_count} courses ({round(success_rate, 1)}% success rate)",
+            "message": f"Program oluşturuldu: {scheduled_count} ders programlandı (%{round(success_rate, 1)} başarı oranı)",
             "scheduled_count": scheduled_count,
             "unscheduled_count": unscheduled_count,
             "success_rate": round(success_rate, 1),
@@ -298,7 +298,7 @@ async def generate_schedule(db: Session = Depends(get_db)):
         }
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error generating schedule: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Program oluşturulurken hata: {str(e)}")
 
 @router.get("/status")
 async def get_schedule_status(db: Session = Depends(get_db)):
@@ -313,4 +313,4 @@ async def get_schedule_status(db: Session = Depends(get_db)):
             "completion_percentage": round((scheduled_courses / total_courses * 100) if total_courses > 0 else 0, 2)
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching schedule status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Program durumu alınırken hata: {str(e)}")

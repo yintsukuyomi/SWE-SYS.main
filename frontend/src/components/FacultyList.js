@@ -2,24 +2,29 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FACULTIES } from '../constants/facultiesAndDepartments';
 import '../styles/ListView.css';
+import '../styles/CourseList.css';
+import '../styles/SearchStyles.css';
 
 const FacultyList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Fakülteleri arama fonksiyonu
+  // Filter and sort faculties alphabetically
   const filteredFaculties = () => {
-    if (!searchTerm) return FACULTIES;
-    
-    return FACULTIES.filter(faculty => 
-      faculty.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    if (!searchTerm) {
+      return FACULTIES.slice().sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+    }
+    return FACULTIES
+      .filter(faculty => faculty.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name, 'tr'));
   };
   
   return (
     <div className="list-container">
       <div className="list-header">
-        <h1>Fakülteler</h1>
-        <p className="list-subtitle">Fakülteler ve bölümlerini görüntüleyin</p>
+        <div className="header-content">
+          <h1>Fakülteler</h1>
+          <p className="list-subtitle">Fakülte ve bölümlere göre görüntüleyin</p>
+        </div>
       </div>
       
       <div className="search-container with-search-icon">

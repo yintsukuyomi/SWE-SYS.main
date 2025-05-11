@@ -76,7 +76,7 @@ const Scheduler = ({ token }) => {
         }
       }
     } catch (err) {
-      console.error('Error generating schedule:', err);
+      console.error('Program oluşturulurken hata:', err);
       setError(err.detail || 'Program oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setGenerating(false);

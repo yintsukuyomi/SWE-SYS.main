@@ -13,7 +13,6 @@ import TeacherEdit from "./components/TeacherEdit";
 // Course components
 import CourseList from "./components/CourseList";
 import CourseForm from "./components/CourseForm";
-import CourseEdit from "./components/CourseEdit";
 
 // Classroom components
 import ClassroomList from "./components/ClassroomList";
@@ -149,7 +148,7 @@ const App = () => {
               <Route path="/courses/edit/:id" element={
                 <PrivateRoute>
                   <AdminRoute user={user}>
-                    <CourseEdit token={token} />
+                    <CourseForm token={token} />
                   </AdminRoute>
                 </PrivateRoute>
               } />

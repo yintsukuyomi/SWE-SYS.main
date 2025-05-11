@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getCourses, deleteCourse, updateCourse } from "../api"; // Eklendi: updateCourse
 import "../styles/ListView.css";
+import "../styles/CourseList.css";
 import "../styles/SearchStyles.css";
 import { FACULTIES } from '../constants/facultiesAndDepartments';
 
@@ -246,7 +247,19 @@ const CourseList = ({ token, user }) => {
             <span className="course-category">
               {safeText(course.category) === 'zorunlu' ? 'Zorunlu' : safeText(course.category) === 'seçmeli' ? 'Seçmeli' : safeText(course.category)}
             </span>
-            <span className={`status-badge ${course.is_active ? 'active' : 'inactive'}`}>{course.is_active ? 'Aktif' : 'Pasif'}</span>
+            {isAdmin ? (
+              <span 
+                className={`status-badge ${course.is_active ? 'active' : 'inactive'} clickable`}
+                onClick={() => toggleCourseStatus(course.id, course.is_active)}
+                title={course.is_active ? 'Pasif yap' : 'Aktif yap'}
+              >
+                {course.is_active ? 'Aktif' : 'Pasif'}
+              </span>
+            ) : (
+              <span className={`status-badge ${course.is_active ? 'active' : 'inactive'}`}>
+                {course.is_active ? 'Aktif' : 'Pasif'}
+              </span>
+            )}
           </div>
         </div>
         {isAdmin && (

@@ -29,15 +29,16 @@ class Course(Base):
     faculty = Column(String)
     department = Column(String)
     level = Column(String)
-    type = Column(String)  # 'teorik' or 'lab'
+    type = Column(String, default="Core")  # 'Core', 'Lab', 'Elective' vs.
     category = Column(String)  # 'zorunlu' or 'secmeli'
     semester = Column(String)
     ects = Column(Integer)
-    total_hours = Column(Integer)
+    total_hours = Column(Integer, default=2)  # Dersin toplam saat süresi
     is_active = Column(Boolean, default=True)
     student_count = Column(Integer, default=0)  # Dersi alan öğrenci sayısı
     teacher = relationship("Teacher", back_populates="courses")
     schedules = relationship("Schedule", back_populates="course")
+    sessions = relationship("CourseSession", back_populates="course", cascade="all, delete-orphan")
 
 class Classroom(Base):
     __tablename__ = "classrooms"
@@ -58,3 +59,11 @@ class Schedule(Base):
     classroom_id = Column(Integer, ForeignKey("classrooms.id"))
     course = relationship("Course", back_populates="schedules")
     classroom = relationship("Classroom", back_populates="schedules")
+
+class CourseSession(Base):
+    __tablename__ = "course_sessions"
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id"))
+    type = Column(String)  # 'teorik' or 'lab'
+    hours = Column(Integer)  # Duration of this session in hours
+    course = relationship("Course", back_populates="sessions")

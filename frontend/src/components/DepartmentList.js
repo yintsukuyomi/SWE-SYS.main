@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { FACULTIES, getDepartmentsByFaculty } from '../constants/facultiesAndDepartments';
-import '../styles/DepartmentList.css';
+import '../styles/ListView.css';
+import '../styles/CourseList.css';
+import '../styles/SearchStyles.css';
 
 const DepartmentList = () => {
   const { facultyId } = useParams();
@@ -18,23 +20,26 @@ const DepartmentList = () => {
 
   if (!faculty) {
     return (
-      <div className="department-list-container">
-        <div className="error-message">Faculty not found</div>
-        <Link to="/faculties" className="back-link">Back to Faculties</Link>
+      <div className="list-container">
+        <div className="error-message">Fakülte bulunamadı</div>
+        <Link to="/faculties" className="back-button">Fakültelere Dön</Link>
       </div>
     );
   }
 
   return (
-    <div className="department-list-container">
-      <div className="page-navigation">
-        <Link to="/faculties" className="back-link">
-          ← Fakültelere Dön
-        </Link>
+    <div className="list-container">
+      <div className="list-header">
+        <div className="header-content">
+          <h1>{faculty.name}</h1>
+          <p className="list-subtitle">Bölümler ve programları</p>
+        </div>
+        <div className="header-actions">
+          <Link to="/faculties" className="back-button">
+            ← Fakültelere Dön
+          </Link>
+        </div>
       </div>
-      
-      <h1>{faculty.name}</h1>
-      <p className="subtitle">Bölümler ve programları</p>
       
       <div className="search-container with-search-icon">
         <span className="search-icon">🔍</span>
@@ -56,38 +61,39 @@ const DepartmentList = () => {
         )}
       </div>
       
-      <table className="list-table">
-        <thead>
-          <tr>
-            <th>Bölüm Adı</th>
-            <th style={{ width: 160, textAlign: "center" }}>İşlemler</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredDepartments.length > 0 ? (
-            filteredDepartments.map(department => (
-              <tr key={department.id}>
-                <td>{department.name}</td>
-                <td style={{ textAlign: "center" }}>
-                  <Link
-                    className="view-details-btn"
-                    style={{ minWidth: 120, display: "inline-block", textAlign: "center" }}
-                    to={`/faculties/${facultyId}/departments/${department.id}`}
-                  >
-                    Detayları Gör
-                  </Link>
+      <div className="department-list">
+        <table className="list-table">
+          <thead>
+            <tr>
+              <th>Bölüm Adı</th>
+              <th className="text-center">İşlemler</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredDepartments.length > 0 ? (
+              filteredDepartments.map(department => (
+                <tr key={department.id}>
+                  <td>{department.name}</td>
+                  <td className="text-center">
+                    <Link
+                      className="view-details-btn"
+                      to={`/faculties/${facultyId}/departments/${department.id}`}
+                    >
+                      Detayları Gör
+                    </Link>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={2} className="no-data-message">
+                  Bu fakülte için bölüm bulunamadı
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={2} className="no-data-message" style={{ textAlign: "center" }}>
-                No departments found for this faculty
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

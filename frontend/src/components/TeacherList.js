@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getTeachers, deleteTeacher } from "../api";
+import { getTeachers, deleteTeacher, updateTeacher } from "../api";
 import "../styles/ListView.css";
+import "../styles/TeacherList.css";
+import "../styles/CourseList.css";
 import "../styles/SearchStyles.css";
 import { FACULTIES } from '../constants/facultiesAndDepartments';
 
@@ -150,6 +152,42 @@ const TeacherList = ({ token, user }) => {
     }
     // Sort teachers alphabetically by name
     return filtered.slice().sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+  };
+
+  // Öğretmen aktivasyon durumunu değiştirme fonksiyonu
+  const toggleTeacherStatus = async (teacherId, isCurrentlyActive) => {
+    try {
+      const teacher = teachers.find(t => t.id === teacherId);
+      if (!teacher) return;
+  
+      const updateData = {
+        ...teacher,
+        is_active: !isCurrentlyActive
+      };
+  
+      await updateTeacher(teacherId, updateData, token);
+      
+      setTeachers(prevTeachers => 
+        prevTeachers.map(t => 
+          t.id === teacherId ? { ...t, is_active: !isCurrentlyActive } : t
+        )
+      );
+  
+      setGroupedTeachers(prevGrouped => {
+        const newGrouped = { ...prevGrouped };
+        Object.keys(newGrouped).forEach(faculty => {
+          Object.keys(newGrouped[faculty]).forEach(department => {
+            newGrouped[faculty][department] = newGrouped[faculty][department].map(t => 
+              t.id === teacherId ? { ...t, is_active: !isCurrentlyActive } : t
+            );
+          });
+        });
+        return newGrouped;
+      });
+    } catch (error) {
+      console.error("Error updating teacher status:", error);
+      setError(error.response?.data?.detail || "Öğretmen durumu güncellenirken bir hata oluştu.");
+    }
   };
 
   // Fakülteler sayfası
@@ -360,39 +398,46 @@ const TeacherList = ({ token, user }) => {
           )}
         </div>
         
-        <div className="teacher-list">
-          <table className="list-table">
-            <thead>
-              <tr>
-                <th>İsim</th>
-                <th>Email</th>
-                <th>Çalışma Günleri</th>
-                <th>Çalışma Saatleri</th>
-                {isAdmin && <th>İşlemler</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTeachers(departmentTeachers).map(teacher => (
-                <tr key={teacher.id}>
-                  <td>{teacher.name}</td>
-                  <td>{teacher.email}</td>
-                  <td>{teacher.working_days}</td>
-                  <td>{teacher.working_hours}</td>
-                  {isAdmin && (
-                    <td className="action-buttons">
-                      <Link to={`/teachers/edit/${teacher.id}`} className="btn-edit">Düzenle</Link>
-                      <button 
-                        className="btn-delete" 
-                        onClick={() => handleDeleteClick(teacher.id, teacher.name)}
-                      >
-                        Sil
-                      </button>
-                    </td>
+        <div className="course-list">
+          {filteredTeachers(departmentTeachers).map((teacher) => (
+            <div className="course-item" key={teacher.id}>
+              <div className="course-details">
+                <div className="course-code-name">
+                  <span className="teacher-name">{teacher.name}</span>
+                </div>
+                <div className="course-meta-row">
+                  <span className="teacher-email">{teacher.email}</span>
+                  <span className="teacher-title">{teacher.title}</span>
+                  {isAdmin ? (
+                    <span 
+                      className={`status-badge ${teacher.is_active ? 'active' : 'inactive'} clickable`}
+                      onClick={() => toggleTeacherStatus(teacher.id, teacher.is_active)}
+                      title={teacher.is_active ? 'Pasif yap' : 'Aktif yap'}
+                    >
+                      {teacher.is_active ? 'Aktif' : 'Pasif'}
+                    </span>
+                  ) : (
+                    <span className={`status-badge ${teacher.is_active ? 'active' : 'inactive'}`}>
+                      {teacher.is_active ? 'Aktif' : 'Pasif'}
+                    </span>
                   )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                </div>
+              </div>
+              {isAdmin && (
+                <div className="course-actions">
+                  <Link to={`/teachers/edit/${teacher.id}`} className="btn-edit">
+                    Düzenle
+                  </Link>
+                  <button
+                    className="btn-delete"
+                    onClick={() => handleDeleteClick(teacher.id, teacher.name)}
+                  >
+                    Sil
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     );

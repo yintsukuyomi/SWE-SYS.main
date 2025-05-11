@@ -448,12 +448,12 @@
 
 .classroom-type {
   display: inline-block;
-  background-color: var(--primary-color);
-  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
   font-size: 12px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  margin-bottom: 8px;
+  font-weight: 500;
+  background-color: #e3f2fd;
+  color: #1565c0;
 }
 
 .classroom-card-header h3 {
@@ -573,4 +573,20 @@
   .add-button {
     margin-top: 15px;
   }
+}
+
+.classroom-capacity {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.classrooms-page {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }

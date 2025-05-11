@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { getSchedules, deleteSchedulesByDay, deleteSchedulesByDays } from "../api";
 import "../styles/ScheduleList.css";
+import "../styles/ListView.css";
+import "../styles/CourseList.css";
 
 const ScheduleList = ({ token, user }) => {
   const [schedules, setSchedules] = useState([]);
@@ -217,13 +219,15 @@ const ScheduleList = ({ token, user }) => {
     );
   };
 
-  if (loading) return <div className="loading">Ders programı yükleniyor...</div>;
-  if (error) return <div className="error">{error}</div>;
-
   return (
-    <div className="schedule-list-container">
-      <h1>Haftalık Ders Programı</h1>
-      
+    <div className="list-container">
+      <div className="list-header">
+        <div className="header-content">
+          <h1>Ders Programı</h1>
+          <p className="list-subtitle">Günlere göre program görüntüleme</p>
+        </div>
+      </div>
+
       {isAdmin && sortedDays.length > 0 && (
         <div className="admin-actions">
           <button 
@@ -235,7 +239,6 @@ const ScheduleList = ({ token, user }) => {
         </div>
       )}
       
-      {/* Silme onay modalı */}
       {deleteConfirm.show && (
         <div className="modal-backdrop">
           <div className="delete-confirmation-modal">
@@ -244,25 +247,27 @@ const ScheduleList = ({ token, user }) => {
               <button className="close-button" onClick={cancelDelete}>&times;</button>
             </div>
             <div className="modal-body">
-              <p>
-                {deleteConfirm.dayNames.length === 1 ? (
-                  <><strong>{deleteConfirm.dayNames[0]}</strong> günündeki <strong>TÜM dersleri</strong> silmek istediğinize emin misiniz?</>
-                ) : (
-                  <><strong>{deleteConfirm.dayNames.join(', ')}</strong> günlerindeki <strong>TÜM dersleri</strong> silmek istediğinize emin misiniz?</>
-                )}
-              </p>
-              <p className="warning-text">Bu işlem geri alınamaz ve seçili günlere ait tüm programlanmış dersleri kaldıracaktır.</p>
+              {deleteConfirm.days.length === 1 ? (
+                <p><strong>{deleteConfirm.dayNames[0]}</strong> gününe ait tüm programları silmek istediğinizden emin misiniz?</p>
+              ) : (
+                <p><strong>{deleteConfirm.dayNames.length}</strong> güne ait tüm programları silmek istediğinizden emin misiniz?</p>
+              )}
+              <p className="warning-text">Bu işlem geri alınamaz.</p>
             </div>
             <div className="modal-footer">
               <button onClick={cancelDelete} className="btn-cancel">İptal</button>
-              <button onClick={confirmDelete} className="btn-delete">Tümünü Sil</button>
+              <button onClick={confirmDelete} className="btn-delete">Sil</button>
             </div>
           </div>
         </div>
       )}
       
-      {schedules.length === 0 ? (
-        <div className="no-schedules">
+      {loading ? (
+        <div className="loading">Programlar yükleniyor...</div>
+      ) : error ? (
+        <div className="error-message">{error}</div>
+      ) : schedules.length === 0 ? (
+        <div className="no-data-message">
           <p>Ders programı bulunamadı. Lütfen program oluşturmak için Program Oluşturucu kullanın.</p>
         </div>
       ) : (

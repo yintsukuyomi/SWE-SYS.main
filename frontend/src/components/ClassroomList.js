@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getClassrooms, deleteClassroom } from "../api";
+import { getClassrooms, deleteClassroom, updateClassroom } from "../api";
 import "../styles/ListView.css";
+import "../styles/ClassroomList.css";
+import "../styles/CourseList.css";
 import "../styles/SearchStyles.css";
 import { FACULTIES } from '../constants/facultiesAndDepartments';
 
@@ -155,6 +157,42 @@ const ClassroomList = ({ token, user }) => {
       .sort((a, b) => a.localeCompare(b, 'tr'));
   };
 
+  // Derslik aktivasyon durumunu değiştirme fonksiyonu
+  const toggleClassroomStatus = async (classroomId, isCurrentlyActive) => {
+    try {
+      const classroom = classrooms.find(c => c.id === classroomId);
+      if (!classroom) return;
+  
+      const updateData = {
+        ...classroom,
+        is_active: !isCurrentlyActive
+      };
+  
+      await updateClassroom(classroomId, updateData, token);
+      
+      setClassrooms(prevClassrooms => 
+        prevClassrooms.map(c => 
+          c.id === classroomId ? { ...c, is_active: !isCurrentlyActive } : c
+        )
+      );
+  
+      setGroupedClassrooms(prevGrouped => {
+        const newGrouped = { ...prevGrouped };
+        Object.keys(newGrouped).forEach(faculty => {
+          Object.keys(newGrouped[faculty]).forEach(department => {
+            newGrouped[faculty][department] = newGrouped[faculty][department].map(c => 
+              c.id === classroomId ? { ...c, is_active: !isCurrentlyActive } : c
+            );
+          });
+        });
+        return newGrouped;
+      });
+    } catch (error) {
+      console.error("Error updating classroom status:", error);
+      setError(error.response?.data?.detail || "Derslik durumu güncellenirken bir hata oluştu.");
+    }
+  };
+
   // Fakülteler sayfası
   const renderFacultiesPage = () => {
     return (
@@ -267,7 +305,7 @@ const ClassroomList = ({ token, user }) => {
         </div>
         
         <div className="search-container with-search-icon">
-          <span className="search-icon">��</span>
+          <span className="search-icon">🔍</span>
           <input
             type="text"
             placeholder="Bölüm ara..."
@@ -328,12 +366,18 @@ const ClassroomList = ({ token, user }) => {
     );
   };
 
-  // Sınıflar sayfası
+  // Derslikler sayfası
   const renderClassroomsPage = () => {
-    const classrooms = groupedClassrooms[selectedFaculty][selectedDepartment] || [];
+    if (!selectedFaculty || !selectedDepartment || 
+        !groupedClassrooms[selectedFaculty] || 
+        !groupedClassrooms[selectedFaculty][selectedDepartment]) {
+      return <div>Derslik bulunamadı</div>;
+    }
+    
+    const departmentClassrooms = groupedClassrooms[selectedFaculty][selectedDepartment];
     
     return (
-      <div className="list-container">
+      <div className="classrooms-page">
         <div className="list-header">
           <div className="header-content">
             <h1>{selectedDepartment}</h1>
@@ -374,37 +418,47 @@ const ClassroomList = ({ token, user }) => {
           )}
         </div>
         
-        <div className="classroom-list">
-          <table className="list-table">
-            <thead>
-              <tr>
-                <th>Derslik Adı</th>
-                <th>Tür</th>
-                <th>Kapasite</th>
-                {isAdmin && <th className="text-center">İşlemler</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredClassrooms(classrooms).map(classroom => (
-                <tr key={classroom.id}>
-                  <td>{classroom.name}</td>
-                  <td>{classroom.type}</td>
-                  <td>{classroom.capacity}</td>
-                  {isAdmin && (
-                    <td className="action-buttons">
-                      <Link to={`/classrooms/edit/${classroom.id}`} className="btn-edit">Düzenle</Link>
-                      <button 
-                        className="btn-delete" 
-                        onClick={() => handleDeleteClick(classroom.id, classroom.name)}
-                      >
-                        Sil
-                      </button>
-                    </td>
+        <div className="course-list">
+          {filteredClassrooms(departmentClassrooms).map((classroom) => (
+            <div className="course-item" key={classroom.id}>
+              <div className="course-details">
+                <div className="course-code-name">
+                  <span className="course-code">{classroom.code}</span>
+                  <span className="course-name">{classroom.name}</span>
+                </div>
+                <div className="course-meta-row">
+                  <span className="classroom-type">{classroom.type}</span>
+                  <span className="classroom-capacity">Kapasite: {classroom.capacity}</span>
+                  {isAdmin ? (
+                    <span 
+                      className={`status-badge ${classroom.is_active ? 'active' : 'inactive'} clickable`}
+                      onClick={() => toggleClassroomStatus(classroom.id, classroom.is_active)}
+                      title={classroom.is_active ? 'Pasif yap' : 'Aktif yap'}
+                    >
+                      {classroom.is_active ? 'Aktif' : 'Pasif'}
+                    </span>
+                  ) : (
+                    <span className={`status-badge ${classroom.is_active ? 'active' : 'inactive'}`}>
+                      {classroom.is_active ? 'Aktif' : 'Pasif'}
+                    </span>
                   )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                </div>
+              </div>
+              {isAdmin && (
+                <div className="course-actions">
+                  <Link to={`/classrooms/edit/${classroom.id}`} className="btn-edit">
+                    Düzenle
+                  </Link>
+                  <button
+                    className="btn-delete"
+                    onClick={() => handleDeleteClick(classroom.id, classroom.name)}
+                  >
+                    Sil
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     );
