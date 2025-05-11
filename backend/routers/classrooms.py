@@ -21,13 +21,12 @@ class ClassroomCreate(BaseModel):
     faculty: str
     department: str
 
-@router.get("/")
+@router.get("")
 def get_classrooms(db: Session = Depends(get_db)):
     """
     Get all classrooms
     """
-    classrooms = db.query(Classroom).all()
-    return classrooms
+    return db.query(Classroom).all()
 
 @router.get("/{classroom_id}")
 def get_classroom(classroom_id: int, db: Session = Depends(get_db)):
@@ -39,7 +38,7 @@ def get_classroom(classroom_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Classroom not found")
     return classroom
 
-@router.post("/")
+@router.post("")
 def create_classroom(classroom: ClassroomCreate, db: Session = Depends(get_db)):
     """
     Create a new classroom
@@ -49,18 +48,11 @@ def create_classroom(classroom: ClassroomCreate, db: Session = Depends(get_db)):
     if existing_classroom:
         raise HTTPException(status_code=400, detail="Classroom with this name already exists")
     
-    new_classroom = Classroom(
-        name=classroom.name,
-        capacity=classroom.capacity,
-        type=classroom.type,
-        faculty=classroom.faculty,
-        department=classroom.department
-    )
-    
-    db.add(new_classroom)
+    db_classroom = Classroom(**classroom.dict())
+    db.add(db_classroom)
     db.commit()
-    db.refresh(new_classroom)
-    return new_classroom
+    db.refresh(db_classroom)
+    return db_classroom
 
 @router.put("/{classroom_id}")
 def update_classroom(classroom_id: int, classroom: ClassroomCreate, db: Session = Depends(get_db)):

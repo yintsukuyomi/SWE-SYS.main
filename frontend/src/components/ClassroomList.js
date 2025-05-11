@@ -132,26 +132,27 @@ const ClassroomList = ({ token, user }) => {
       );
     }
     // Sort classrooms alphabetically by name
-    return filtered.slice().sort((a, b) => a.name.localeCompare(b.name));
+    return filtered.slice().sort((a, b) => a.name.localeCompare(b.name, 'tr'));
   };
 
   // Fakülteleri arama fonksiyonu
   const filteredFaculties = () => {
     // Only filter on faculties page
-    if (!searchTerm || selectedFaculty || selectedDepartment) return facultyList.slice().sort((a, b) => a.localeCompare(b));
+    if (!searchTerm || selectedFaculty || selectedDepartment) 
+      return facultyList.slice().sort((a, b) => a.localeCompare(b, 'tr'));
     return facultyList
       .filter(faculty => faculty.toLowerCase().includes(searchTerm.toLowerCase()))
-      .sort((a, b) => a.localeCompare(b));
+      .sort((a, b) => a.localeCompare(b, 'tr'));
   };
 
   // Bölümleri arama fonksiyonu
   const filteredDepartments = (departments) => {
     // Only filter on departments page
     if (!searchTerm || selectedDepartment)
-      return departments.slice().sort((a, b) => a.localeCompare(b));
+      return departments.slice().sort((a, b) => a.localeCompare(b, 'tr'));
     return departments
       .filter(department => department.toLowerCase().includes(searchTerm.toLowerCase()))
-      .sort((a, b) => a.localeCompare(b));
+      .sort((a, b) => a.localeCompare(b, 'tr'));
   };
 
   // Fakülteler sayfası
@@ -266,7 +267,7 @@ const ClassroomList = ({ token, user }) => {
         </div>
         
         <div className="search-container with-search-icon">
-          <span className="search-icon">🔍</span>
+          <span className="search-icon">��</span>
           <input
             type="text"
             placeholder="Bölüm ara..."

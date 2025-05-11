@@ -21,24 +21,23 @@ class TeacherCreate(BaseModel):
     working_days: str
     working_hours: str
 
-@router.get("/")  # "/" olarak değiştirdik, "/teachers" yerine
+@router.get("")
 def get_teachers(db: Session = Depends(get_db)):
+    """
+    Get all teachers
+    """
     return db.query(Teacher).all()
 
-@router.post("/")  # "/" olarak değiştirdik, "/teachers" yerine
+@router.post("")
 def create_teacher(teacher: TeacherCreate, db: Session = Depends(get_db)):
-    new_teacher = Teacher(
-        name=teacher.name,
-        email=teacher.email,
-        faculty=teacher.faculty,
-        department=teacher.department,
-        working_days=teacher.working_days,
-        working_hours=teacher.working_hours,
-    )
-    db.add(new_teacher)
+    """
+    Create a new teacher
+    """
+    db_teacher = Teacher(**teacher.dict())
+    db.add(db_teacher)
     db.commit()
-    db.refresh(new_teacher)
-    return new_teacher
+    db.refresh(db_teacher)
+    return db_teacher
 
 @router.delete("/{teacher_id}")  # Sadece "/{teacher_id}" olarak değiştirdik
 def delete_teacher(teacher_id: int, db: Session = Depends(get_db)):

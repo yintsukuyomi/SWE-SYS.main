@@ -160,27 +160,28 @@ const CourseList = ({ token, user }) => {
       // If name is an object (e.g. {id, name}), use .name
       const aName = typeof a.name === "object" && a.name !== null ? a.name.name : a.name;
       const bName = typeof b.name === "object" && b.name !== null ? b.name.name : b.name;
-      return String(aName).localeCompare(String(bName));
+      return String(aName).localeCompare(String(bName), 'tr');
     });
   };
 
   // Fakülteleri arama fonksiyonu
   const filteredFaculties = () => {
     // Only filter on faculties page
-    if (!searchTerm || selectedFaculty || selectedDepartment) return facultyList.slice().sort((a, b) => a.localeCompare(b));
+    if (!searchTerm || selectedFaculty || selectedDepartment) 
+      return facultyList.slice().sort((a, b) => a.localeCompare(b, 'tr'));
     return facultyList
       .filter(faculty => faculty.toLowerCase().includes(searchTerm.toLowerCase()))
-      .sort((a, b) => a.localeCompare(b));
+      .sort((a, b) => a.localeCompare(b, 'tr'));
   };
 
   // Bölümleri arama fonksiyonu
   const filteredDepartments = (departments) => {
     // Filter only on departments page (when selectedFaculty is set and selectedDepartment is NOT set)
     if (!searchTerm || !selectedFaculty || selectedDepartment)
-      return departments.slice().sort((a, b) => a.localeCompare(b));
+      return departments.slice().sort((a, b) => a.localeCompare(b, 'tr'));
     return departments
       .filter(department => department.toLowerCase().includes(searchTerm.toLowerCase()))
-      .sort((a, b) => a.localeCompare(b));
+      .sort((a, b) => a.localeCompare(b, 'tr'));
   };
 
   // Kurs aktivasyon durumunu değiştirme fonksiyonu

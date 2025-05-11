@@ -19,7 +19,7 @@ class ScheduleCreate(BaseModel):
     course_id: int
     classroom_id: int
 
-@router.get("/")
+@router.get("")
 def get_schedules(db: Session = Depends(get_db)):
     """
     Get all schedules with course and classroom information
@@ -30,7 +30,7 @@ def get_schedules(db: Session = Depends(get_db)):
     ).all()
     return schedules
 
-@router.post("/")
+@router.post("")
 def create_schedule(schedule: ScheduleCreate, db: Session = Depends(get_db)):
     new_schedule = Schedule(
         day=schedule.day,

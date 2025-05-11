@@ -29,7 +29,7 @@ class CourseCreate(BaseModel):
     is_active: bool = True
     student_count: int = 0  # Varsayılan değer 0
 
-@router.get("/")
+@router.get("")
 def get_courses(db: Session = Depends(get_db)):
     """
     Get all courses with their associated teachers
@@ -46,7 +46,7 @@ def get_course(course_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Course not found")
     return course
 
-@router.post("/")
+@router.post("")
 def create_course(course: CourseCreate, db: Session = Depends(get_db)):
     """
     Create a new course
