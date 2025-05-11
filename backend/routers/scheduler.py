@@ -1,19 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
-from database import SessionLocal
+from database import get_db
 from models import Course, Teacher, Classroom, Schedule
 from datetime import datetime, time
 from typing import List, Dict, Tuple, Any
 import random
 
 router = APIRouter()
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 # Time block definition
 TIME_BLOCKS = [

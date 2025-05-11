@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getSchedules, deleteSchedulesByDay } from "../api";
+import { getSchedules, deleteSchedulesByDay, deleteSchedulesByDays } from "../api";
 import "../styles/ScheduleList.css";
 
 const ScheduleList = ({ token, user }) => {
@@ -8,11 +8,10 @@ const ScheduleList = ({ token, user }) => {
   const [error, setError] = useState(null);
   const [groupedSchedules, setGroupedSchedules] = useState({});
   const [sortedDays, setSortedDays] = useState([]);
-  // Silme doğrulaması için state
   const [deleteConfirm, setDeleteConfirm] = useState({
     show: false,
-    day: null,
-    dayName: ''
+    days: [],
+    dayNames: []
   });
 
   // Tarih ve gün formatlamalarını yapacak yardımcı fonksiyonlar
@@ -43,22 +42,25 @@ const ScheduleList = ({ token, user }) => {
         const data = await getSchedules(token);
         console.log("Fetched schedules:", data);
         
-        // Group schedules by date (assuming a date field exists or we convert day to date)
+        // Group schedules by date
         const grouped = {};
         
-        // Simulating dates - in a real app, these would come from the backend
+        // Get the current week's dates
         const today = new Date();
+        const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - currentDay + 1); // Move to Monday
+        
         const dateMap = {
-          "Monday": new Date(today.setDate(today.getDate() - today.getDay() + 1)).toISOString().split('T')[0],
-          "Tuesday": new Date(today.setDate(today.getDate() + 1)).toISOString().split('T')[0],
-          "Wednesday": new Date(today.setDate(today.getDate() + 1)).toISOString().split('T')[0],
-          "Thursday": new Date(today.setDate(today.getDate() + 1)).toISOString().split('T')[0],
-          "Friday": new Date(today.setDate(today.getDate() + 1)).toISOString().split('T')[0]
+          "Monday": new Date(monday).toISOString().split('T')[0],
+          "Tuesday": new Date(new Date(monday).setDate(monday.getDate() + 1)).toISOString().split('T')[0],
+          "Wednesday": new Date(new Date(monday).setDate(monday.getDate() + 1)).toISOString().split('T')[0],
+          "Thursday": new Date(new Date(monday).setDate(monday.getDate() + 1)).toISOString().split('T')[0],
+          "Friday": new Date(new Date(monday).setDate(monday.getDate() + 1)).toISOString().split('T')[0]
         };
         
         data.forEach(schedule => {
-          // Convert day to a date format (example mapping)
-          const scheduleDate = dateMap[schedule.day] || "2023-06-01"; // Default date if day not found
+          const scheduleDate = dateMap[schedule.day] || "2023-06-01";
           
           if (!grouped[scheduleDate]) {
             grouped[scheduleDate] = [];
@@ -93,27 +95,44 @@ const ScheduleList = ({ token, user }) => {
     
     setDeleteConfirm({
       show: true,
-      day: dayName,
-      dayName: formatDateForDisplay(date)
+      days: [dayName],
+      dayNames: [formatDateForDisplay(date)]
+    });
+  };
+
+  const handleDeleteMultipleDaysClick = (dates) => {
+    const dayNames = dates.map(date => new Date(date).toLocaleDateString('en-US', { weekday: 'long' }));
+    const formattedDates = dates.map(date => formatDateForDisplay(date));
+    
+    setDeleteConfirm({
+      show: true,
+      days: dayNames,
+      dayNames: formattedDates
     });
   };
 
   const cancelDelete = () => {
     setDeleteConfirm({
       show: false,
-      day: null,
-      dayName: ''
+      days: [],
+      dayNames: []
     });
   };
 
   const confirmDelete = async () => {
     try {
-      // Günün tüm schedule'larını sil
-      await deleteSchedulesByDay(deleteConfirm.day, token);
+      if (deleteConfirm.days.length === 1) {
+        // Single day deletion
+        await deleteSchedulesByDay(deleteConfirm.days[0], token);
+      } else {
+        // Multiple days deletion
+        await deleteSchedulesByDays(deleteConfirm.days, token);
+      }
+      
       setDeleteConfirm({
         show: false,
-        day: null,
-        dayName: ''
+        days: [],
+        dayNames: []
       });
       
       // Programları yeniden yükle
@@ -205,6 +224,17 @@ const ScheduleList = ({ token, user }) => {
     <div className="schedule-list-container">
       <h1>Haftalık Ders Programı</h1>
       
+      {isAdmin && sortedDays.length > 0 && (
+        <div className="admin-actions">
+          <button 
+            className="delete-multiple-days-btn"
+            onClick={() => handleDeleteMultipleDaysClick(sortedDays)}
+          >
+            Delete All Days
+          </button>
+        </div>
+      )}
+      
       {/* Silme onay modalı */}
       {deleteConfirm.show && (
         <div className="modal-backdrop">
@@ -214,8 +244,14 @@ const ScheduleList = ({ token, user }) => {
               <button className="close-button" onClick={cancelDelete}>&times;</button>
             </div>
             <div className="modal-body">
-              <p><strong>{deleteConfirm.dayName}</strong> günündeki <strong>TÜM dersleri</strong> silmek istediğinize emin misiniz?</p>
-              <p className="warning-text">Bu işlem geri alınamaz ve bu güne ait tüm programlanmış dersleri kaldıracaktır.</p>
+              <p>
+                {deleteConfirm.dayNames.length === 1 ? (
+                  <><strong>{deleteConfirm.dayNames[0]}</strong> günündeki <strong>TÜM dersleri</strong> silmek istediğinize emin misiniz?</>
+                ) : (
+                  <><strong>{deleteConfirm.dayNames.join(', ')}</strong> günlerindeki <strong>TÜM dersleri</strong> silmek istediğinize emin misiniz?</>
+                )}
+              </p>
+              <p className="warning-text">Bu işlem geri alınamaz ve seçili günlere ait tüm programlanmış dersleri kaldıracaktır.</p>
             </div>
             <div className="modal-footer">
               <button onClick={cancelDelete} className="btn-cancel">İptal</button>
@@ -262,11 +298,13 @@ const ScheduleList = ({ token, user }) => {
                       return aTime.localeCompare(bTime);
                     })
                     .map(schedule => {
-                      const studentCount = schedule.course ? schedule.course.student_count || 0 : 0;
-                      const classroomCapacity = schedule.classroom ? schedule.classroom.capacity || 0 : 0;
+                      const studentCount = schedule.course?.student_count || 0;
+                      const classroomCapacity = schedule.classroom?.capacity || 0;
                       const capacityClass = getCapacityStatusClass(schedule);
                       const rowSpan = calculateRowspan(schedule.time_range);
-                      const courseName = schedule.course ? schedule.course.name : 'Unknown Course';
+                      const courseName = schedule.course?.name || 'Unknown Course';
+                      const teacherName = schedule.course?.teacher?.name || 'Unknown Teacher';
+                      const classroomName = schedule.classroom?.name || 'Unknown Classroom';
                       
                       return (
                         <tr key={schedule.id} className={rowSpan > 1 ? "long-course" : ""}>
@@ -274,11 +312,11 @@ const ScheduleList = ({ token, user }) => {
                           <td>
                             <div className="course-info">
                               <div className="course-title">{courseName}</div>
-                              <div className="course-code">{schedule.course ? schedule.course.code : ''}</div>
+                              <div className="course-code">{schedule.course?.code || ''}</div>
                             </div>
                           </td>
-                          <td>{schedule.course && schedule.course.teacher ? schedule.course.teacher.name : 'Unknown Teacher'}</td>
-                          <td>{schedule.classroom ? schedule.classroom.name : 'Unknown Classroom'}</td>
+                          <td>{teacherName}</td>
+                          <td>{classroomName}</td>
                           <td className={capacityClass}>
                             {studentCount} / {classroomCapacity}
                             {studentCount > classroomCapacity && <span className="capacity-warning"> ⚠️</span>}

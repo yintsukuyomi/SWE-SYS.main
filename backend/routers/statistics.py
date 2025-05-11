@@ -1,16 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from database import SessionLocal
+from database import get_db
 from models import Teacher, Course, Classroom, Schedule
 
 router = APIRouter()
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @router.get("/")
 def get_statistics(db: Session = Depends(get_db)):

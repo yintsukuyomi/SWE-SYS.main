@@ -1,23 +1,25 @@
-# SWESYS - Ders Programı Yönetim Sistemi
+# Ders Programı Yönetim Sistemi
 
-SWESYS, üniversiteler için geliştirilmiş bir ders programı yönetim sistemidir. Bu sistem, fakülte ve bölümlerin ders programlarını oluşturmasına, yönetmesine ve optimize etmesine olanak sağlar.
+Bu proje, üniversiteler için geliştirilmiş bir ders programı yönetim sistemidir. Öğretmenler, dersler, sınıflar ve programların yönetimini sağlar.
 
 ## Özellikler
 
-- Fakülte ve bölüm yönetimi
-- Derslik yönetimi
-- Öğretmen yönetimi
-- Ders programı oluşturma ve düzenleme
-- Çakışma kontrolü
-- Kullanıcı yetkilendirme sistemi
-- Responsive web arayüzü
+- Öğretmen yönetimi (ekleme, düzenleme, silme)
+- Ders yönetimi (ekleme, düzenleme, silme)
+- Sınıf yönetimi (ekleme, düzenleme, silme)
+- Program oluşturma ve yönetimi
+- Otomatik program oluşturma
+- Filtreleme ve arama özellikleri
+- Admin ve normal kullanıcı rolleri
+- Responsive tasarım
 
 ## Teknolojiler
 
 ### Backend
 - FastAPI
 - SQLAlchemy
-- PostgreSQL
+- SQLite
+- Pydantic
 - JWT Authentication
 - Alembic (Database Migrations)
 
@@ -25,69 +27,178 @@ SWESYS, üniversiteler için geliştirilmiş bir ders programı yönetim sistemi
 - React
 - React Router
 - Axios
-- CSS3
+- Material-UI
+- Jest & React Testing Library
 
 ## Kurulum
 
+### Gereksinimler
+- Python 3.8+
+- Node.js 14+
+- Git
+
+### Projeyi İndirme
+
+1. Projeyi klonlayın:
+```bash
+git clone https://github.com/yintsukuyomi/swesys.git
+cd swesys
+```
+
 ### Backend Kurulumu
 
-1. Python 3.8 veya üstü sürümü yükleyin
-2. Backend klasörüne gidin:
-   ```bash
-   cd backend
-   ```
-3. Virtual environment oluşturun ve aktifleştirin:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # Linux/Mac
-   venv\Scripts\activate     # Windows
-   ```
-4. Gereksinimleri yükleyin:
-   ```bash
-   pip install -r requirements.txt
-   ```
-5. `.env` dosyasını oluşturun ve gerekli değişkenleri ayarlayın:
-   ```
-   DATABASE_URL=postgresql://user:password@localhost:5432/swesys
-   SECRET_KEY=your-secret-key
-   ALGORITHM=HS256
-   ACCESS_TOKEN_EXPIRE_MINUTES=30
-   ```
+1. Backend klasörüne gidin:
+```bash
+cd backend
+```
+
+2. Sanal ortam oluşturun ve aktifleştirin:
+```bash
+# Windows için
+python -m venv venv
+venv\Scripts\activate
+
+# Linux/Mac için
+python3 -m venv venv
+source venv/bin/activate
+```
+
+3. pip'i güncelleyin:
+```bash
+python -m pip install --upgrade pip
+```
+
+4. Bağımlılıkları yükleyin:
+```bash
+pip install -r requirements.txt
+```
+
+5. Veritabanı ayarlarını yapın:
+- `.env` dosyasını oluşturun ve aşağıdaki değişkenleri ayarlayın:
+```
+DATABASE_URL=sqlite:///./swesys.db
+SECRET_KEY=your-secret-key
+```
+
 6. Veritabanı migrasyonlarını çalıştırın:
-   ```bash
-   alembic upgrade head
-   ```
+```bash
+alembic upgrade head
+```
+
 7. Uygulamayı başlatın:
-   ```bash
-   uvicorn main:app --reload
-   ```
+```bash
+uvicorn main:app --reload
+```
 
 ### Frontend Kurulumu
 
-1. Node.js ve npm yükleyin
-2. Frontend klasörüne gidin:
-   ```bash
-   cd frontend
-   ```
-3. Bağımlılıkları yükleyin:
-   ```bash
-   npm install
-   ```
-4. `.env` dosyasını oluşturun:
-   ```
-   REACT_APP_API_URL=http://localhost:8000
-   ```
-5. Uygulamayı başlatın:
-   ```bash
-   npm start
-   ```
+1. Yeni bir terminal açın ve proje ana dizinine gidin:
+```bash
+cd ..  # Eğer backend klasöründeyseniz
+cd frontend
+```
+
+2. Bağımlılıkları yükleyin:
+```bash
+npm install
+```
+
+3. Uygulamayı başlatın:
+```bash
+npm start
+```
 
 ## Kullanım
 
-1. Tarayıcınızda `http://localhost:3000` adresine gidin
-2. Varsayılan admin hesabı ile giriş yapın:
-   - Kullanıcı adı: admin
-   - Şifre: admin123
+### Admin Paneli
+
+1. Öğretmen Yönetimi
+   - Öğretmen ekleme
+   - Öğretmen bilgilerini düzenleme
+   - Öğretmen silme
+   - Çalışma günleri ve saatlerini belirleme
+
+2. Ders Yönetimi
+   - Ders ekleme
+   - Ders bilgilerini düzenleme
+   - Ders silme
+   - Öğretmen atama
+   - Öğrenci sayısı belirleme
+
+3. Sınıf Yönetimi
+   - Sınıf ekleme
+   - Sınıf bilgilerini düzenleme
+   - Sınıf silme
+   - Kapasite belirleme
+
+4. Program Yönetimi
+   - Otomatik program oluşturma
+   - Program düzenleme
+   - Program silme
+   - Günlük program görüntüleme
+
+### Normal Kullanıcı
+
+1. Program Görüntüleme
+   - Günlük program
+   - Haftalık program
+   - Filtreleme seçenekleri
+
+2. Ders Bilgileri
+   - Ders detayları
+   - Öğretmen bilgileri
+   - Sınıf bilgileri
+
+## Test
+
+### Backend Testleri
+
+1. Backend klasörüne gidin:
+```bash
+cd backend
+```
+
+2. Sanal ortamı aktifleştirin (eğer aktif değilse):
+```bash
+# Windows için
+venv\Scripts\activate
+
+# Linux/Mac için
+source venv/bin/activate
+```
+
+3. Test bağımlılıklarını yükleyin:
+```bash
+pip install pytest pytest-cov httpx
+```
+
+4. Testleri çalıştırın:
+```bash
+pytest tests/ -v --cov=.
+```
+
+### Frontend Testleri
+
+1. Frontend klasörüne gidin:
+```bash
+cd frontend
+```
+
+2. Testleri çalıştırın:
+```bash
+npm test
+```
+
+Test kapsamı raporu için:
+```bash
+npm run test:coverage
+```
+
+## API Dokümantasyonu
+
+API dokümantasyonuna aşağıdaki URL'lerden erişebilirsiniz:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
 ## Katkıda Bulunma
 
@@ -99,11 +210,11 @@ SWESYS, üniversiteler için geliştirilmiş bir ders programı yönetim sistemi
 
 ## Lisans
 
-Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
+Bu proje Apache2.0 lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
 
 ## İletişim
 
-Proje Sahibi - [@your-username](https://github.com/your-username)
+Proje Sahibi - [@yintsukuyomi](https://github.com/yintsukuyomi)
 
-Proje Linki: [https://github.com/your-username/swesys](https://github.com/your-username/swesys)
+Proje Linki: [https://github.com/yintsukuyomi/swesys](https://github.com/yintsukuyomi/swesys)
 

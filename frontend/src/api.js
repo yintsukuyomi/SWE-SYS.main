@@ -124,6 +124,18 @@ export const deleteSchedulesByDay = async (day, token) => {
   }
 };
 
+export const deleteSchedulesByDays = async (days, token) => {
+  try {
+    const response = await axios.delete(`${API_URL}/schedules/days`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: days
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response ? error.response.data : error;
+  }
+};
+
 // Scheduler API calls
 export const generateSchedule = async (token) => {
   try {

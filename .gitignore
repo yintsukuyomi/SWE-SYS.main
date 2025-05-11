@@ -171,3 +171,7 @@ node_modules/
 # System Files
 .DS_Store
 Thumbs.db
+backend/data/swesys.db
+backend/data/swesys.db
+frontend/package-lock.json
+frontend/package-lock.json

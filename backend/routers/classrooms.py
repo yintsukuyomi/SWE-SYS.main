@@ -1,102 +1,99 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from database import SessionLocal
-from models import Classroom, Schedule
-from pydantic import BaseModel
-from typing import Optional
+from typing import List
+from database import get_db
+from models import Classroom
+from pydantic import BaseModel, Field
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+class ClassroomBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    capacity: int = Field(..., gt=0)
+    type: str = Field(..., min_length=1, max_length=50)
+    faculty: str = Field(..., min_length=1, max_length=100)
+    department: str = Field(..., min_length=1, max_length=100)
 
-class ClassroomCreate(BaseModel):
-    name: str
-    capacity: int
-    type: str
-    faculty: str
-    department: str
+class ClassroomCreate(ClassroomBase):
+    pass
 
-@router.get("")
+class ClassroomResponse(ClassroomBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+@router.get("", response_model=List[ClassroomResponse])
 def get_classrooms(db: Session = Depends(get_db)):
     """
     Get all classrooms
     """
     return db.query(Classroom).all()
 
-@router.get("/{classroom_id}")
+@router.get("/{classroom_id}", response_model=ClassroomResponse)
 def get_classroom(classroom_id: int, db: Session = Depends(get_db)):
     """
     Get a specific classroom by ID
     """
     classroom = db.query(Classroom).filter(Classroom.id == classroom_id).first()
     if not classroom:
-        raise HTTPException(status_code=404, detail="Classroom not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Classroom not found")
     return classroom
 
-@router.post("")
+@router.post("", response_model=ClassroomResponse, status_code=status.HTTP_201_CREATED)
 def create_classroom(classroom: ClassroomCreate, db: Session = Depends(get_db)):
     """
     Create a new classroom
     """
-    # Check if classroom with the same name already exists
+    # Check if classroom with same name exists
     existing_classroom = db.query(Classroom).filter(Classroom.name == classroom.name).first()
     if existing_classroom:
-        raise HTTPException(status_code=400, detail="Classroom with this name already exists")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Classroom with this name already exists")
     
-    db_classroom = Classroom(**classroom.dict())
-    db.add(db_classroom)
+    new_classroom = Classroom(**classroom.model_dump())
+    db.add(new_classroom)
+    db.commit()
+    db.refresh(new_classroom)
+    return new_classroom
+
+@router.put("/{classroom_id}", response_model=ClassroomResponse)
+def update_classroom(classroom_id: int, classroom: ClassroomCreate, db: Session = Depends(get_db)):
+    """
+    Update a classroom
+    """
+    db_classroom = db.query(Classroom).filter(Classroom.id == classroom_id).first()
+    if not db_classroom:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Classroom not found")
+    
+    # Check if another classroom with same name exists
+    existing_classroom = db.query(Classroom).filter(
+        Classroom.name == classroom.name,
+        Classroom.id != classroom_id
+    ).first()
+    if existing_classroom:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Classroom with this name already exists")
+    
+    for key, value in classroom.model_dump().items():
+        setattr(db_classroom, key, value)
+    
     db.commit()
     db.refresh(db_classroom)
     return db_classroom
 
-@router.put("/{classroom_id}")
-def update_classroom(classroom_id: int, classroom: ClassroomCreate, db: Session = Depends(get_db)):
-    """
-    Update an existing classroom
-    """
-    existing_classroom = db.query(Classroom).filter(Classroom.id == classroom_id).first()
-    if not existing_classroom:
-        raise HTTPException(status_code=404, detail="Classroom not found")
-    
-    # Check if another classroom with the same name already exists
-    name_conflict = db.query(Classroom).filter(
-        Classroom.name == classroom.name, 
-        Classroom.id != classroom_id
-    ).first()
-    
-    if name_conflict:
-        raise HTTPException(status_code=400, detail="Another classroom with this name already exists")
-    
-    existing_classroom.name = classroom.name
-    existing_classroom.capacity = classroom.capacity
-    existing_classroom.type = classroom.type
-    existing_classroom.faculty = classroom.faculty
-    existing_classroom.department = classroom.department
-    
-    db.commit()
-    db.refresh(existing_classroom)
-    return existing_classroom
-
-@router.delete("/{classroom_id}")
+@router.delete("/{classroom_id}", status_code=status.HTTP_200_OK)
 def delete_classroom(classroom_id: int, db: Session = Depends(get_db)):
     """
     Delete a classroom
     """
     classroom = db.query(Classroom).filter(Classroom.id == classroom_id).first()
     if not classroom:
-        raise HTTPException(status_code=404, detail="Classroom not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Classroom not found")
     
     # Check if classroom is used in any schedules
-    schedule_exists = db.query(Schedule).filter(Schedule.classroom_id == classroom_id).first()
-    if schedule_exists:
-        raise HTTPException(status_code=400, detail="Classroom cannot be deleted because it is used in schedules")
+    if classroom.schedules:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete classroom that is used in schedules")
     
     db.delete(classroom)
     db.commit()
-    return {"message": "Classroom deleted successfully"}
+    return {"detail": "Classroom deleted successfully"}
 

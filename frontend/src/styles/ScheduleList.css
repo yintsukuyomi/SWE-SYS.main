@@ -293,3 +293,24 @@
   background-color: #c0392b;
 }
 
+.admin-actions {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.delete-multiple-days-btn {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.delete-multiple-days-btn:hover {
+  background-color: #c0392b;
+}
+
