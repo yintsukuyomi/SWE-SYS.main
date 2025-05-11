@@ -1,81 +1,109 @@
-# SWE-SYS: Eğitim Yönetiminde Yeni Nesil Otomasyon
+# SWESYS - Ders Programı Yönetim Sistemi
 
-## 🚀 Neden Bu Proje?
+SWESYS, üniversiteler için geliştirilmiş bir ders programı yönetim sistemidir. Bu sistem, fakülte ve bölümlerin ders programlarını oluşturmasına, yönetmesine ve optimize etmesine olanak sağlar.
 
-Zaman kaybı, çakışan programlar, manuel işlemler, düşük verim.
+## Özellikler
 
-Yükseköğretim kurumları hâlâ *Excel tabloları* ve *e-posta trafiğiyle* akademik planlamalarını yürütmeye çalışıyor. Bu sistemler:
-
-- Haftalık programları oluşturmakta yavaş kalıyor
-- Ders çakışmalarını önleyemiyor
-- Akademisyen ve salon kaynaklarını verimsiz kullanıyor
-- Anlık değişikliklere hızlı uyum sağlayamıyor
-- Kurumsal veri üretmiyor ve raporlayamıyor
-
-Bu noktada **SWE-SYS** devreye giriyor.
-
----
-
-## 🧠 SWE-SYS Nedir?
-
-**SWE-SYS**, üniversite düzeyindeki ders planlama ve yönetim süreçlerini baştan sona dijitalleştiren, akıllı algoritmalarla otomatikleştirilmiş, rol bazlı yetkilendirilmiş ve gerçek zamanlı bildirim desteği olan **modüler bir eğitim yönetim sistemidir.**
-
-> "SWE-SYS, manuel iş yükünü kaldırır; doğru, hızlı ve esnek planlamayı mümkün kılar."
-
----
-
-## 🧩 Modüler Mimari – Gereken Her Şey Tek Sistemde
-
-| Modül | Açıklama |
-| --- | --- |
-| 🧭 **Ders Planlayıcı** | Akademik kadro ve salon bilgilerini alır, çakışmasız ders programı üretir |
-| 🔐 **Kimlik Doğrulama ve Yetkilendirme** | Kullanıcı girişlerini ve rol bazlı erişimi yönetir |
-| 🧠 **Akıllı Zamanlama Motoru** | Yapay zekâ destekli algoritmalarla ders saatlerini optimize eder |
-| 💻 **Web & Mobil Arayüz** | Öğrenci, akademisyen ve yöneticiye özel kullanıcı deneyimi sunar |
-| 🔔 **Anlık Bildirim Sistemi** | Ders değişiklikleri ve iptaller anında bildirilir |
-| 🔐 **Rol Bazlı Yetkilendirme** | Yalnızca yetkili kullanıcılar belirli işlemleri gerçekleştirebilir |
-| 📈 **Veri Analitiği ve Raporlama** | Yönetim panelleriyle kurumlara karar destek raporları sunar |
-| 🔗 **Üniversite Sistemleri ile Entegrasyon** | Öğrenci bilgi sistemi, YÖK API’leri ve LDAP gibi altyapılara bağlanabilir |
-
----
-
-## 💡 Fark Yaratan Özellikler
-
-✅ %90’a kadar zaman tasarrufu  
-✅ %100 çakışma önleme  
-✅ Akademisyen memnuniyetinde artış  
-✅ Gerçek zamanlı değişiklik yönetimi  
-✅ Tam dijital dönüşüm uyumluluğu  
-✅ Ölçeklenebilir yapı – 1 fakülteden, tüm üniversiteye  
-
----
+- Fakülte ve bölüm yönetimi
+- Derslik yönetimi
+- Öğretmen yönetimi
+- Ders programı oluşturma ve düzenleme
+- Çakışma kontrolü
+- Kullanıcı yetkilendirme sistemi
+- Responsive web arayüzü
 
 ## Teknolojiler
 
-- **React**: Web ve mobil arayüz geliştirmek için.
-- **FastAPI**: Backend API'lerini oluşturmak için.
-- **SQLite**: Veritabanı yönetimi için.
-- **SQLAlchemy**: Veritabanı işlemleri için ORM (Object-Relational Mapping) aracı olarak.
-- **Python-Jose**: JWT tabanlı kimlik doğrulama için.
-- **Passlib**: Şifreleme işlemleri için.
+### Backend
+- FastAPI
+- SQLAlchemy
+- PostgreSQL
+- JWT Authentication
+- Alembic (Database Migrations)
 
----
+### Frontend
+- React
+- React Router
+- Axios
+- CSS3
 
+## Kurulum
 
-<pre>
-⣇⣿⠘⣿⣿⣿⡿⡿⣟⣟⢟⢟⢝⠵⡝⣿⡿⢂⣼⣿⣷⣌⠩⡫⡻⣝⠹⢿⣿⣷    Hi
-⡆⣿⣆⠱⣝⡵⣝⢅⠙⣿⢕⢕⢕⢕⢝⣥⢒⠅⣿⣿⣿⡿⣳⣌⠪⡪⣡⢑⢝⣇    We are two asocial engineers
-⡆⣿⣿⣦⠹⣳⣳⣕⢅⠈⢗⢕⢕⢕⢕⢕⢈⢆⠟⠋⠉⠁⠉⠉⠁⠈⠼⢐⢕⢽    XD
-⡗⢰⣶⣶⣦⣝⢝⢕⢕⠅⡆⢕⢕⢕⢕⢕⣴⠏⣠⡶⠛⡉⡉⡛⢶⣦⡀⠐⣕⢕
-⡝⡄⢻⢟⣿⣿⣷⣕⣕⣅⣿⣔⣕⣵⣵⣿⣿⢠⣿⢠⣮⡈⣌⠨⠅⠹⣷⡀⢱⢕
-⡝⡵⠟⠈⢀⣀⣀⡀⠉⢿⣿⣿⣿⣿⣿⣿⣿⣼⣿⢈⡋⠴⢿⡟⣡⡇⣿⡇⡀⢕
-⡝⠁⣠⣾⠟⡉⡉⡉⠻⣦⣻⣿⣿⣿⣿⣿⣿⣿⣿⣧⠸⣿⣦⣥⣿⡇⡿⣰⢗⢄
-⠁⢰⣿⡏⣴⣌⠈⣌⠡⠈⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣬⣉⣉⣁⣄⢖⢕⢕⢕
-⡀⢻⣿⡇⢙⠁⠴⢿⡟⣡⡆⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣵⣵⣿
-⡻⣄⣻⣿⣌⠘⢿⣷⣥⣿⠇⣿⣿⣿⣿⣿⣿⠛⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣷⢄⠻⣿⣟⠿⠦⠍⠉⣡⣾⣿⣿⣿⣿⣿⣿⢸⣿⣦⠙⣿⣿⣿⣿⣿⣿⣿⣿⠟
-⡕⡑⣑⣈⣻⢗⢟⢞⢝⣻⣿⣿⣿⣿⣿⣿⣿⠸⣿⠿⠃⣿⣿⣿⣿⣿⣿⡿⠁⣠
-⡝⡵⡈⢟⢕⢕⢕⢕⣵⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣶⣿⣿⣿⣿⣿⠿⠋⣀⣈⠙
-⡝⡵⡕⡀⠑⠳⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠛⢉⡠⡲⡫⡪⡪⡣ 
-</pre>
+### Backend Kurulumu
+
+1. Python 3.8 veya üstü sürümü yükleyin
+2. Backend klasörüne gidin:
+   ```bash
+   cd backend
+   ```
+3. Virtual environment oluşturun ve aktifleştirin:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Linux/Mac
+   venv\Scripts\activate     # Windows
+   ```
+4. Gereksinimleri yükleyin:
+   ```bash
+   pip install -r requirements.txt
+   ```
+5. `.env` dosyasını oluşturun ve gerekli değişkenleri ayarlayın:
+   ```
+   DATABASE_URL=postgresql://user:password@localhost:5432/swesys
+   SECRET_KEY=your-secret-key
+   ALGORITHM=HS256
+   ACCESS_TOKEN_EXPIRE_MINUTES=30
+   ```
+6. Veritabanı migrasyonlarını çalıştırın:
+   ```bash
+   alembic upgrade head
+   ```
+7. Uygulamayı başlatın:
+   ```bash
+   uvicorn main:app --reload
+   ```
+
+### Frontend Kurulumu
+
+1. Node.js ve npm yükleyin
+2. Frontend klasörüne gidin:
+   ```bash
+   cd frontend
+   ```
+3. Bağımlılıkları yükleyin:
+   ```bash
+   npm install
+   ```
+4. `.env` dosyasını oluşturun:
+   ```
+   REACT_APP_API_URL=http://localhost:8000
+   ```
+5. Uygulamayı başlatın:
+   ```bash
+   npm start
+   ```
+
+## Kullanım
+
+1. Tarayıcınızda `http://localhost:3000` adresine gidin
+2. Varsayılan admin hesabı ile giriş yapın:
+   - Kullanıcı adı: admin
+   - Şifre: admin123
+
+## Katkıda Bulunma
+
+1. Bu repository'yi fork edin
+2. Yeni bir branch oluşturun (`git checkout -b feature/amazing-feature`)
+3. Değişikliklerinizi commit edin (`git commit -m 'Add some amazing feature'`)
+4. Branch'inizi push edin (`git push origin feature/amazing-feature`)
+5. Pull Request oluşturun
+
+## Lisans
+
+Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
+
+## İletişim
+
+Proje Sahibi - [@your-username](https://github.com/your-username)
+
+Proje Linki: [https://github.com/your-username/swesys](https://github.com/your-username/swesys)
 

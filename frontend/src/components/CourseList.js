@@ -219,13 +219,20 @@ const CourseList = ({ token, user }) => {
     }
   };
 
-  // Fakülteler sayfasını değiştirme fonksiyonu
+  // Fakülteler sayfası
   const renderFacultiesPage = () => {
     return (
       <div className="list-container">
         <div className="list-header">
-          <h1>Dersler</h1>
-          <p className="list-subtitle">Fakülte ve bölümlere göre dersleri görüntüleyin</p>
+          <div className="header-content">
+            <h1>Dersler</h1>
+            <p className="list-subtitle">Fakülte ve bölümlere göre dersleri görüntüleyin</p>
+          </div>
+          {isAdmin && (
+            <Link to="/courses/new" className="add-button">
+              <span className="btn-icon">+</span> Yeni Ders Ekle
+            </Link>
+          )}
         </div>
         
         <div className="search-container with-search-icon">
@@ -298,11 +305,20 @@ const CourseList = ({ token, user }) => {
     return (
       <div className="list-container">
         <div className="list-header">
-          <h1>{selectedFaculty}</h1>
-          <p className="list-subtitle">Bölümlere göre dersleri görüntüleyin</p>
-          <button className="view-details-btn" onClick={handleBackToFaculties}>
-            ← Fakültelere Dön
-          </button>
+          <div className="header-content">
+            <h1>{selectedFaculty}</h1>
+            <p className="list-subtitle">Bölümlere göre dersleri görüntüleyin</p>
+          </div>
+          <div className="header-actions">
+            <button className="back-button" onClick={handleBackToFaculties}>
+              ← Fakültelere Dön
+            </button>
+            {isAdmin && (
+              <Link to="/courses/new" className="add-button">
+                <span className="btn-icon">+</span> Yeni Ders Ekle
+              </Link>
+            )}
+          </div>
         </div>
         
         <div className="search-container with-search-icon">
@@ -371,24 +387,24 @@ const CourseList = ({ token, user }) => {
 
     return (
       <div className="courses-page">
-        <div className="page-navigation">
-          <button className="back-button" onClick={handleBackToFaculties}>
-            ← Fakültelere Dön
-          </button>
-          <button className="back-button" onClick={handleBackToDepartments}>
-            ← Bölümlere Dön
-          </button>
-        </div>
-        <div className="course-header">
-          <div>
-            <h1 className="page-title">{selectedDepartment}</h1>
-            <p className="page-description">{selectedFaculty}</p>
+        <div className="list-header">
+          <div className="header-content">
+            <h1>{selectedDepartment}</h1>
+            <p className="list-subtitle">{selectedFaculty}</p>
           </div>
-          {isAdmin && (
-            <Link to="/courses/new" className="add-button">
-              <span className="btn-icon">+</span> Yeni Ders Ekle
-            </Link>
-          )}
+          <div className="header-actions">
+            <button className="back-button" onClick={handleBackToFaculties}>
+              ← Fakültelere Dön
+            </button>
+            <button className="back-button" onClick={handleBackToDepartments}>
+              ← Bölümlere Dön
+            </button>
+            {isAdmin && (
+              <Link to="/courses/new" className="add-button">
+                <span className="btn-icon">+</span> Yeni Ders Ekle
+              </Link>
+            )}
+          </div>
         </div>
         <div className="search-container with-search-icon">
           <span className="search-icon">🔍</span>

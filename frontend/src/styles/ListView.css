@@ -35,19 +35,29 @@
   margin: 0 auto;
 }
 
+/* List Header Styles */
 .list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.list-header h1 {
+.header-content {
+  flex: 1;
+}
+
+.header-content h1 {
   margin-bottom: 10px;
   color: var(--text-color);
   font-size: 28px;
 }
 
-.list-subtitle {
+.header-content .list-subtitle {
   color: var(--text-secondary);
-  margin-bottom: 20px;
+  margin: 0;
 }
 
 /* List table styles */
@@ -188,5 +198,102 @@
 
 [data-theme="dark"] .list-table tr:hover {
   background-color: var(--table-row-hover);
+}
+
+/* Add Button Styles */
+.add-button {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.add-button:hover {
+  background-color: #2980b9;
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.add-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.add-button .btn-icon {
+  margin-right: 8px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.add-button.disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.add-button.disabled:hover {
+  background-color: #ccc;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Empty State Styles */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--card-background);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.no-data-message {
+  color: var(--text-secondary);
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.empty-state-action {
+  margin-top: 20px;
+}
+
+.empty-state-action .add-button {
+  min-width: 200px;
+  justify-content: center;
+}
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-actions .back-button {
+  background: var(--hover-background);
+  color: var(--text-color);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.header-actions .back-button:hover {
+  background: #e0e0e0;
+}
+
+.header-actions .add-button {
+  margin-left: auto;
 }
 

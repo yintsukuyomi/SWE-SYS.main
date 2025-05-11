@@ -159,8 +159,15 @@ const ClassroomList = ({ token, user }) => {
     return (
       <div className="list-container">
         <div className="list-header">
-          <h1>Derslikler</h1>
-          <p className="list-subtitle">Fakülte ve bölümlere göre derslikleri görüntüleyin</p>
+          <div className="header-content">
+            <h1>Derslikler</h1>
+            <p className="list-subtitle">Fakülte ve bölümlere göre derslikleri görüntüleyin</p>
+          </div>
+          {isAdmin && (
+            <Link to="/classrooms/new" className="add-button">
+              <span className="btn-icon">+</span> Yeni Derslik Ekle
+            </Link>
+          )}
         </div>
         
         <div className="search-container with-search-icon">
@@ -242,11 +249,20 @@ const ClassroomList = ({ token, user }) => {
     return (
       <div className="list-container">
         <div className="list-header">
-          <h1>{selectedFaculty}</h1>
-          <p className="list-subtitle">Bölümlere göre derslikleri görüntüleyin</p>
-          <button className="view-details-btn" onClick={handleBackToFaculties}>
-            ← Fakültelere Dön
-          </button>
+          <div className="header-content">
+            <h1>{selectedFaculty}</h1>
+            <p className="list-subtitle">Bölümlere göre derslikleri görüntüleyin</p>
+          </div>
+          <div className="header-actions">
+            <button className="back-button" onClick={handleBackToFaculties}>
+              ← Fakültelere Dön
+            </button>
+            {isAdmin && (
+              <Link to="/classrooms/new" className="add-button">
+                <span className="btn-icon">+</span> Yeni Derslik Ekle
+              </Link>
+            )}
+          </div>
         </div>
         
         <div className="search-container with-search-icon">
@@ -318,11 +334,23 @@ const ClassroomList = ({ token, user }) => {
     return (
       <div className="list-container">
         <div className="list-header">
-          <h1>{selectedDepartment}</h1>
-          <p className="list-subtitle">Derslikleri görüntüleyin ve yönetin</p>
-          <button className="view-details-btn" onClick={handleBackToDepartments}>
-            ← Bölümlere Dön
-          </button>
+          <div className="header-content">
+            <h1>{selectedDepartment}</h1>
+            <p className="list-subtitle">{selectedFaculty}</p>
+          </div>
+          <div className="header-actions">
+            <button className="back-button" onClick={handleBackToFaculties}>
+              ← Fakültelere Dön
+            </button>
+            <button className="back-button" onClick={handleBackToDepartments}>
+              ← Bölümlere Dön
+            </button>
+            {isAdmin && (
+              <Link to="/classrooms/new" className="add-button">
+                <span className="btn-icon">+</span> Yeni Derslik Ekle
+              </Link>
+            )}
+          </div>
         </div>
         
         <div className="search-container with-search-icon">

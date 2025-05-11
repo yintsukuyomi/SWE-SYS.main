@@ -108,11 +108,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 16px;
+  padding: 10px 20px;
   border-radius: 6px;
   font-weight: 500;
-  transition: background-color 0.2s, transform 0.1s;
+  transition: all 0.2s ease;
   text-decoration: none !important;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .card-btn.primary {
@@ -122,6 +125,13 @@
 
 .card-btn.primary:hover {
   background-color: #2980b9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.card-btn.primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .card-btn.secondary {
@@ -132,6 +142,13 @@
 
 .card-btn.secondary:hover {
   background-color: #e9ecef;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.card-btn.secondary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .recent-activity {
