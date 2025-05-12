@@ -1,5 +1,6 @@
 import pytest
 from fastapi import status
+from models import Classroom
 
 def test_create_classroom(client):
     """Test creating a new classroom."""
@@ -69,4 +70,22 @@ def test_create_duplicate_classroom(client, test_classroom):
         "department": "Computer Science"
     }
     response = client.post("/api/classrooms", json=classroom_data)
-    assert response.status_code == status.HTTP_400_BAD_REQUEST 
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+def test_create_classroom_with_model(client):
+    """Test creating a new classroom using the model."""
+    classroom = Classroom(
+        name="Test Classroom",
+        capacity=30,
+        type="Theoretical",
+        faculty="Test Faculty",
+        department="Test Department"
+    )
+    response = client.post("/api/classrooms", json=classroom.dict())
+    assert response.status_code == status.HTTP_201_CREATED
+    data = response.json()
+    assert data["name"] == classroom.name
+    assert data["capacity"] == classroom.capacity
+    assert data["type"] == classroom.type
+    assert data["faculty"] == classroom.faculty
+    assert data["department"] == classroom.department 

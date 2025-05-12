@@ -79,7 +79,7 @@ def test_classroom(db):
     classroom = Classroom(
         name="Test Classroom",
         capacity=30,
-        type="Lecture",
+        type="Theoretical",
         faculty="Test Faculty",
         department="Test Department"
     )
