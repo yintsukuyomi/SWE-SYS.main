@@ -31,14 +31,14 @@
 - [x]  Dersler teorik ve lab olarak ayrılacak.***
 - [x]  Aktif pasif gibi durumlar listview olarak yana buton olarak eklenecek.***
 - [x]  Dersleri saat olarak ayırma seçeneği sunacak.***
-- [ ]  Derslerde lab sonra konacak.***
+- [x]  Lab ve Teorik sessionları olan derslerde lab sonra konacak.***
 
 # Classrooms
 
-- [ ]  Derslik tipleri lab ve teorik olarak sadeleştirilecek.***
+- [x]  Derslik tipleri lab ve teorik olarak sadeleştirilecek.***
 
 # Scheduler
 
 - [ ]  Ders programı oluşturma ekranında _döneme_ göre ders, derslik hoca dönem seçilebilir olmalı.**
 - [ ]  Ders programı oluşturma fonksiyonu bölüm bazlı olacak şekilde küçültülerek sistem yükü azaltılmalı.**
-- [ ]  Algoritma yeni değişikliklere göre yeniden düzenlenmeli.*********
+- [ ]  Algoritma yeni değişikliklere göre yeniden düzenlenmeli.********

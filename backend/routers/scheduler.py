@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from database import get_db
-from models import Course, Teacher, Classroom, Schedule
+from models import Course, Teacher, Classroom, Schedule, CourseSession
 from datetime import datetime, time
 from typing import List, Dict, Tuple, Any
 import random
@@ -79,6 +79,95 @@ def get_suitable_classrooms(course_type, available_classrooms, student_count):
             suitable_rooms.append(classroom)
     
     return suitable_rooms
+
+def get_course_sessions(course, db):
+    """Get all sessions for a course, sorted by type (theoretical first, then lab)"""
+    sessions = db.query(CourseSession).filter(
+        CourseSession.course_id == course.id
+    ).order_by(CourseSession.type).all()
+    return sessions
+
+def schedule_course_sessions(course, teacher, teacher_days, suitable_time_slots, suitable_classrooms, schedule_entries, db):
+    """Schedule all sessions for a course"""
+    sessions = get_course_sessions(course, db)
+    if not sessions:
+        return False, "No sessions defined for course"
+    
+    # Sort sessions to ensure theoretical sessions come before lab sessions
+    sessions.sort(key=lambda x: 0 if x.type == "teorik" else 1)
+    
+    scheduled_sessions = []
+    for session in sessions:
+        session_scheduled = False
+        random.shuffle(teacher_days)
+        
+        # Get suitable time slots for this specific session
+        session_suitable_time_slots = []
+        for time_slot in suitable_time_slots:
+            duration = calculate_duration(time_slot)
+            # Match time slots to session duration with some flexibility
+            if abs(duration - session.hours) <= 0.5:
+                session_suitable_time_slots.append(time_slot)
+        
+        if not session_suitable_time_slots:
+            return False, f"{session.hours} saatlik {session.type} oturumu için uygun zaman dilimi yok"
+        
+        for day in teacher_days:
+            if session_scheduled:
+                break
+                
+            random.shuffle(session_suitable_time_slots)
+            for time_slot in session_suitable_time_slots:
+                if session_scheduled:
+                    break
+                    
+                # Get suitable classrooms for this session type
+                session_suitable_classrooms = get_suitable_classrooms(
+                    "Lab" if session.type == "lab" else "Theoretical",
+                    suitable_classrooms,
+                    course.student_count
+                )
+                
+                if not session_suitable_classrooms:
+                    return False, f"{session.type} oturumu için uygun derslik yok"
+                
+                random.shuffle(session_suitable_classrooms)
+                for classroom in session_suitable_classrooms:
+                    # For lab sessions, check if theoretical session is already scheduled
+                    if session.type == "lab":
+                        theoretical_scheduled = any(
+                            s.type == "teorik" and s.course_id == course.id 
+                            for s in scheduled_sessions
+                        )
+                        if not theoretical_scheduled:
+                            continue
+                    
+                    if not is_conflict(
+                        schedule_entries, day, time_slot, 
+                        teacher.id, classroom.id, course.department, course.level
+                    ):
+                        new_schedule = Schedule(
+                            day=day.capitalize(),
+                            time_range=time_slot,
+                            course_id=course.id,
+                            classroom_id=classroom.id
+                        )
+                        db.add(new_schedule)
+                        schedule_entries.append({
+                            "day": day,
+                            "time_slot": time_slot,
+                            "teacher_id": teacher.id,
+                            "classroom_id": classroom.id,
+                            "department": course.department,
+                            "level": course.level,
+                            "session_type": session.type,
+                            "session_hours": session.hours
+                        })
+                        scheduled_sessions.append(session)
+                        session_scheduled = True
+                        break
+    
+    return len(scheduled_sessions) == len(sessions), "All sessions scheduled successfully"
 
 def is_conflict(schedule_entries, day, time_slot, teacher_id, classroom_id, department, level):
     """Check if there's a scheduling conflict with the given parameters"""
@@ -196,69 +285,20 @@ async def generate_schedule(db: Session = Depends(get_db)):
                 unscheduled_courses.append((course, "Öğretmenin uygun günü yok"))
                 continue
                 
-            # Get suitable time slots based on course duration
-            suitable_time_slots = []
-            for start, end in time_slots:
-                time_slot = f"{start}-{end}"
-                duration = calculate_duration(time_slot)
-                
-                # Match time slots to course duration with some flexibility
-                if abs(duration - course.total_hours) <= 0.5:
-                    suitable_time_slots.append(time_slot)
-                    
-            if not suitable_time_slots:
-                unscheduled_courses.append((course, f"{course.total_hours} saatlik derse uygun zaman dilimi yok"))
-                continue
-                
-            # Get suitable classrooms based on course type and student count
-            suitable_classrooms = get_suitable_classrooms(
-                course.type,
-                classrooms,
-                course.student_count
+            # Get all possible time slots
+            suitable_time_slots = [f"{start}-{end}" for start, end in time_slots]
+            
+            # Get all possible classrooms
+            suitable_classrooms = classrooms
+            
+            # Schedule all sessions for the course
+            success, message = schedule_course_sessions(
+                course, teacher, teacher_days, suitable_time_slots, 
+                suitable_classrooms, schedule_entries, db
             )
             
-            if not suitable_classrooms:
-                unscheduled_courses.append((course, f"Uygun tipte ve {course.student_count} öğrenci kapasitesine sahip derslik yok"))
-                continue
-                
-            scheduled = False
-            random.shuffle(teacher_days)
-            
-            for day in teacher_days:
-                if scheduled:
-                    break
-                    
-                random.shuffle(suitable_time_slots)
-                for time_slot in suitable_time_slots:
-                    if scheduled:
-                        break
-                        
-                    random.shuffle(suitable_classrooms)
-                    for classroom in suitable_classrooms:
-                        if not is_conflict(
-                            schedule_entries, day, time_slot, 
-                            teacher.id, classroom.id, course.department, course.level
-                        ):
-                            new_schedule = Schedule(
-                                day=day.capitalize(),
-                                time_range=time_slot,
-                                course_id=course.id,
-                                classroom_id=classroom.id
-                            )
-                            db.add(new_schedule)
-                            schedule_entries.append({
-                                "day": day,
-                                "time_slot": time_slot,
-                                "teacher_id": teacher.id,
-                                "classroom_id": classroom.id,
-                                "department": course.department,
-                                "level": course.level
-                            })
-                            scheduled = True
-                            break
-                            
-            if not scheduled:
-                unscheduled_courses.append((course, "Uygun zaman dilimi ve derslik bulunamadı"))
+            if not success:
+                unscheduled_courses.append((course, message))
                 
         db.commit()
         new_schedule = db.query(Schedule).options(
