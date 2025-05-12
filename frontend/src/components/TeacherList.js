@@ -14,7 +14,7 @@ const TeacherList = ({ token, user }) => {
   const [deleteConfirm, setDeleteConfirm] = useState({
     show: false,
     teacherId: null,
-    teacherName: '',
+    teacherName: ''
   });
   const [groupedTeachers, setGroupedTeachers] = useState({});
   const [facultyList, setFacultyList] = useState([]);
@@ -30,11 +30,11 @@ const TeacherList = ({ token, user }) => {
     try {
       const data = await getTeachers(token);
       setTeachers(data);
-      // Use Map for grouping for better performance
+
       const grouped = new Map();
       const faculties = new Set();
+
       data.forEach(teacher => {
-        // Map faculty ID to display name
         const facultyObj = FACULTIES.find(f => f.id === teacher.faculty);
         const facultyName = facultyObj ? facultyObj.name : teacher.faculty;
         
@@ -48,7 +48,7 @@ const TeacherList = ({ token, user }) => {
         }
         deptMap.get(teacher.department).push(teacher);
       });
-      // Convert Map back to plain object for compatibility
+
       const groupedObj = {};
       grouped.forEach((deptMap, faculty) => {
         groupedObj[faculty] = {};
@@ -56,6 +56,7 @@ const TeacherList = ({ token, user }) => {
           groupedObj[faculty][dept] = teachers;
         });
       });
+
       setGroupedTeachers(groupedObj);
       setFacultyList([...faculties].sort());
       setLoading(false);
@@ -78,7 +79,7 @@ const TeacherList = ({ token, user }) => {
     setDeleteConfirm({
       show: false,
       teacherId: null,
-      teacherName: '',
+      teacherName: ''
     });
   };
 
@@ -88,9 +89,8 @@ const TeacherList = ({ token, user }) => {
       setDeleteConfirm({
         show: false,
         teacherId: null,
-        teacherName: '',
+        teacherName: ''
       });
-      // Öğretmen listesini yeniden yükle
       fetchTeachers();
     } catch (error) {
       console.error("Error deleting teacher:", error);
@@ -98,34 +98,38 @@ const TeacherList = ({ token, user }) => {
     }
   };
 
-  // Kullanıcının admin yetkisi olup olmadığını kontrol et
   const isAdmin = user?.role === "admin" || user?.permissions?.includes("admin");
 
-  // Fakülte seçme fonksiyonu
   const handleFacultySelect = (faculty) => {
     setSelectedFaculty(faculty);
     setSelectedDepartment(null);
   };
 
-  // Bölüm seçme fonksiyonu
   const handleDepartmentSelect = (department) => {
     setSelectedDepartment(department);
   };
 
-  // Ana sayfaya dönme fonksiyonu
   const handleBackToFaculties = () => {
     setSelectedFaculty(null);
     setSelectedDepartment(null);
   };
 
-  // Üst düzey bölüm listesine dönüş
   const handleBackToDepartments = () => {
     setSelectedDepartment(null);
   };
 
-  // Fakülteleri arama fonksiyonu
+  const filteredTeachers = (teacherList) => {
+    let filtered = teacherList;
+    if (searchTerm && selectedDepartment) {
+      filtered = teacherList.filter(teacher =>
+        teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        teacher.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    return filtered.slice().sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+  };
+
   const filteredFaculties = () => {
-    // Only filter on faculties page
     if (!searchTerm || selectedFaculty || selectedDepartment) 
       return facultyList.slice().sort((a, b) => a.localeCompare(b, 'tr'));
     return facultyList
@@ -133,9 +137,7 @@ const TeacherList = ({ token, user }) => {
       .sort((a, b) => a.localeCompare(b, 'tr'));
   };
 
-  // Bölümleri arama fonksiyonu
   const filteredDepartments = (departments) => {
-    // Only filter on departments page
     if (!searchTerm || selectedDepartment)
       return departments.slice().sort((a, b) => a.localeCompare(b, 'tr'));
     return departments
@@ -143,22 +145,6 @@ const TeacherList = ({ token, user }) => {
       .sort((a, b) => a.localeCompare(b, 'tr'));
   };
 
-  // Öğretmenleri arama fonksiyonu
-  const filteredTeachers = (teacherList) => {
-    // Only filter on teachers page
-    let filtered = teacherList;
-    if (searchTerm && selectedDepartment) {
-      filtered = teacherList.filter(teacher =>
-        teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        teacher.working_days.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    // Sort teachers alphabetically by name
-    return filtered.slice().sort((a, b) => a.name.localeCompare(b.name, 'tr'));
-  };
-
-  // Öğretmen aktivasyon durumunu değiştirme fonksiyonu
   const toggleTeacherStatus = async (teacherId, isCurrentlyActive) => {
     try {
       const teacher = teachers.find(t => t.id === teacherId);
@@ -194,7 +180,6 @@ const TeacherList = ({ token, user }) => {
     }
   };
 
-  // Fakülteler sayfası
   const renderFacultiesPage = () => {
     return (
       <div className="list-container">
@@ -244,12 +229,15 @@ const TeacherList = ({ token, user }) => {
               {filteredFaculties().map(faculty => {
                 let totalTeachers = 0;
                 let departmentCount = 0;
+                
                 if (groupedTeachers[faculty]) {
                   departmentCount = Object.keys(groupedTeachers[faculty]).length;
+                  
                   Object.values(groupedTeachers[faculty]).forEach(teachers => {
                     totalTeachers += teachers.length;
                   });
                 }
+                
                 return (
                   <tr key={faculty}>
                     <td>{faculty}</td>
@@ -273,7 +261,6 @@ const TeacherList = ({ token, user }) => {
     );
   };
 
-  // Bölümler sayfası
   const renderDepartmentsPage = () => {
     const departments = Object.keys(groupedTeachers[selectedFaculty] || {});
     
@@ -328,6 +315,7 @@ const TeacherList = ({ token, user }) => {
             <tbody>
               {filteredDepartments(departments).map(department => {
                 const teachers = groupedTeachers[selectedFaculty][department];
+                
                 return (
                   <tr key={department}>
                     <td>{department}</td>
@@ -349,8 +337,7 @@ const TeacherList = ({ token, user }) => {
       </div>
     );
   };
-  
-  // Öğretmenler sayfası
+
   const renderTeachersPage = () => {
     if (!selectedFaculty || !selectedDepartment || 
         !groupedTeachers[selectedFaculty] || 
@@ -407,11 +394,11 @@ const TeacherList = ({ token, user }) => {
             <div className="course-item" key={teacher.id}>
               <div className="course-details">
                 <div className="course-code-name">
-                  <span className="teacher-name">{teacher.name}</span>
+                  <span className="course-code">{teacher.title}</span>
+                  <span className="course-name">{teacher.name}</span>
                 </div>
                 <div className="course-meta-row">
                   <span className="teacher-email">{teacher.email}</span>
-                  <span className="teacher-title">{teacher.title}</span>
                   {isAdmin ? (
                     <span 
                       className={`status-badge ${teacher.is_active ? 'active' : 'inactive'} clickable`}
@@ -447,7 +434,6 @@ const TeacherList = ({ token, user }) => {
     );
   };
 
-  // Hangi sayfayı göstereceğimize karar ver
   const renderContent = () => {
     if (loading) {
       return <div className="loading">Öğretmenler yükleniyor...</div>;
@@ -503,6 +489,7 @@ const TeacherList = ({ token, user }) => {
           </div>
         </div>
       )}
+      
       {renderContent()}
     </div>
   );

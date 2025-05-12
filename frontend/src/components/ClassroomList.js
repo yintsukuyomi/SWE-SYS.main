@@ -31,12 +31,10 @@ const ClassroomList = ({ token, user }) => {
       const data = await getClassrooms(token);
       setClassrooms(data);
 
-      // Use Map for grouping for better performance
       const grouped = new Map();
       const faculties = new Set();
 
       data.forEach(classroom => {
-        // Map faculty ID to display name
         const facultyObj = FACULTIES.find(f => f.id === classroom.faculty);
         const facultyName = facultyObj ? facultyObj.name : classroom.faculty;
         
@@ -51,7 +49,6 @@ const ClassroomList = ({ token, user }) => {
         deptMap.get(classroom.department).push(classroom);
       });
 
-      // Convert Map back to plain object for compatibility
       const groupedObj = {};
       grouped.forEach((deptMap, faculty) => {
         groupedObj[faculty] = {};
@@ -94,7 +91,6 @@ const ClassroomList = ({ token, user }) => {
         classroomId: null,
         classroomName: ''
       });
-      // Derslik listesini yeniden yükle
       fetchClassrooms();
     } catch (error) {
       console.error("Error deleting classroom:", error);
@@ -102,34 +98,27 @@ const ClassroomList = ({ token, user }) => {
     }
   };
 
-  // Kullanıcının admin yetkisi olup olmadığını kontrol et
   const isAdmin = user?.role === "admin" || user?.permissions?.includes("admin");
 
-  // Fakülte seçme fonksiyonu
   const handleFacultySelect = (faculty) => {
     setSelectedFaculty(faculty);
     setSelectedDepartment(null);
   };
 
-  // Bölüm seçme fonksiyonu
   const handleDepartmentSelect = (department) => {
     setSelectedDepartment(department);
   };
 
-  // Ana sayfaya dönme fonksiyonu
   const handleBackToFaculties = () => {
     setSelectedFaculty(null);
     setSelectedDepartment(null);
   };
 
-  // Üst düzey bölüm listesine dönüş
   const handleBackToDepartments = () => {
     setSelectedDepartment(null);
   };
 
-  // Derslikleri arama fonksiyonu
   const filteredClassrooms = (classroomList) => {
-    // Only filter on classrooms page
     let filtered = classroomList;
     if (searchTerm && selectedDepartment) {
       filtered = classroomList.filter(classroom =>
@@ -137,13 +126,10 @@ const ClassroomList = ({ token, user }) => {
         classroom.type.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    // Sort classrooms alphabetically by name
     return filtered.slice().sort((a, b) => a.name.localeCompare(b.name, 'tr'));
   };
 
-  // Fakülteleri arama fonksiyonu
   const filteredFaculties = () => {
-    // Only filter on faculties page
     if (!searchTerm || selectedFaculty || selectedDepartment) 
       return facultyList.slice().sort((a, b) => a.localeCompare(b, 'tr'));
     return facultyList
@@ -151,9 +137,7 @@ const ClassroomList = ({ token, user }) => {
       .sort((a, b) => a.localeCompare(b, 'tr'));
   };
 
-  // Bölümleri arama fonksiyonu
   const filteredDepartments = (departments) => {
-    // Only filter on departments page
     if (!searchTerm || selectedDepartment)
       return departments.slice().sort((a, b) => a.localeCompare(b, 'tr'));
     return departments
@@ -161,7 +145,6 @@ const ClassroomList = ({ token, user }) => {
       .sort((a, b) => a.localeCompare(b, 'tr'));
   };
 
-  // Derslik aktivasyon durumunu değiştirme fonksiyonu
   const toggleClassroomStatus = async (classroomId, isCurrentlyActive) => {
     try {
       const classroom = classrooms.find(c => c.id === classroomId);
@@ -197,7 +180,6 @@ const ClassroomList = ({ token, user }) => {
     }
   };
 
-  // Fakülteler sayfası
   const renderFacultiesPage = () => {
     return (
       <div className="list-container">
@@ -285,7 +267,6 @@ const ClassroomList = ({ token, user }) => {
     );
   };
 
-  // Bölümler sayfası
   const renderDepartmentsPage = () => {
     const departments = Object.keys(groupedClassrooms[selectedFaculty] || {});
     
@@ -370,7 +351,6 @@ const ClassroomList = ({ token, user }) => {
     );
   };
 
-  // Derslikler sayfası
   const renderClassroomsPage = () => {
     if (!selectedFaculty || !selectedDepartment || 
         !groupedClassrooms[selectedFaculty] || 
@@ -468,7 +448,6 @@ const ClassroomList = ({ token, user }) => {
     );
   };
 
-  // Hangi sayfayı göstereceğimize karar ver
   const renderContent = () => {
     if (loading) {
       return <div className="loading">Derslikler yükleniyor...</div>;
