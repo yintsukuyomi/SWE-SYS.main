@@ -24,7 +24,7 @@
 
 # Teachers
 
-- [ ]  Öğretmenler uygun saati bir tablodan işaretleyecek(dakika dahil olacak).***
+- [x]  Öğretmenler uygun saati bir tablodan işaretleyecek(dakika dahil olacak).***
 
 # Courses
 
