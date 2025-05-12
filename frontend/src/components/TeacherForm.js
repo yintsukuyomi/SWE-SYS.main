@@ -11,33 +11,35 @@ const TeacherForm = ({ token }) => {
     email: '',
     faculty: '',
     department: '',
-    working_days: '',
     working_hours: ''
   });
   
-  // Gün ve saat seçimleri için state
-  const [selectedDays, setSelectedDays] = useState({
-    monday: false,
-    tuesday: false,
-    wednesday: false,
-    thursday: false,
-    friday: false
-  });
-  
-  const [workingHours, setWorkingHours] = useState({
-    start: '09:00',
-    end: '17:00'
-  });
-  
+  // Çalışma saatleri için state
+  const [timeSlots, setTimeSlots] = useState({});
   const [departments, setDepartments] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Saat dilimlerini oluştur
+  useEffect(() => {
+    const slots = {};
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+    const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+    
+    days.forEach(day => {
+      slots[day] = {};
+      hours.forEach(hour => {
+        slots[day][hour] = false;
+      });
+    });
+    
+    setTimeSlots(slots);
+  }, []);
 
   // Fakülte değiştiğinde ilgili bölümleri güncelle
   useEffect(() => {
     if (formData.faculty) {
       setDepartments(getDepartmentsByFaculty(formData.faculty));
-      // Eğer seçilen fakülte değiştiyse ve mevcut bölüm bu fakültede yoksa, bölümü sıfırla
       if (!getDepartmentsByFaculty(formData.faculty).find(dept => dept.id === formData.department)) {
         setFormData(prev => ({ ...prev, department: '' }));
       }
@@ -54,19 +56,13 @@ const TeacherForm = ({ token }) => {
     }));
   };
   
-  const handleDayChange = (e) => {
-    const { name, checked } = e.target;
-    setSelectedDays(prev => ({
+  const handleTimeSlotChange = (day, hour) => {
+    setTimeSlots(prev => ({
       ...prev,
-      [name]: checked
-    }));
-  };
-  
-  const handleHourChange = (e) => {
-    const { name, value } = e.target;
-    setWorkingHours(prev => ({
-      ...prev,
-      [name]: value
+      [day]: {
+        ...prev[day],
+        [hour]: !prev[day][hour]
+      }
     }));
   };
 
@@ -75,17 +71,23 @@ const TeacherForm = ({ token }) => {
     setLoading(true);
     setError(null);
     
-    // Seçili günleri ve saatleri formData'ya ekleyelim
-    const selectedDaysArray = Object.keys(selectedDays).filter(day => selectedDays[day]);
+    // Seçili saatleri formData'ya ekleyelim
+    const workingHours = {};
+    Object.keys(timeSlots).forEach(day => {
+      const selectedHours = Object.entries(timeSlots[day])
+        .filter(([_, selected]) => selected)
+        .map(([hour]) => hour);
+      
+      if (selectedHours.length > 0) {
+        workingHours[day] = selectedHours;
+      }
+    });
     
-    if (selectedDaysArray.length === 0) {
-      setError("En az bir çalışma günü seçmelisiniz.");
+    if (Object.keys(workingHours).length === 0) {
+      setError("En az bir çalışma saati seçmelisiniz.");
       setLoading(false);
       return;
     }
-    
-    const workingDays = selectedDaysArray.join(',');
-    const workingHoursFormat = `${workingHours.start}-${workingHours.end}`;
     
     // Seçilen fakülte ve bölümün adlarını al
     const selectedFaculty = FACULTIES.find(f => f.id === formData.faculty);
@@ -93,8 +95,7 @@ const TeacherForm = ({ token }) => {
     
     const updatedFormData = {
       ...formData,
-      working_days: workingDays,
-      working_hours: workingHoursFormat,
+      working_hours: JSON.stringify(workingHours),
       // ID yerine adları gönderelim
       faculty: selectedFaculty ? selectedFaculty.name : '',
       department: selectedDepartment ? selectedDepartment.name : ''
@@ -188,49 +189,35 @@ const TeacherForm = ({ token }) => {
           </select>
         </div>
 
-        <div className="form-group days-selection">
-          <label>Çalışma Günleri</label>
-          <div className="checkbox-group">
-            {Object.keys(selectedDays).map(day => (
-              <div key={day} className="checkbox-item">
-                <input
-                  type="checkbox"
-                  id={day}
-                  name={day}
-                  checked={selectedDays[day]}
-                  onChange={handleDayChange}
-                />
-                <label htmlFor={day}>{dayLabels[day]}</label>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="form-group hours-selection">
+        <div className="form-group working-hours-table">
           <label>Çalışma Saatleri</label>
-          <div className="hours-inputs">
-            <div className="time-input">
-              <label htmlFor="start">Başlangıç:</label>
-              <input
-                type="time"
-                id="start"
-                name="start"
-                value={workingHours.start}
-                onChange={handleHourChange}
-                required
-              />
-            </div>
-            <div className="time-input">
-              <label htmlFor="end">Bitiş:</label>
-              <input
-                type="time"
-                id="end"
-                name="end"
-                value={workingHours.end}
-                onChange={handleHourChange}
-                required
-              />
-            </div>
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Saat</th>
+                  {Object.keys(dayLabels).map(day => (
+                    <th key={day}>{dayLabels[day]}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Object.keys(timeSlots.monday || {}).map(hour => (
+                  <tr key={hour}>
+                    <td>{hour}</td>
+                    {Object.keys(dayLabels).map(day => (
+                      <td key={`${day}-${hour}`}>
+                        <input
+                          type="checkbox"
+                          checked={timeSlots[day]?.[hour] || false}
+                          onChange={() => handleTimeSlotChange(day, hour)}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -239,7 +226,7 @@ const TeacherForm = ({ token }) => {
             İptal
           </button>
           <button type="submit" className="btn-submit" disabled={loading}>
-            {loading ? 'Ekleniyor...' : 'Öğretmen Ekle'}
+            {loading ? 'Kaydediliyor...' : 'Öğretmen Ekle'}
           </button>
         </div>
       </form>

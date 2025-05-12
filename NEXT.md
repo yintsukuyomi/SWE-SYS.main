@@ -24,7 +24,7 @@
 
 # Teachers
 
-- [ ]  Öğretmenler uygun olmadıkları saati bir tablodan işaretleyecek(dakika dahil olacak).***
+- [ ]  Öğretmenler uygun saati bir tablodan işaretleyecek(dakika dahil olacak).***
 
 # Courses
 

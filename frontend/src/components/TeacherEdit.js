@@ -1,50 +1,107 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getTeacherById, updateTeacher } from '../api';
 import { FACULTIES, getDepartmentsByFaculty } from '../constants/facultiesAndDepartments';
 import '../styles/TeacherForm.css';
 
 const TeacherEdit = ({ token }) => {
-  const navigate = useNavigate();
   const { id } = useParams();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     faculty: '',
     department: '',
-    working_days: '',
     working_hours: ''
   });
   
-  // Gün ve saat seçimleri için state
-  const [selectedDays, setSelectedDays] = useState({
-    monday: false,
-    tuesday: false,
-    wednesday: false,
-    thursday: false,
-    friday: false
-  });
-  
-  const [workingHours, setWorkingHours] = useState({
-    start: '09:00',
-    end: '17:00'
-  });
-  
+  // Çalışma saatleri için state
+  const [timeSlots, setTimeSlots] = useState(null);
   const [departments, setDepartments] = useState([]);
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
-  
-  // Veritabanından gelen fakülte ve bölüm adlarını ID'lere çevirmek için
-  const [originalData, setOriginalData] = useState({
-    faculty: '',
-    department: ''
-  });
+  const [loading, setLoading] = useState(false);
+
+  // Saat dilimlerini oluştur
+  const initializeTimeSlots = () => {
+    const slots = {};
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+    const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+    
+    days.forEach(day => {
+      slots[day] = {};
+      hours.forEach(hour => {
+        slots[day][hour] = false;
+      });
+    });
+    
+    return slots;
+  };
+
+  // Öğretmen verilerini yükle
+  useEffect(() => {
+    const fetchTeacher = async () => {
+      try {
+        const teacher = await getTeacherById(id, token);
+        console.log('Fetched teacher data:', teacher);
+        
+        // Fakülte ve bölüm ID'lerini bul
+        const facultyObj = FACULTIES.find(f => f.name === teacher.faculty);
+        console.log('Found faculty object:', facultyObj);
+        
+        const departmentObj = facultyObj ? 
+          getDepartmentsByFaculty(facultyObj.id).find(d => d.name === teacher.department) : null;
+        console.log('Found department object:', departmentObj);
+        
+        // Çalışma saatlerini parse et
+        let workingHours = {};
+        try {
+          if (teacher.working_hours) {
+            console.log('Raw working hours:', teacher.working_hours);
+            workingHours = JSON.parse(teacher.working_hours);
+            console.log('Parsed working hours:', workingHours);
+          }
+        } catch (e) {
+          console.error('Error parsing working hours:', e);
+        }
+        
+        // TimeSlots'u güncelle
+        const updatedTimeSlots = initializeTimeSlots();
+        Object.keys(workingHours).forEach(day => {
+          if (workingHours[day] && Array.isArray(workingHours[day])) {
+            workingHours[day].forEach(hour => {
+              if (updatedTimeSlots[day]) {
+                updatedTimeSlots[day][hour] = true;
+              }
+            });
+          }
+        });
+        console.log('Updated time slots:', updatedTimeSlots);
+        
+        setTimeSlots(updatedTimeSlots);
+        setFormData({
+          name: teacher.name,
+          email: teacher.email,
+          faculty: facultyObj ? facultyObj.id : '',
+          department: departmentObj ? departmentObj.id : '',
+          working_hours: teacher.working_hours
+        });
+        
+        if (facultyObj) {
+          setDepartments(getDepartmentsByFaculty(facultyObj.id));
+        }
+      } catch (err) {
+        console.error('Error fetching teacher:', err);
+        setError('Öğretmen bilgileri yüklenirken bir hata oluştu.');
+      }
+    };
+
+    fetchTeacher();
+  }, [id, token]);
 
   // Fakülte değiştiğinde ilgili bölümleri güncelle
   useEffect(() => {
     if (formData.faculty) {
       setDepartments(getDepartmentsByFaculty(formData.faculty));
-      // Eğer seçilen fakülte değiştiyse ve mevcut bölüm bu fakültede yoksa, bölümü sıfırla
       if (!getDepartmentsByFaculty(formData.faculty).find(dept => dept.id === formData.department)) {
         setFormData(prev => ({ ...prev, department: '' }));
       }
@@ -52,81 +109,6 @@ const TeacherEdit = ({ token }) => {
       setDepartments([]);
     }
   }, [formData.faculty]);
-
-  useEffect(() => {
-    const fetchTeacher = async () => {
-      try {
-        const data = await getTeacherById(id, token);
-        
-        // Veritabanından gelen fakülte ve bölüm adlarını sakla
-        setOriginalData({
-          faculty: data.faculty || '',
-          department: data.department || ''
-        });
-        
-        // Fakülte ve bölüm adlarından ID'leri bul
-        const facultyId = findFacultyIdByName(data.faculty);
-        const departmentsForFaculty = facultyId ? getDepartmentsByFaculty(facultyId) : [];
-        const departmentId = findDepartmentIdByName(departmentsForFaculty, data.department);
-        
-        setFormData({
-          name: data.name || '',
-          email: data.email || '',
-          faculty: facultyId || '',
-          department: departmentId || '',
-          working_days: data.working_days || '',
-          working_hours: data.working_hours || ''
-        });
-        
-        // Fakültenin bölümlerini hemen ayarla
-        if (facultyId) {
-          setDepartments(getDepartmentsByFaculty(facultyId));
-        }
-
-        // Çalışma günlerini parse et
-        if (data.working_days) {
-          const days = data.working_days.split(',');
-          const dayState = {
-            monday: days.includes('monday'),
-            tuesday: days.includes('tuesday'),
-            wednesday: days.includes('wednesday'),
-            thursday: days.includes('thursday'),
-            friday: days.includes('friday')
-          };
-          setSelectedDays(dayState);
-        }
-
-        // Çalışma saatlerini parse et
-        if (data.working_hours && data.working_hours.includes('-')) {
-          const [start, end] = data.working_hours.split('-');
-          setWorkingHours({
-            start: start.trim() || '09:00',
-            end: end.trim() || '17:00'
-          });
-        }
-
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching teacher:', error);
-        setError('Öğretmen bilgileri yüklenemedi. Lütfen tekrar deneyin.');
-        setLoading(false);
-      }
-    };
-
-    fetchTeacher();
-  }, [id, token]);
-  
-  // Fakülte adından ID bulan yardımcı fonksiyon
-  const findFacultyIdByName = (facultyName) => {
-    const faculty = FACULTIES.find(f => f.name === facultyName);
-    return faculty ? faculty.id : '';
-  };
-  
-  // Bölüm adından ID bulan yardımcı fonksiyon
-  const findDepartmentIdByName = (departments, departmentName) => {
-    const department = departments.find(d => d.name === departmentName);
-    return department ? department.id : '';
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -136,36 +118,38 @@ const TeacherEdit = ({ token }) => {
     }));
   };
   
-  const handleDayChange = (e) => {
-    const { name, checked } = e.target;
-    setSelectedDays(prev => ({
+  const handleTimeSlotChange = (day, hour) => {
+    setTimeSlots(prev => ({
       ...prev,
-      [name]: checked
-    }));
-  };
-  
-  const handleHourChange = (e) => {
-    const { name, value } = e.target;
-    setWorkingHours(prev => ({
-      ...prev,
-      [name]: value
+      [day]: {
+        ...prev[day],
+        [hour]: !prev[day][hour]
+      }
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     setError(null);
     
-    // Seçili günleri ve saatleri formData'ya ekleyelim
-    const selectedDaysArray = Object.keys(selectedDays).filter(day => selectedDays[day]);
+    // Seçili saatleri formData'ya ekleyelim
+    const workingHours = {};
+    Object.keys(timeSlots).forEach(day => {
+      const selectedHours = Object.entries(timeSlots[day])
+        .filter(([_, selected]) => selected)
+        .map(([hour]) => hour);
+      
+      if (selectedHours.length > 0) {
+        workingHours[day] = selectedHours;
+      }
+    });
     
-    if (selectedDaysArray.length === 0) {
-      setError("En az bir çalışma günü seçmelisiniz.");
+    if (Object.keys(workingHours).length === 0) {
+      setError("En az bir çalışma saati seçmelisiniz.");
+      setLoading(false);
       return;
     }
-    
-    const workingDays = selectedDaysArray.join(',');
-    const workingHoursFormat = `${workingHours.start}-${workingHours.end}`;
     
     // Seçilen fakülte ve bölümün adlarını al
     const selectedFaculty = FACULTIES.find(f => f.id === formData.faculty);
@@ -173,11 +157,10 @@ const TeacherEdit = ({ token }) => {
     
     const updatedFormData = {
       ...formData,
-      working_days: workingDays,
-      working_hours: workingHoursFormat,
+      working_hours: JSON.stringify(workingHours),
       // ID yerine adları gönderelim
-      faculty: selectedFaculty ? selectedFaculty.name : originalData.faculty,
-      department: selectedDepartment ? selectedDepartment.name : originalData.department
+      faculty: selectedFaculty ? selectedFaculty.name : '',
+      department: selectedDepartment ? selectedDepartment.name : ''
     };
 
     try {
@@ -186,6 +169,8 @@ const TeacherEdit = ({ token }) => {
     } catch (err) {
       console.error('Error updating teacher:', err);
       setError(err.detail || 'Öğretmen güncellenirken bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -197,7 +182,9 @@ const TeacherEdit = ({ token }) => {
     friday: 'Cuma'
   };
 
-  if (loading) return <div className="loading">Öğretmen bilgileri yükleniyor...</div>;
+  if (!timeSlots) {
+    return <div>Yükleniyor...</div>;
+  }
 
   return (
     <div className="teacher-form-container">
@@ -268,49 +255,35 @@ const TeacherEdit = ({ token }) => {
           </select>
         </div>
 
-        <div className="form-group days-selection">
-          <label>Çalışma Günleri</label>
-          <div className="checkbox-group">
-            {Object.keys(selectedDays).map(day => (
-              <div key={day} className="checkbox-item">
-                <input
-                  type="checkbox"
-                  id={day}
-                  name={day}
-                  checked={selectedDays[day]}
-                  onChange={handleDayChange}
-                />
-                <label htmlFor={day}>{dayLabels[day]}</label>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="form-group hours-selection">
+        <div className="form-group working-hours-table">
           <label>Çalışma Saatleri</label>
-          <div className="hours-inputs">
-            <div className="time-input">
-              <label htmlFor="start">Başlangıç:</label>
-              <input
-                type="time"
-                id="start"
-                name="start"
-                value={workingHours.start}
-                onChange={handleHourChange}
-                required
-              />
-            </div>
-            <div className="time-input">
-              <label htmlFor="end">Bitiş:</label>
-              <input
-                type="time"
-                id="end"
-                name="end"
-                value={workingHours.end}
-                onChange={handleHourChange}
-                required
-              />
-            </div>
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Saat</th>
+                  {Object.keys(dayLabels).map(day => (
+                    <th key={day}>{dayLabels[day]}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Object.keys(timeSlots.monday || {}).map(hour => (
+                  <tr key={hour}>
+                    <td>{hour}</td>
+                    {Object.keys(dayLabels).map(day => (
+                      <td key={`${day}-${hour}`}>
+                        <input
+                          type="checkbox"
+                          checked={timeSlots[day]?.[hour] || false}
+                          onChange={() => handleTimeSlotChange(day, hour)}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -318,8 +291,8 @@ const TeacherEdit = ({ token }) => {
           <button type="button" onClick={() => navigate('/teachers')} className="btn-cancel">
             İptal
           </button>
-          <button type="submit" className="btn-submit">
-            Öğretmen Güncelle
+          <button type="submit" className="btn-submit" disabled={loading}>
+            {loading ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet'}
           </button>
         </div>
       </form>
