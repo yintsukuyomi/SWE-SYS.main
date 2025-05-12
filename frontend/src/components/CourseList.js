@@ -4,7 +4,7 @@ import { getCourses, deleteCourse, updateCourse } from "../api"; // Eklendi: upd
 import "../styles/ListView.css";
 import "../styles/CourseList.css";
 import "../styles/SearchStyles.css";
-import { FACULTIES } from '../constants/facultiesAndDepartments';
+import { FACULTIES, DEPARTMENTS } from '../constants/facultiesAndDepartments';
 
 const CourseList = ({ token, user }) => {
   const [courses, setCourses] = useState([]);
@@ -44,10 +44,41 @@ const CourseList = ({ token, user }) => {
           grouped.set(facultyName, new Map());
         }
         const deptMap = grouped.get(facultyName);
-        if (!deptMap.has(course.department)) {
-          deptMap.set(course.department, []);
+
+        // Handle multiple departments
+        if (course.departments && Array.isArray(course.departments)) {
+          course.departments.forEach(dept => {
+            // Find department name from DEPARTMENTS constant
+            const departmentObj = DEPARTMENTS[course.faculty]?.find(d => d.id === dept.department);
+            const departmentName = departmentObj ? departmentObj.name : dept.department;
+            
+            if (!deptMap.has(departmentName)) {
+              deptMap.set(departmentName, new Set()); // Use Set to track unique courses
+            }
+            // Create a copy of the course with department-specific student count
+            const courseCopy = {
+              ...course,
+              student_count: dept.student_count,
+              department: departmentName, // Store the display name
+              department_id: dept.department // Store the original department ID
+            };
+            deptMap.get(departmentName).add(courseCopy); // Add to Set instead of array
+          });
+        } else {
+          // Fallback for backward compatibility
+          const departmentObj = DEPARTMENTS[course.faculty]?.find(d => d.id === course.department);
+          const departmentName = departmentObj ? departmentObj.name : course.department;
+          
+          if (!deptMap.has(departmentName)) {
+            deptMap.set(departmentName, new Set()); // Use Set to track unique courses
+          }
+          const courseCopy = {
+            ...course,
+            department: departmentName, // Store the display name
+            department_id: course.department // Store the original department ID
+          };
+          deptMap.get(departmentName).add(courseCopy); // Add to Set instead of array
         }
-        deptMap.get(course.department).push(course);
       });
 
       // Convert Map back to plain object for compatibility
@@ -55,7 +86,7 @@ const CourseList = ({ token, user }) => {
       grouped.forEach((deptMap, faculty) => {
         groupedObj[faculty] = {};
         deptMap.forEach((courses, dept) => {
-          groupedObj[faculty][dept] = courses;
+          groupedObj[faculty][dept] = Array.from(courses); // Convert Set back to array
         });
       });
 
@@ -326,24 +357,51 @@ const CourseList = ({ token, user }) => {
                 <th>Fakülte Adı</th>
                 <th>Bölüm Sayısı</th>
                 <th>Ders Sayısı</th>
+                <th>Toplam Öğrenci</th>
                 <th className="text-center">İşlemler</th>
               </tr>
             </thead>
             <tbody>
               {filteredFaculties().map(faculty => {
-                let totalCourses = 0;
+                let totalStudents = 0;
                 let departmentCount = 0;
+                const uniqueCourses = new Set();
+                const processedCourses = new Set(); // Track processed courses to avoid double counting
+                
                 if (groupedCourses[faculty]) {
                   departmentCount = Object.keys(groupedCourses[faculty]).length;
+                  
                   Object.values(groupedCourses[faculty]).forEach(courses => {
-                    totalCourses += courses.length;
+                    courses.forEach(course => {
+                      // Add course to unique set using code as identifier
+                      uniqueCourses.add(course.code);
+                      
+                      // Only process each course once per faculty
+                      if (!processedCourses.has(course.code)) {
+                        processedCourses.add(course.code);
+                        
+                        // Calculate total students from all departments
+                        if (course.departments && Array.isArray(course.departments)) {
+                          // Sum up student counts from all departments for this course
+                          const courseTotalStudents = course.departments.reduce((sum, dept) => {
+                            return sum + (parseInt(dept.student_count) || 0);
+                          }, 0);
+                          totalStudents += courseTotalStudents;
+                        } else if (course.student_count) {
+                          // Fallback for backward compatibility
+                          totalStudents += parseInt(course.student_count) || 0;
+                        }
+                      }
+                    });
                   });
                 }
+                
                 return (
                   <tr key={faculty}>
                     <td>{faculty}</td>
                     <td>{departmentCount}</td>
-                    <td>{totalCourses}</td>
+                    <td>{uniqueCourses.size}</td>
+                    <td>{totalStudents}</td>
                     <td className="text-center">
                       <button
                         className="view-details-btn"
@@ -411,16 +469,38 @@ const CourseList = ({ token, user }) => {
               <tr>
                 <th>Bölüm Adı</th>
                 <th>Ders Sayısı</th>
+                <th>Toplam Öğrenci</th>
                 <th className="text-center">İşlemler</th>
               </tr>
             </thead>
             <tbody>
               {filteredDepartments(departments).map(department => {
                 const courses = groupedCourses[selectedFaculty][department];
+                let totalStudents = 0;
+                let uniqueCourses = new Set();
+                
+                courses.forEach(course => {
+                  // Add course to unique set using code as identifier
+                  uniqueCourses.add(course.code);
+                  
+                  // Calculate total students for this department
+                  if (course.departments && Array.isArray(course.departments)) {
+                    // Find the department-specific student count
+                    const deptInfo = course.departments.find(d => d.department === course.department_id);
+                    if (deptInfo) {
+                      totalStudents += parseInt(deptInfo.student_count) || 0;
+                    }
+                  } else if (course.student_count) {
+                    // Fallback for backward compatibility
+                    totalStudents += parseInt(course.student_count) || 0;
+                  }
+                });
+                
                 return (
                   <tr key={department}>
                     <td>{department}</td>
-                    <td>{courses.length}</td>
+                    <td>{uniqueCourses.size}</td>
+                    <td>{totalStudents}</td>
                     <td className="text-center">
                       <button
                         className="view-details-btn"

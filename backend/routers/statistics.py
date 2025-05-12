@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from database import get_db
 from models import Teacher, Course, Classroom, Schedule
 
@@ -39,7 +39,9 @@ def get_courses_by_faculty(db: Session = Depends(get_db)):
     Get course statistics grouped by faculty
     """
     faculties = {}
-    courses = db.query(Course).all()
+    courses = db.query(Course).options(
+        joinedload(Course.departments)
+    ).all()
     
     for course in courses:
         if course.faculty not in faculties:
@@ -50,15 +52,26 @@ def get_courses_by_faculty(db: Session = Depends(get_db)):
             }
         
         faculties[course.faculty]["courseCount"] += 1
-        faculties[course.faculty]["studentCount"] += course.student_count
         
-        if course.department not in faculties[course.faculty]["departments"]:
-            faculties[course.faculty]["departments"][course.department] = {
-                "courseCount": 0,
-                "studentCount": 0
-            }
+        # Calculate total student count from all departments
+        course_student_count = 0
+        if course.departments:
+            course_student_count = sum(dept.student_count for dept in course.departments)
+        else:
+            # Fallback for backward compatibility
+            course_student_count = course.student_count
         
-        faculties[course.faculty]["departments"][course.department]["courseCount"] += 1
-        faculties[course.faculty]["departments"][course.department]["studentCount"] += course.student_count
+        faculties[course.faculty]["studentCount"] += course_student_count
+        
+        # Update department statistics
+        for dept in course.departments:
+            if dept.department not in faculties[course.faculty]["departments"]:
+                faculties[course.faculty]["departments"][dept.department] = {
+                    "courseCount": 0,
+                    "studentCount": 0
+                }
+            
+            faculties[course.faculty]["departments"][dept.department]["courseCount"] += 1
+            faculties[course.faculty]["departments"][dept.department]["studentCount"] += dept.student_count
     
     return faculties
