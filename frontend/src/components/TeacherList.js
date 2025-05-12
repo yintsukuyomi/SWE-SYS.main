@@ -34,11 +34,15 @@ const TeacherList = ({ token, user }) => {
       const grouped = new Map();
       const faculties = new Set();
       data.forEach(teacher => {
-        faculties.add(teacher.faculty);
-        if (!grouped.has(teacher.faculty)) {
-          grouped.set(teacher.faculty, new Map());
+        // Map faculty ID to display name
+        const facultyObj = FACULTIES.find(f => f.id === teacher.faculty);
+        const facultyName = facultyObj ? facultyObj.name : teacher.faculty;
+        
+        faculties.add(facultyName);
+        if (!grouped.has(facultyName)) {
+          grouped.set(facultyName, new Map());
         }
-        const deptMap = grouped.get(teacher.faculty);
+        const deptMap = grouped.get(facultyName);
         if (!deptMap.has(teacher.department)) {
           deptMap.set(teacher.department, []);
         }

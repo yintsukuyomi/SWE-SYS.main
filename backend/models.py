@@ -27,7 +27,6 @@ class Course(Base):
     code = Column(String, unique=True)
     teacher_id = Column(Integer, ForeignKey("teachers.id"))
     faculty = Column(String)
-    department = Column(String)
     level = Column(String)
     type = Column(String, default="Core")  # 'Core', 'Lab', 'Elective' vs.
     category = Column(String)  # 'zorunlu' or 'secmeli'
@@ -39,6 +38,7 @@ class Course(Base):
     teacher = relationship("Teacher", back_populates="courses")
     schedules = relationship("Schedule", back_populates="course")
     sessions = relationship("CourseSession", back_populates="course", cascade="all, delete-orphan")
+    departments = relationship("CourseDepartment", back_populates="course", cascade="all, delete-orphan")
 
 class Classroom(Base):
     __tablename__ = "classrooms"
@@ -67,3 +67,11 @@ class CourseSession(Base):
     type = Column(String)  # 'teorik' or 'lab'
     hours = Column(Integer)  # Duration of this session in hours
     course = relationship("Course", back_populates="sessions")
+
+class CourseDepartment(Base):
+    __tablename__ = "course_departments"
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id"))
+    department = Column(String)
+    student_count = Column(Integer, default=0)  # Bu bölümden dersi alan öğrenci sayısı
+    course = relationship("Course", back_populates="departments")

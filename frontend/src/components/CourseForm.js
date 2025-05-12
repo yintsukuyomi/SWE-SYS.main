@@ -13,14 +13,13 @@ const CourseForm = ({ token }) => {
     code: '',
     teacher_id: '',
     faculty: '',
-    department: '',
     level: '',
     category: 'zorunlu',
     semester: '',
     ects: 0,
     is_active: true,
-    student_count: 0,
-    sessions: [{ type: 'teorik', hours: 0 }]
+    sessions: [{ type: 'teorik', hours: 0 }],
+    departments: [{ department: '', student_count: 0 }]
   });
   
   const [teachers, setTeachers] = useState([]);
@@ -28,101 +27,100 @@ const CourseForm = ({ token }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Öğretmenleri yükle
-        const teachersData = await getTeachers(token);
-        setTeachers(teachersData);
+    fetchTeachers();
+    if (id) {
+      fetchCourse();
+    }
+  }, [id]);
 
-        // Eğer düzenleme modundaysa, ders bilgilerini yükle
-        if (id) {
-          const courseData = await getCourseById(id, token);
-          
-          // Fakülte ve bölüm ID'lerini bul
-          const facultyObj = FACULTIES.find(f => f.name === courseData.faculty);
-          const departmentObj = getDepartmentsByFaculty(facultyObj?.id || '').find(d => d.name === courseData.department);
-          
-          setFormData({
-            name: courseData.name,
-            code: courseData.code,
-            teacher_id: courseData.teacher_id,
-            faculty: facultyObj?.id || '',
-            department: departmentObj?.id || '',
-            level: courseData.level,
-            category: courseData.category,
-            semester: courseData.semester,
-            ects: courseData.ects,
-            is_active: courseData.is_active,
-            student_count: courseData.student_count,
-            sessions: courseData.sessions.map(session => ({
-              type: session.type,
-              hours: session.hours
-            }))
-          });
-        }
-      } catch (err) {
-        console.error('Error loading data:', err);
-        setError('Veriler yüklenemedi. Lütfen tekrar deneyin.');
-      }
-    };
-    
-    fetchData();
-  }, [token, id]);
-
-  // Fakülte değiştiğinde ilgili bölümleri güncelle
   useEffect(() => {
     if (formData.faculty) {
       setDepartments(getDepartmentsByFaculty(formData.faculty));
-      // Eğer seçilen fakülte değiştiyse ve mevcut bölüm bu fakültede yoksa, bölümü sıfırla
-      if (!getDepartmentsByFaculty(formData.faculty).find(dept => dept.id === formData.department)) {
-        setFormData(prev => ({ ...prev, department: '' }));
-      }
     } else {
       setDepartments([]);
     }
   }, [formData.faculty]);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    
-    // teacher_id için özel işlem yapalım
-    if (name === 'teacher_id') {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value ? parseInt(value, 10) : ''
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: type === 'checkbox' ? checked : value
-      }));
+  const fetchTeachers = async () => {
+    try {
+      const data = await getTeachers(token);
+      setTeachers(data);
+    } catch (error) {
+      setError('Öğretmenler yüklenirken hata oluştu');
     }
   };
 
-  const handleNumberChange = (e) => {
+  const fetchCourse = async () => {
+    try {
+      const data = await getCourseById(id, token);
+      setFormData({
+        ...data,
+        sessions: data.sessions || [{ type: 'teorik', hours: 0 }],
+        departments: data.departments || [{ department: '', student_count: 0 }]
+      });
+    } catch (error) {
+      setError('Ders bilgileri yüklenirken hata oluştu');
+    }
+  };
+
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: parseInt(value, 10) || 0
+      [name]: value
     }));
   };
 
   const handleSessionChange = (index, field, value) => {
     const newSessions = [...formData.sessions];
-    newSessions[index] = { ...newSessions[index], [field]: value };
-    setFormData({ ...formData, sessions: newSessions });
+    newSessions[index] = {
+      ...newSessions[index],
+      [field]: value
+    };
+    setFormData(prev => ({
+      ...prev,
+      sessions: newSessions
+    }));
+  };
+
+  const handleDepartmentChange = (index, field, value) => {
+    const newDepartments = [...formData.departments];
+    newDepartments[index] = {
+      ...newDepartments[index],
+      [field]: value
+    };
+    setFormData(prev => ({
+      ...prev,
+      departments: newDepartments
+    }));
   };
 
   const addSession = () => {
-    setFormData({
-      ...formData,
-      sessions: [...formData.sessions, { type: 'teorik', hours: 0 }]
-    });
+    setFormData(prev => ({
+      ...prev,
+      sessions: [...prev.sessions, { type: 'teorik', hours: 0 }]
+    }));
   };
 
   const removeSession = (index) => {
-    const newSessions = formData.sessions.filter((_, i) => i !== index);
-    setFormData({ ...formData, sessions: newSessions });
+    setFormData(prev => ({
+      ...prev,
+      sessions: prev.sessions.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addDepartment = () => {
+    setFormData(prev => ({
+      ...prev,
+      departments: [...prev.departments, { department: '', student_count: 0 }]
+    }));
+  };
+
+  const removeDepartment = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      departments: prev.departments.filter((_, i) => i !== index)
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -130,33 +128,15 @@ const CourseForm = ({ token }) => {
     setLoading(true);
     setError(null);
 
-    // Seçilen fakülte ve bölümün adlarını al
-    const selectedFaculty = FACULTIES.find(f => f.id === formData.faculty);
-    const selectedDepartment = departments.find(d => d.id === formData.department);
-
-    // teacher_id'nin sayısal olduğundan emin olalım
-    const submissionData = {
-      ...formData,
-      teacher_id: parseInt(formData.teacher_id, 10),
-      // ID yerine adları gönderelim
-      faculty: selectedFaculty ? selectedFaculty.name : '',
-      department: selectedDepartment ? selectedDepartment.name : '',
-      sessions: formData.sessions.map(session => ({
-        ...session,
-        type: session.type === 'teorik' ? 'teorik' : 'lab'
-      }))
-    };
-
     try {
       if (id) {
-        await updateCourse(id, submissionData, token);
+        await updateCourse(id, formData, token);
       } else {
-        await createCourse(submissionData, token);
+        await createCourse(formData, token);
       }
       navigate('/courses');
-    } catch (err) {
-      console.error('Error saving course:', err);
-      setError(err.detail || 'Ders kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
+    } catch (error) {
+      setError(error.message || 'Bir hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -167,7 +147,7 @@ const CourseForm = ({ token }) => {
       <h2>{id ? 'Dersi Düzenle' : 'Yeni Ders Ekle'}</h2>
       {error && <div className="error-message">{error}</div>}
       
-      <form onSubmit={handleSubmit} className="course-form">
+      <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="name">Ders Adı</label>
           <input
@@ -177,7 +157,6 @@ const CourseForm = ({ token }) => {
             value={formData.name}
             onChange={handleChange}
             required
-            placeholder="Ders adını girin"
           />
         </div>
 
@@ -190,7 +169,6 @@ const CourseForm = ({ token }) => {
             value={formData.code}
             onChange={handleChange}
             required
-            placeholder="Örn: CS101"
           />
         </div>
 
@@ -230,23 +208,59 @@ const CourseForm = ({ token }) => {
           </select>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="department">Bölüm</label>
-          <select
-            id="department"
-            name="department"
-            value={formData.department}
-            onChange={handleChange}
-            required
-            disabled={!formData.faculty}
+        <div className="departments-section">
+          <h3>Bölümler</h3>
+          {formData.departments.map((dept, index) => (
+            <div key={index} className="department-row">
+              <div className="form-group">
+                <label htmlFor={`department-${index}`}>Bölüm</label>
+                <select
+                  id={`department-${index}`}
+                  value={dept.department}
+                  onChange={(e) => handleDepartmentChange(index, 'department', e.target.value)}
+                  required
+                  disabled={!formData.faculty}
+                >
+                  <option value="">Bölüm seçin</option>
+                  {departments.map(dept => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor={`student-count-${index}`}>Öğrenci Sayısı</label>
+                <input
+                  type="number"
+                  id={`student-count-${index}`}
+                  min="0"
+                  value={dept.student_count}
+                  onChange={(e) => handleDepartmentChange(index, 'student_count', parseInt(e.target.value))}
+                  required
+                />
+              </div>
+
+              {index > 0 && (
+                <button
+                  type="button"
+                  className="btn-remove"
+                  onClick={() => removeDepartment(index)}
+                >
+                  Bölümü Sil
+                </button>
+              )}
+            </div>
+          ))}
+
+          <button
+            type="button"
+            className="btn-add"
+            onClick={addDepartment}
           >
-            <option value="">Bölüm seçin</option>
-            {departments.map(department => (
-              <option key={department.id} value={department.id}>
-                {department.name}
-              </option>
-            ))}
-          </select>
+            Bölüm Ekle
+          </button>
         </div>
 
         <div className="form-group">
@@ -256,7 +270,9 @@ const CourseForm = ({ token }) => {
             name="level"
             value={formData.level}
             onChange={handleChange}
+            required
           >
+            <option value="">Seviye seçin</option>
             <option value="Preparatory Year">Hazırlık</option>
             <option value="Year 1">1. Sınıf</option>
             <option value="Year 2">2. Sınıf</option>
@@ -288,51 +304,38 @@ const CourseForm = ({ token }) => {
             name="semester"
             value={formData.semester}
             onChange={handleChange}
+            required
           >
+            <option value="">Dönem seçin</option>
             <option value="Fall">Güz</option>
             <option value="Spring">Bahar</option>
             <option value="Summer">Yaz</option>
-            <option value="Winter">Kış</option>
           </select>
         </div>
 
         <div className="form-group">
-          <label htmlFor="ects">AKTS Kredisi</label>
+          <label htmlFor="ects">AKTS</label>
           <input
             type="number"
             id="ects"
             name="ects"
-            min="1"
-            max="30"
+            min="0"
             value={formData.ects}
-            onChange={handleNumberChange}
+            onChange={handleChange}
             required
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="student_count">Öğrenci Sayısı</label>
-          <input
-            type="number"
-            id="student_count"
-            name="student_count"
-            min="0"
-            max="1000"
-            value={formData.student_count}
-            onChange={handleNumberChange}
-            required
-          />
-        </div>
-
-        <div className="form-group checkbox-group">
-          <input
-            type="checkbox"
-            id="is_active"
-            name="is_active"
-            checked={formData.is_active}
-            onChange={handleChange}
-          />
-          <label htmlFor="is_active">Aktif Ders</label>
+          <label>
+            <input
+              type="checkbox"
+              name="is_active"
+              checked={formData.is_active}
+              onChange={(e) => handleChange({ target: { name: 'is_active', value: e.target.checked } })}
+            />
+            Aktif
+          </label>
         </div>
 
         <div className="sessions-section">
@@ -387,11 +390,11 @@ const CourseForm = ({ token }) => {
         </div>
 
         <div className="form-actions">
-          <button type="button" onClick={() => navigate('/courses')} className="btn-cancel">
-            İptal
-          </button>
           <button type="submit" className="btn-submit" disabled={loading}>
-            {loading ? 'Kaydediliyor...' : (id ? 'Güncelle' : 'Ders Ekle')}
+            {loading ? 'Kaydediliyor...' : (id ? 'Güncelle' : 'Kaydet')}
+          </button>
+          <button type="button" className="btn-cancel" onClick={() => navigate('/courses')}>
+            İptal
           </button>
         </div>
       </form>

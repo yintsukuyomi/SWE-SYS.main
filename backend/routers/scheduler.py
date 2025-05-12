@@ -87,11 +87,42 @@ def get_course_sessions(course, db):
     ).order_by(CourseSession.type).all()
     return sessions
 
+def is_conflict(schedule_entries, day, time_slot, teacher_id, classroom_id, departments, level):
+    """Check if there's a scheduling conflict with the given parameters"""
+    start, end = time_slot.split('-')
+    
+    for entry in schedule_entries:
+        if entry['day'] != day:
+            continue
+            
+        entry_start, entry_end = entry['time_slot'].split('-')
+        
+        # Time conflict check
+        if (start <= entry_end and end >= entry_start):
+            # Same teacher conflict
+            if entry['teacher_id'] == teacher_id:
+                return True
+                
+            # Same classroom conflict
+            if entry['classroom_id'] == classroom_id:
+                return True
+                
+            # Same department and level conflict
+            if any(dept in entry['departments'] for dept in departments) and entry['level'] == level:
+                return True
+                
+    return False
+
 def schedule_course_sessions(course, teacher, teacher_days, suitable_time_slots, suitable_classrooms, schedule_entries, db):
     """Schedule all sessions for a course"""
     sessions = get_course_sessions(course, db)
     if not sessions:
         return False, "No sessions defined for course"
+    
+    # Get course departments
+    departments = [dept.department for dept in course.departments]
+    if not departments:
+        return False, "Course has no departments assigned"
     
     # Sort sessions to ensure theoretical sessions come before lab sessions
     sessions.sort(key=lambda x: 0 if x.type == "teorik" else 1)
@@ -125,7 +156,7 @@ def schedule_course_sessions(course, teacher, teacher_days, suitable_time_slots,
                 session_suitable_classrooms = get_suitable_classrooms(
                     "Lab" if session.type == "lab" else "Theoretical",
                     suitable_classrooms,
-                    course.student_count
+                    sum(dept.student_count for dept in course.departments)  # Total students from all departments
                 )
                 
                 if not session_suitable_classrooms:
@@ -144,7 +175,7 @@ def schedule_course_sessions(course, teacher, teacher_days, suitable_time_slots,
                     
                     if not is_conflict(
                         schedule_entries, day, time_slot, 
-                        teacher.id, classroom.id, course.department, course.level
+                        teacher.id, classroom.id, departments, course.level
                     ):
                         new_schedule = Schedule(
                             day=day.capitalize(),
@@ -158,7 +189,7 @@ def schedule_course_sessions(course, teacher, teacher_days, suitable_time_slots,
                             "time_slot": time_slot,
                             "teacher_id": teacher.id,
                             "classroom_id": classroom.id,
-                            "department": course.department,
+                            "departments": departments,
                             "level": course.level,
                             "session_type": session.type,
                             "session_hours": session.hours
@@ -168,32 +199,6 @@ def schedule_course_sessions(course, teacher, teacher_days, suitable_time_slots,
                         break
     
     return len(scheduled_sessions) == len(sessions), "All sessions scheduled successfully"
-
-def is_conflict(schedule_entries, day, time_slot, teacher_id, classroom_id, department, level):
-    """Check if there's a scheduling conflict with the given parameters"""
-    start, end = time_slot.split('-')
-    
-    for entry in schedule_entries:
-        if entry['day'] != day:
-            continue
-            
-        entry_start, entry_end = entry['time_slot'].split('-')
-        
-        # Time conflict check
-        if (start <= entry_end and end >= entry_start):
-            # Same teacher conflict
-            if entry['teacher_id'] == teacher_id:
-                return True
-                
-            # Same classroom conflict
-            if entry['classroom_id'] == classroom_id:
-                return True
-                
-            # Same department and level conflict
-            if entry['department'] == department and entry['level'] == level:
-                return True
-                
-    return False
 
 def get_time_slots():
     """Define standard time slots for scheduling"""

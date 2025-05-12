@@ -35,11 +35,15 @@ const CourseList = ({ token, user }) => {
       const faculties = new Set();
 
       data.forEach(course => {
-        faculties.add(course.faculty);
-        if (!grouped.has(course.faculty)) {
-          grouped.set(course.faculty, new Map());
+        // Map faculty ID to display name
+        const facultyObj = FACULTIES.find(f => f.id === course.faculty);
+        const facultyName = facultyObj ? facultyObj.name : course.faculty;
+        
+        faculties.add(facultyName);
+        if (!grouped.has(facultyName)) {
+          grouped.set(facultyName, new Map());
         }
-        const deptMap = grouped.get(course.faculty);
+        const deptMap = grouped.get(facultyName);
         if (!deptMap.has(course.department)) {
           deptMap.set(course.department, []);
         }
