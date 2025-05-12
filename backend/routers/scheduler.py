@@ -67,15 +67,14 @@ def get_suitable_classrooms(course_type, available_classrooms, student_count):
     
     # Map course types to classroom types
     type_mapping = {
-        "Lab": ["Laboratory", "Computer Lab"],
-        "Core": ["Lecture Hall", "Classroom", "Conference Room"],
-        "Elective": ["Lecture Hall", "Classroom", "Seminar Room"]
+        "Lab": ["Lab"],
+        "Theoretical": ["Theoretical"]
     }
     
-    matching_types = type_mapping.get(course_type, ["Lecture Hall", "Classroom"])
+    matching_types = type_mapping.get(course_type, ["Theoretical"])
     
     for classroom in available_classrooms:
-        # İki koşulu kontrol ediyoruz: sınıf türü uyumlu mu ve kapasite yeterli mi
+        # Check if classroom type matches and has sufficient capacity
         if classroom.type in matching_types and classroom.capacity >= student_count:
             suitable_rooms.append(classroom)
     
@@ -91,17 +90,17 @@ def is_conflict(schedule_entries, day, time_slot, teacher_id, classroom_id, depa
             
         entry_start, entry_end = entry['time_slot'].split('-')
         
-        # Zaman çakışması kontrolü
+        # Time conflict check
         if (start <= entry_end and end >= entry_start):
-            # Aynı öğretmen çakışması
+            # Same teacher conflict
             if entry['teacher_id'] == teacher_id:
                 return True
                 
-            # Aynı sınıf çakışması
+            # Same classroom conflict
             if entry['classroom_id'] == classroom_id:
                 return True
                 
-            # Aynı bölüm ve sınıf seviyesi çakışması 
+            # Same department and level conflict
             if entry['department'] == department and entry['level'] == level:
                 return True
                 
@@ -161,61 +160,79 @@ async def generate_schedule(db: Session = Depends(get_db)):
         ).all()
         if not active_courses:
             return {"message": "Programlanacak aktif ders bulunamadı"}
+            
         teachers = {teacher.id: teacher for teacher in db.query(Teacher).all()}
         classrooms = db.query(Classroom).all()
         if not classrooms:
             return {"message": "Programlama için uygun derslik bulunamadı"}
+            
+        # Clear existing schedule
         db.query(Schedule).delete()
         db.commit()
+        
+        # Sort courses by priority
         prioritized_courses = sorted(
             active_courses, 
             key=lambda c: (
-                0 if c.type == "Core" else 1,
+                0 if c.type == "Lab" else 1,  # Lab courses have higher priority
                 -c.ects,
                 -c.total_hours,
                 -c.student_count
             )
         )
+        
         schedule_entries = []
         unscheduled_courses = []
         time_slots = get_time_slots()
+        
         for course in prioritized_courses:
             teacher = teachers.get(course.teacher_id)
             if not teacher:
                 unscheduled_courses.append((course, "Derse atanmış öğretmen yok"))
                 continue
+                
             teacher_days = teacher.working_days.split(',') if teacher.working_days else []
             if not teacher_days:
                 unscheduled_courses.append((course, "Öğretmenin uygun günü yok"))
                 continue
+                
+            # Get suitable time slots based on course duration
             suitable_time_slots = []
             for start, end in time_slots:
                 time_slot = f"{start}-{end}"
                 duration = calculate_duration(time_slot)
-                if course.total_hours == 1 and 0.8 <= duration <= 1.2:
+                
+                # Match time slots to course duration with some flexibility
+                if abs(duration - course.total_hours) <= 0.5:
                     suitable_time_slots.append(time_slot)
-                elif course.total_hours == 2 and 1.5 <= duration <= 2.2:
-                    suitable_time_slots.append(time_slot)
-                elif course.total_hours == 3 and 2.5 <= duration <= 3.5:
-                    suitable_time_slots.append(time_slot)
-                elif abs(duration - course.total_hours) < 0.5:
-                    suitable_time_slots.append(time_slot)
+                    
             if not suitable_time_slots:
                 unscheduled_courses.append((course, f"{course.total_hours} saatlik derse uygun zaman dilimi yok"))
                 continue
-            suitable_classrooms = [classroom for classroom in classrooms if classroom.capacity >= course.student_count]
+                
+            # Get suitable classrooms based on course type and student count
+            suitable_classrooms = get_suitable_classrooms(
+                course.type,
+                classrooms,
+                course.student_count
+            )
+            
             if not suitable_classrooms:
-                unscheduled_courses.append((course, f"{course.student_count} öğrenci kapasitesine sahip derslik yok"))
+                unscheduled_courses.append((course, f"Uygun tipte ve {course.student_count} öğrenci kapasitesine sahip derslik yok"))
                 continue
+                
             scheduled = False
             random.shuffle(teacher_days)
+            
             for day in teacher_days:
                 if scheduled:
                     break
+                    
                 random.shuffle(suitable_time_slots)
                 for time_slot in suitable_time_slots:
                     if scheduled:
                         break
+                        
                     random.shuffle(suitable_classrooms)
                     for classroom in suitable_classrooms:
                         if not is_conflict(
@@ -239,8 +256,10 @@ async def generate_schedule(db: Session = Depends(get_db)):
                             })
                             scheduled = True
                             break
+                            
             if not scheduled:
                 unscheduled_courses.append((course, "Uygun zaman dilimi ve derslik bulunamadı"))
+                
         db.commit()
         new_schedule = db.query(Schedule).options(
             joinedload(Schedule.course),

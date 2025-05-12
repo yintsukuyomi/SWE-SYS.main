@@ -6,7 +6,7 @@ def test_create_classroom(client):
     classroom_data = {
         "name": "Test Classroom",
         "capacity": 30,
-        "type": "Lecture",
+        "type": "Theoretical",
         "faculty": "Engineering",
         "department": "Computer Science"
     }
@@ -38,7 +38,7 @@ def test_update_classroom(client, test_classroom):
     update_data = {
         "name": "Updated Classroom",
         "capacity": 40,
-        "type": "Laboratory",
+        "type": "Lab",
         "faculty": "Updated Faculty",
         "department": "Updated Department"
     }
@@ -64,7 +64,7 @@ def test_create_duplicate_classroom(client, test_classroom):
     classroom_data = {
         "name": test_classroom.name,
         "capacity": 30,
-        "type": "Lecture",
+        "type": "Theoretical",
         "faculty": "Engineering",
         "department": "Computer Science"
     }

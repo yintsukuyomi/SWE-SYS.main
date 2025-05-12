@@ -176,13 +176,8 @@ const ClassroomEdit = ({ token }) => {
             onChange={handleChange}
             required
           >
-            <option value="Lecture Hall">Amfi</option>
-            <option value="Laboratory">Laboratuvar</option>
-            <option value="Seminar Room">Seminer Salonu</option>
-            <option value="Computer Lab">Bilgisayar Laboratuvarı</option>
-            <option value="Conference Room">Konferans Salonu</option>
-            <option value="Studio">Stüdyo</option>
-            <option value="Auditorium">Oditoryum</option>
+            <option value="Theoretical">Teorik</option>
+            <option value="Lab">Laboratuvar</option>
           </select>
         </div>
 
