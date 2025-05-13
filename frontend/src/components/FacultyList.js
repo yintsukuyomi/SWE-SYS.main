@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FACULTIES } from '../constants/facultiesAndDepartments';
+import { FACULTIES, DEPARTMENTS } from '../constants/facultiesAndDepartments';
 import '../styles/ListView.css';
 import '../styles/CourseList.css';
 import '../styles/SearchStyles.css';
@@ -60,7 +60,7 @@ const FacultyList = () => {
             {filteredFaculties().map(faculty => (
               <tr key={faculty.id}>
                 <td>{faculty.name}</td>
-                <td>{faculty.departments ? faculty.departments.length : 0} bölüm</td>
+                <td>{DEPARTMENTS[faculty.id] ? DEPARTMENTS[faculty.id].length : 0} bölüm</td>
                 <td className="text-center">
                   <Link to={`/faculties/${faculty.id}`} className="view-details-btn">
                     Detayları Gör
