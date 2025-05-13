@@ -1,36 +1,49 @@
-# Ders Programı Yönetim Sistemi
+# SWE-SYS (Ders Programı Yönetim Sistemi)
 
-Bu proje, üniversiteler için geliştirilmiş bir ders programı yönetim sistemidir. Öğretmenler, dersler, sınıflar ve programların yönetimini sağlar.
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-14%2B-green)](https://nodejs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.68%2B-blue)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-17%2B-blue)](https://reactjs.org/)
 
-## Özellikler
+Modern ve kullanıcı dostu bir üniversite ders programı yönetim sistemi. Öğretmenler, dersler, sınıflar ve programların etkin yönetimini sağlar.
 
+## 🌟 Özellikler
+
+### 📚 Temel Özellikler
+- Fakülte ve bölüm bazlı yönetim
 - Öğretmen yönetimi (ekleme, düzenleme, silme)
 - Ders yönetimi (ekleme, düzenleme, silme)
 - Sınıf yönetimi (ekleme, düzenleme, silme)
 - Program oluşturma ve yönetimi
 - Otomatik program oluşturma
-- Filtreleme ve arama özellikleri
-- Admin ve normal kullanıcı rolleri
-- Responsive tasarım
 
-## Teknolojiler
+### 🔍 Gelişmiş Özellikler
+- Gelişmiş filtreleme ve arama
+- Rol tabanlı yetkilendirme (Admin ve normal kullanıcı)
+- Responsive tasarım
+- Excel ile toplu veri girişi
+- Bildirim sistemi
+- Aktivite takibi
+
+## 🛠️ Teknolojiler
 
 ### Backend
-- FastAPI
-- SQLAlchemy
-- SQLite
-- Pydantic
-- JWT Authentication
-- Alembic (Database Migrations)
+- FastAPI - Modern, hızlı web framework
+- SQLAlchemy - Güçlü ORM
+- SQLite - Hafif veritabanı
+- Pydantic - Veri doğrulama
+- JWT Authentication - Güvenli kimlik doğrulama
+- Alembic - Veritabanı migrasyonları
 
 ### Frontend
-- React
-- React Router
-- Axios
-- Material-UI
-- Jest & React Testing Library
+- React - Modern UI framework
+- React Router - Sayfa yönlendirme
+- Axios - HTTP istekleri
+- Material-UI - UI bileşenleri
+- Jest & React Testing Library - Test araçları
 
-## Kurulum
+## 🚀 Kurulum
 
 ### Gereksinimler
 - Python 3.8+
@@ -39,7 +52,6 @@ Bu proje, üniversiteler için geliştirilmiş bir ders programı yönetim siste
 
 ### Projeyi İndirme
 
-1. Projeyi klonlayın:
 ```bash
 git clone https://github.com/yintsukuyomi/swesys.git
 cd swesys
@@ -47,172 +59,92 @@ cd swesys
 
 ### Backend Kurulumu
 
-1. Backend klasörüne gidin:
 ```bash
 cd backend
-```
 
-2. Sanal ortam oluşturun ve aktifleştirin:
-```bash
-# Windows için
+# Sanal ortam oluşturma
 python -m venv venv
-venv\Scripts\activate
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # Linux/Mac
 
-# Linux/Mac için
-python3 -m venv venv
-source venv/bin/activate
-```
-
-3. pip'i güncelleyin:
-```bash
-python -m pip install --upgrade pip
-```
-
-4. Bağımlılıkları yükleyin:
-```bash
+# Bağımlılıkları yükleme
 pip install -r requirements.txt
-```
 
-5. Veritabanı ayarlarını yapın:
-- `.env` dosyasını oluşturun ve aşağıdaki değişkenleri ayarlayın:
-```
-DATABASE_URL=sqlite:///./swesys.db
-SECRET_KEY=your-secret-key
-```
+# Veritabanı ayarları
+cp .env.example .env  # .env dosyasını oluştur
+# .env dosyasını düzenle
 
-6. Veritabanı migrasyonlarını çalıştırın:
-```bash
+# Veritabanı migrasyonları
 alembic upgrade head
-```
 
-7. Uygulamayı başlatın:
-```bash
+# Uygulamayı başlatma
 uvicorn main:app --reload
 ```
 
 ### Frontend Kurulumu
 
-1. Yeni bir terminal açın ve proje ana dizinine gidin:
 ```bash
-cd ..  # Eğer backend klasöründeyseniz
 cd frontend
-```
 
-2. Bağımlılıkları yükleyin:
-```bash
+# Bağımlılıkları yükleme
 npm install
-```
 
-3. Uygulamayı başlatın:
-```bash
+# Uygulamayı başlatma
 npm start
 ```
 
-## Kullanım
+## 📖 Kullanım
+
+Detaylı kullanım kılavuzu için [USER_GUIDE.md](USER_GUIDE.md) dosyasına bakın.
 
 ### Admin Paneli
-
-1. Öğretmen Yönetimi
-   - Öğretmen ekleme
-   - Öğretmen bilgilerini düzenleme
-   - Öğretmen silme
-   - Çalışma günleri ve saatlerini belirleme
-
-2. Ders Yönetimi
-   - Ders ekleme
-   - Ders bilgilerini düzenleme
-   - Ders silme
-   - Öğretmen atama
-   - Öğrenci sayısı belirleme
-
-3. Sınıf Yönetimi
-   - Sınıf ekleme
-   - Sınıf bilgilerini düzenleme
-   - Sınıf silme
-   - Kapasite belirleme
-
-4. Program Yönetimi
-   - Otomatik program oluşturma
-   - Program düzenleme
-   - Program silme
-   - Günlük program görüntüleme
+- Öğretmen Yönetimi
+- Ders Yönetimi
+- Sınıf Yönetimi
+- Program Yönetimi
 
 ### Normal Kullanıcı
+- Program Görüntüleme
+- Ders Bilgileri
+- Filtreleme ve Arama
 
-1. Program Görüntüleme
-   - Günlük program
-   - Haftalık program
-   - Filtreleme seçenekleri
-
-2. Ders Bilgileri
-   - Ders detayları
-   - Öğretmen bilgileri
-   - Sınıf bilgileri
-
-## Test
+## 🧪 Test
 
 ### Backend Testleri
-
-1. Backend klasörüne gidin:
 ```bash
 cd backend
-```
-
-2. Sanal ortamı aktifleştirin (eğer aktif değilse):
-```bash
-# Windows için
-venv\Scripts\activate
-
-# Linux/Mac için
-source venv/bin/activate
-```
-
-3. Test bağımlılıklarını yükleyin:
-```bash
-pip install pytest pytest-cov httpx
-```
-
-4. Testleri çalıştırın:
-```bash
 pytest tests/ -v --cov=.
 ```
 
 ### Frontend Testleri
-
-1. Frontend klasörüne gidin:
 ```bash
 cd frontend
-```
-
-2. Testleri çalıştırın:
-```bash
 npm test
-```
-
-Test kapsamı raporu için:
-```bash
 npm run test:coverage
 ```
 
-## API Dokümantasyonu
+## 📚 Dokümantasyon
 
-API dokümantasyonuna aşağıdaki URL'lerden erişebilirsiniz:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+- [API Dokümantasyonu](API.md)
+- [Kullanıcı Kılavuzu](USER_GUIDE.md)
+- [Katkıda Bulunma Rehberi](CONTRIBUTING.md)
+- [Değişiklik Günlüğü](CHANGELOG.md)
 
-## Katkıda Bulunma
+## 🤝 Katkıda Bulunma
 
-1. Bu repository'yi fork edin
-2. Yeni bir branch oluşturun (`git checkout -b feature/amazing-feature`)
+Katkıda bulunmak için [CONTRIBUTING.md](CONTRIBUTING.md) dosyasını inceleyin.
+
+1. Fork yapın
+2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
 3. Değişikliklerinizi commit edin (`git commit -m 'Add some amazing feature'`)
 4. Branch'inizi push edin (`git push origin feature/amazing-feature`)
 5. Pull Request oluşturun
 
-## Lisans
+## 📄 Lisans
 
 Bu proje Apache2.0 lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
 
-## İletişim
+## 📞 İletişim
 
 Proje Sahibi - [@yintsukuyomi](https://github.com/yintsukuyomi)
 
