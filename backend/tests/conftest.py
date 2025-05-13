@@ -11,7 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from database import Base, get_db
 from main import app
-from models import Teacher, Classroom, Course, Schedule
+from models import Teacher, Classroom, Course, Schedule, CourseDepartment
 
 # Create test database
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
@@ -99,7 +99,6 @@ def test_course(db, test_teacher):
         code="TEST101",
         teacher_id=test_teacher.id,
         faculty="Test Faculty",
-        department="Test Department",
         level="Bachelor",
         type="teorik",
         category="zorunlu",
@@ -112,6 +111,17 @@ def test_course(db, test_teacher):
     db.add(course)
     db.commit()
     db.refresh(course)
+    
+    # Add department relationship
+    course_department = CourseDepartment(
+        course_id=course.id,
+        department="Test Department",
+        student_count=25
+    )
+    db.add(course_department)
+    db.commit()
+    db.refresh(course)
+    
     return course
 
 @pytest.fixture(scope="function")

@@ -10,7 +10,6 @@ def test_create_course(client, test_teacher):
         "code": "TEST101",
         "teacher_id": test_teacher.id,
         "faculty": "Engineering",
-        "department": "Computer Science",
         "level": "Bachelor",
         "type": "teorik",
         "category": "zorunlu",
@@ -18,32 +17,53 @@ def test_create_course(client, test_teacher):
         "ects": 6,
         "total_hours": 3,
         "is_active": True,
-        "student_count": 25
+        "sessions": [
+            {
+                "type": "teorik",
+                "hours": 3
+            }
+        ],
+        "departments": [
+            {
+                "department": "Computer Science",
+                "student_count": 25
+            }
+        ]
     }
     response = client.post("/api/courses", json=course_data)
     assert response.status_code == status.HTTP_201_CREATED
     data = response.json()
     assert data["name"] == course_data["name"]
     assert data["code"] == course_data["code"]
-    assert data["type"] == course_data["type"]
     assert data["category"] == course_data["category"]
+    assert len(data["departments"]) == 1
+    assert data["departments"][0]["department"] == course_data["departments"][0]["department"]
 
 def test_create_course_invalid_type(client, test_teacher):
-    """Test creating a course with invalid type."""
+    """Test creating a course with invalid category."""
     course_data = {
         "name": "Test Course",
         "code": "TEST102",
         "teacher_id": test_teacher.id,
         "faculty": "Engineering",
-        "department": "Computer Science",
         "level": "Bachelor",
-        "type": "invalid_type",
-        "category": "zorunlu",
+        "category": "invalid_category",
         "semester": "Fall",
         "ects": 6,
         "total_hours": 3,
         "is_active": True,
-        "student_count": 25
+        "sessions": [
+            {
+                "type": "teorik",
+                "hours": 3
+            }
+        ],
+        "departments": [
+            {
+                "department": "Computer Science",
+                "student_count": 25
+            }
+        ]
     }
     response = client.post("/api/courses", json=course_data)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -55,7 +75,6 @@ def test_create_course_invalid_category(client, test_teacher):
         "code": "TEST103",
         "teacher_id": test_teacher.id,
         "faculty": "Engineering",
-        "department": "Computer Science",
         "level": "Bachelor",
         "type": "teorik",
         "category": "invalid_category",
@@ -63,7 +82,18 @@ def test_create_course_invalid_category(client, test_teacher):
         "ects": 6,
         "total_hours": 3,
         "is_active": True,
-        "student_count": 25
+        "sessions": [
+            {
+                "type": "teorik",
+                "hours": 3
+            }
+        ],
+        "departments": [
+            {
+                "department": "Computer Science",
+                "student_count": 25
+            }
+        ]
     }
     response = client.post("/api/courses", json=course_data)
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -92,7 +122,6 @@ def test_update_course(client, test_course):
         "code": "UPD101",
         "teacher_id": test_course.teacher_id,
         "faculty": "Updated Faculty",
-        "department": "Updated Department",
         "level": "Master",
         "type": "teorik",
         "category": "secmeli",
@@ -100,13 +129,26 @@ def test_update_course(client, test_course):
         "ects": 4,
         "total_hours": 2,
         "is_active": True,
-        "student_count": 20
+        "sessions": [
+            {
+                "type": "teorik",
+                "hours": 2
+            }
+        ],
+        "departments": [
+            {
+                "department": "Updated Department",
+                "student_count": 20
+            }
+        ]
     }
     response = client.put(f"/api/courses/{test_course.id}", json=update_data)
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert data["name"] == update_data["name"]
     assert data["code"] == update_data["code"]
+    assert len(data["departments"]) == 1
+    assert data["departments"][0]["department"] == update_data["departments"][0]["department"]
 
 def test_delete_course(client, test_course):
     """Test deleting a course."""

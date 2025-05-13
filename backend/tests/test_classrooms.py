@@ -81,7 +81,13 @@ def test_create_classroom_with_model(client):
         faculty="Test Faculty",
         department="Test Department"
     )
-    response = client.post("/api/classrooms", json=classroom.dict())
+    response = client.post("/api/classrooms", json={
+        "name": classroom.name,
+        "capacity": classroom.capacity,
+        "type": classroom.type,
+        "faculty": classroom.faculty,
+        "department": classroom.department
+    })
     assert response.status_code == status.HTTP_201_CREATED
     data = response.json()
     assert data["name"] == classroom.name
