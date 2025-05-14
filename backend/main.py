@@ -2,7 +2,15 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from database import init_db
-from routers import schedule, notifications, auth, teachers, schedules, statistics, courses, classrooms, scheduler
+from app.api.endpoints.courses import router as courses_router
+from app.api.endpoints.teachers import router as teachers_router
+from app.api.endpoints.schedules import router as schedules_router
+from app.api.endpoints.auth import router as auth_router
+from app.api.endpoints.classrooms import router as classrooms_router
+from app.api.endpoints.statistics import router as statistics_router
+from app.api.endpoints.notifications import router as notifications_router
+from app.api.endpoints.schedule import router as schedule_router
+from app.api.endpoints.scheduler import router as scheduler_router
 import time
 import logging
 from dotenv import load_dotenv
@@ -58,15 +66,15 @@ async def general_exception_handler(request: Request, exc: Exception):
 init_db()
 
 # Router'ları dahil et
-app.include_router(schedule.router, prefix="/api/schedule", tags=["Schedule"])
-app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(teachers.router, prefix="/api/teachers", tags=["Teachers"])
-app.include_router(courses.router, prefix="/api/courses", tags=["Courses"])
-app.include_router(classrooms.router, prefix="/api/classrooms", tags=["Classrooms"])
-app.include_router(schedules.router, prefix="/api/schedules", tags=["Schedules"])
-app.include_router(statistics.router, prefix="/api/statistics", tags=["Statistics"])
-app.include_router(scheduler.router, prefix="/api/scheduler", tags=["Scheduler"])
+app.include_router(courses_router, prefix="/api/courses", tags=["Courses"])
+app.include_router(teachers_router, prefix="/api/teachers", tags=["Teachers"])
+app.include_router(schedules_router, prefix="/api/schedules", tags=["Schedules"])
+app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(classrooms_router, prefix="/api/classrooms", tags=["Classrooms"])
+app.include_router(statistics_router, prefix="/api/statistics", tags=["Statistics"])
+app.include_router(notifications_router, prefix="/api/notifications", tags=["Notifications"])
+app.include_router(schedule_router, prefix="/api/schedule", tags=["Schedule"])
+app.include_router(scheduler_router, prefix="/api/scheduler", tags=["Scheduler"])
 
 @app.get("/")
 def read_root():

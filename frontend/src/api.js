@@ -128,7 +128,7 @@ export const deleteSchedulesByDays = async (days, token) => {
   try {
     const response = await axios.delete(`${API_URL}/schedules/days`, {
       headers: { Authorization: `Bearer ${token}` },
-      data: days
+      data: { days }
     });
     return response.data;
   } catch (error) {

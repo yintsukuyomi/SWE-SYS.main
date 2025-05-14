@@ -580,7 +580,6 @@ const CourseList = ({ token, user }) => {
       setLoading(true);
       setError(null);
       
-      // Validate and process each row
       for (const row of data) {
         const courseData = {
           name: row['Ders Adı'],
@@ -588,15 +587,15 @@ const CourseList = ({ token, user }) => {
           teacher_id: parseInt(row['Öğretmen ID']),
           faculty: row['Fakülte'],
           level: row['Seviye'],
-          type: row['Tür'],
-          category: row['Kategori'],
+          type: (row['Tür'] || '').toLowerCase(),
+          category: (row['Kategori'] || '').toLowerCase(),
           semester: row['Dönem'],
           ects: parseInt(row['AKTS']),
           total_hours: parseInt(row['Toplam Saat']),
           is_active: row['Durum']?.toLowerCase() === 'aktif',
           sessions: [
             {
-              type: row['Oturum Türü'],
+              type: (row['Oturum Türü'] || '').toLowerCase(),
               hours: parseInt(row['Oturum Saati'])
             }
           ],
@@ -607,35 +606,25 @@ const CourseList = ({ token, user }) => {
             }
           ]
         };
-        
-        // Validate required fields
+        // Alan validasyonları
         if (!courseData.name || !courseData.code || !courseData.teacher_id || 
             !courseData.faculty || !courseData.level || !courseData.type || 
-            !courseData.category || !courseData.semester || !courseData.ects || 
-            !courseData.total_hours || !courseData.sessions[0].type || 
-            !courseData.sessions[0].hours || !courseData.departments[0].department || 
-            !courseData.departments[0].student_count) {
+            !courseData.category || !courseData.semester || isNaN(courseData.ects) || 
+            isNaN(courseData.total_hours) || !courseData.sessions[0].type || 
+            isNaN(courseData.sessions[0].hours) || !courseData.departments[0].department || 
+            isNaN(courseData.departments[0].student_count)) {
           throw new Error('Tüm alanların doldurulması zorunludur.');
         }
-        
-        // Validate type
-        if (!['teorik', 'lab'].includes(courseData.type.toLowerCase())) {
+        if (!['teorik', 'lab'].includes(courseData.type)) {
           throw new Error('Geçersiz ders türü. Tür "teorik" veya "lab" olmalıdır.');
         }
-        
-        // Validate category
-        if (!['zorunlu', 'secmeli'].includes(courseData.category.toLowerCase())) {
+        if (!['zorunlu', 'secmeli'].includes(courseData.category)) {
           throw new Error('Geçersiz kategori. Kategori "zorunlu" veya "secmeli" olmalıdır.');
         }
-        
-        // Create course
         await createCourse(courseData, token);
       }
-      
-      // Refresh the list
       await fetchCourses();
     } catch (err) {
-      console.error('Error importing courses:', err);
       setError(err.message || 'Dersler içe aktarılırken bir hata oluştu.');
     } finally {
       setLoading(false);

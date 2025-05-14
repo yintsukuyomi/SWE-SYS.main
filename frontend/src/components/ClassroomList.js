@@ -189,35 +189,25 @@ const ClassroomList = ({ token, user }) => {
       setLoading(true);
       setError(null);
       
-      // Validate and process each row
       for (const row of data) {
         const classroomData = {
           name: row['Derslik Adı/Numarası'],
           capacity: parseInt(row['Kapasite']),
-          type: row['Tür'],
+          type: (row['Tür'] || '').toLowerCase(),
           faculty: row['Fakülte'],
           department: row['Bölüm']
         };
-        
-        // Validate required fields
-        if (!classroomData.name || !classroomData.capacity || !classroomData.type || 
+        if (!classroomData.name || isNaN(classroomData.capacity) || !classroomData.type || 
             !classroomData.faculty || !classroomData.department) {
           throw new Error('Tüm alanların doldurulması zorunludur.');
         }
-        
-        // Validate type
-        if (!['teorik', 'lab'].includes(classroomData.type.toLowerCase())) {
+        if (!['teorik', 'lab'].includes(classroomData.type)) {
           throw new Error('Geçersiz derslik türü. Tür "teorik" veya "lab" olmalıdır.');
         }
-        
-        // Create classroom
         await createClassroom(classroomData, token);
       }
-      
-      // Refresh the list
       await fetchClassrooms();
     } catch (err) {
-      console.error('Error importing classrooms:', err);
       setError(err.message || 'Derslikler içe aktarılırken bir hata oluştu.');
     } finally {
       setLoading(false);

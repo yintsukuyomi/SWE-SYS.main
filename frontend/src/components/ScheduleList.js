@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getSchedules, deleteSchedulesByDay, deleteSchedulesByDays } from "../api";
+import { getSchedules, deleteSchedulesByDay, deleteSchedulesByDays, deleteSchedule } from "../api";
 import "../styles/ScheduleList.css";
 import "../styles/ListView.css";
 import "../styles/CourseList.css";
@@ -15,75 +15,65 @@ const ScheduleList = ({ token, user }) => {
     days: [],
     dayNames: []
   });
+  const [deleteSingleConfirm, setDeleteSingleConfirm] = useState({
+    show: false,
+    scheduleId: null,
+    info: null
+  });
 
-  // Tarih ve gün formatlamalarını yapacak yardımcı fonksiyonlar
-  const formatDateForDisplay = (dateStr) => {
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('tr-TR', options);
+  // Türkçe gün isimleri eşlemesi
+  const dayNameTr = {
+    "Monday": "Pazartesi",
+    "Tuesday": "Salı",
+    "Wednesday": "Çarşamba",
+    "Thursday": "Perşembe",
+    "Friday": "Cuma",
+    "Saturday": "Cumartesi",
+    "Sunday": "Pazar"
   };
 
-  // Tarihler için sıralama fonksiyonu
-  const sortDates = (dates) => {
-    return dates.sort((a, b) => new Date(a) - new Date(b));
+  // Türkçe -> İngilizce gün isimleri eşlemesi
+  const trToEnDay = {
+    "Pazartesi": "Monday",
+    "Salı": "Tuesday",
+    "Çarşamba": "Wednesday",
+    "Perşembe": "Thursday",
+    "Cuma": "Friday",
+    "Cumartesi": "Saturday",
+    "Pazar": "Sunday"
   };
 
   const dayOrder = {
-    "Pazartesi": 1, 
-    "Salı": 2, 
-    "Çarşamba": 3, 
-    "Perşembe": 4, 
-    "Cuma": 5, 
-    "Cumartesi": 6, 
-    "Pazar": 7
+    "Monday": 1,
+    "Tuesday": 2,
+    "Wednesday": 3,
+    "Thursday": 4,
+    "Friday": 5,
+    "Saturday": 6,
+    "Sunday": 7
   };
 
   useEffect(() => {
     const fetchSchedules = async () => {
       try {
         const data = await getSchedules(token);
-        console.log("Fetched schedules:", data);
-        
-        // Group schedules by date
+        // Günlere göre gruplama
         const grouped = {};
-        
-        // Get the current week's dates
-        const today = new Date();
-        const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-        const monday = new Date(today);
-        monday.setDate(today.getDate() - currentDay + 1); // Move to Monday
-        
-        const dateMap = {
-          "Monday": new Date(monday).toISOString().split('T')[0],
-          "Tuesday": new Date(new Date(monday).setDate(monday.getDate() + 1)).toISOString().split('T')[0],
-          "Wednesday": new Date(new Date(monday).setDate(monday.getDate() + 1)).toISOString().split('T')[0],
-          "Thursday": new Date(new Date(monday).setDate(monday.getDate() + 1)).toISOString().split('T')[0],
-          "Friday": new Date(new Date(monday).setDate(monday.getDate() + 1)).toISOString().split('T')[0]
-        };
-        
         data.forEach(schedule => {
-          const scheduleDate = dateMap[schedule.day] || "2023-06-01";
-          
-          if (!grouped[scheduleDate]) {
-            grouped[scheduleDate] = [];
-          }
-          grouped[scheduleDate].push(schedule);
+          const day = schedule.day;
+          if (!grouped[day]) grouped[day] = [];
+          grouped[day].push(schedule);
         });
-        
-        // Sort dates
-        const sorted = sortDates(Object.keys(grouped));
-
+        const sorted = Object.keys(grouped).sort((a, b) => (dayOrder[a] || 99) - (dayOrder[b] || 99));
         setGroupedSchedules(grouped);
         setSortedDays(sorted);
         setSchedules(data);
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching schedules:", error);
         setError("Failed to load schedules");
         setLoading(false);
       }
     };
-
     fetchSchedules();
   }, [token]);
 
@@ -98,18 +88,17 @@ const ScheduleList = ({ token, user }) => {
     setDeleteConfirm({
       show: true,
       days: [dayName],
-      dayNames: [formatDateForDisplay(date)]
+      dayNames: [dayName]
     });
   };
 
-  const handleDeleteMultipleDaysClick = (dates) => {
-    const dayNames = dates.map(date => new Date(date).toLocaleDateString('en-US', { weekday: 'long' }));
-    const formattedDates = dates.map(date => formatDateForDisplay(date));
-    
+  const handleDeleteMultipleDaysClick = (days) => {
+    // sortedDays Türkçe gün adı ise İngilizce'ye çevir
+    const dayNames = days.map(day => trToEnDay[day] || day);
     setDeleteConfirm({
       show: true,
       days: dayNames,
-      dayNames: formattedDates
+      dayNames: days.map(day => dayNameTr[day] || day)
     });
   };
 
@@ -124,41 +113,59 @@ const ScheduleList = ({ token, user }) => {
   const confirmDelete = async () => {
     try {
       if (deleteConfirm.days.length === 1) {
-        // Single day deletion
         await deleteSchedulesByDay(deleteConfirm.days[0], token);
       } else {
-        // Multiple days deletion
         await deleteSchedulesByDays(deleteConfirm.days, token);
       }
-      
-      setDeleteConfirm({
-        show: false,
-        days: [],
-        dayNames: []
-      });
-      
-      // Programları yeniden yükle
+      setDeleteConfirm({ show: false, days: [], dayNames: [] });
       const data = await getSchedules(token);
-      
-      // Group schedules by day
       const grouped = {};
       data.forEach(schedule => {
-        if (!grouped[schedule.day]) {
-          grouped[schedule.day] = [];
-        }
-        grouped[schedule.day].push(schedule);
+        const day = schedule.day;
+        if (!grouped[day]) grouped[day] = [];
+        grouped[day].push(schedule);
       });
-      
-      // Sort days according to dayOrder
-      const sorted = Object.keys(grouped).sort((a, b) => {
-        return (dayOrder[a] || 99) - (dayOrder[b] || 99);
-      });
-
+      const sorted = Object.keys(grouped).sort((a, b) => (dayOrder[a] || 99) - (dayOrder[b] || 99));
       setGroupedSchedules(grouped);
       setSortedDays(sorted);
       setSchedules(data);
     } catch (error) {
-      console.error("Error deleting schedule:", error);
+      setError("Failed to delete schedule. " + (error.detail || ""));
+    }
+  };
+
+  const handleDeleteScheduleClick = (schedule) => {
+    setDeleteSingleConfirm({
+      show: true,
+      scheduleId: schedule.id,
+      info: `${schedule.day} - ${schedule.time_range} - ${schedule.course?.name || ''}`
+    });
+  };
+
+  const cancelDeleteSingle = () => {
+    setDeleteSingleConfirm({
+      show: false,
+      scheduleId: null,
+      info: null
+    });
+  };
+
+  const confirmDeleteSingle = async () => {
+    try {
+      await deleteSchedule(deleteSingleConfirm.scheduleId, token);
+      setDeleteSingleConfirm({ show: false, scheduleId: null, info: null });
+      const data = await getSchedules(token);
+      const grouped = {};
+      data.forEach(schedule => {
+        const day = schedule.day;
+        if (!grouped[day]) grouped[day] = [];
+        grouped[day].push(schedule);
+      });
+      const sorted = Object.keys(grouped).sort((a, b) => (dayOrder[a] || 99) - (dayOrder[b] || 99));
+      setGroupedSchedules(grouped);
+      setSortedDays(sorted);
+      setSchedules(data);
+    } catch (error) {
       setError("Failed to delete schedule. " + (error.detail || ""));
     }
   };
@@ -234,7 +241,7 @@ const ScheduleList = ({ token, user }) => {
             className="delete-multiple-days-btn"
             onClick={() => handleDeleteMultipleDaysClick(sortedDays)}
           >
-            Delete All Days
+            Tüm Günleri Sil
           </button>
         </div>
       )}
@@ -262,6 +269,25 @@ const ScheduleList = ({ token, user }) => {
         </div>
       )}
       
+      {deleteSingleConfirm.show && (
+        <div className="modal-backdrop">
+          <div className="delete-confirmation-modal">
+            <div className="modal-header">
+              <h3>Program Silme Onayı</h3>
+              <button className="close-button" onClick={cancelDeleteSingle}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <p><strong>{deleteSingleConfirm.info}</strong> programını silmek istediğinizden emin misiniz?</p>
+              <p className="warning-text">Bu işlem geri alınamaz.</p>
+            </div>
+            <div className="modal-footer">
+              <button onClick={cancelDeleteSingle} className="btn-cancel">İptal</button>
+              <button onClick={confirmDeleteSingle} className="btn-delete">Sil</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {loading ? (
         <div className="loading">Programlar yükleniyor...</div>
       ) : error ? (
@@ -272,18 +298,10 @@ const ScheduleList = ({ token, user }) => {
         </div>
       ) : (
         <div className="schedule-by-day">
-          {sortedDays.map(date => (
-            <div className="day-schedule" key={date}>
+          {sortedDays.map(day => (
+            <div className="day-schedule" key={day}>
               <div className="day-header">
-                <h2>{formatDateForDisplay(date)}</h2>
-                {isAdmin && (
-                  <button 
-                    className="delete-day-btn" 
-                    onClick={() => handleDeleteDayClick(date)}
-                  >
-                    Delete All
-                  </button>
-                )}
+                <h2>{dayNameTr[day] || day}</h2>
               </div>
               <table className="schedule-table">
                 <thead>
@@ -293,10 +311,11 @@ const ScheduleList = ({ token, user }) => {
                     <th>Teacher</th>
                     <th>Classroom</th>
                     <th>Students / Capacity</th>
+                    {isAdmin && <th>Actions</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {groupedSchedules[date]
+                  {groupedSchedules[day]
                     .sort((a, b) => {
                       const aTime = a.time_range.split('-')[0];
                       const bTime = b.time_range.split('-')[0];
@@ -326,6 +345,13 @@ const ScheduleList = ({ token, user }) => {
                             {studentCount} / {classroomCapacity}
                             {studentCount > classroomCapacity && <span className="capacity-warning"> ⚠️</span>}
                           </td>
+                          {isAdmin && (
+                            <td className="actions-cell">
+                              <button className="btn-delete" onClick={() => handleDeleteScheduleClick(schedule)}>
+                                Sil
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       );
                     })

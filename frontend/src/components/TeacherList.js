@@ -189,55 +189,39 @@ const TeacherList = ({ token, user }) => {
       setLoading(true);
       setError(null);
       
-      // Validate and process each row
       for (const row of data) {
+        // working_hours string format: "monday:09:00-10:30,tuesday:10:30-12:00,..."
+        const workingHoursString = [
+          row['Pazartesi'] ? `monday:${row['Pazartesi']}` : null,
+          row['Salı'] ? `tuesday:${row['Salı']}` : null,
+          row['Çarşamba'] ? `wednesday:${row['Çarşamba']}` : null,
+          row['Perşembe'] ? `thursday:${row['Perşembe']}` : null,
+          row['Cuma'] ? `friday:${row['Cuma']}` : null,
+        ].filter(Boolean).join(',');
+
         const teacherData = {
           name: row['Ad Soyad'],
           email: row['E-posta'],
           faculty: row['Fakülte'],
           department: row['Bölüm'],
-          working_hours: {
-            monday: parseWorkingHours(row['Pazartesi']),
-            tuesday: parseWorkingHours(row['Salı']),
-            wednesday: parseWorkingHours(row['Çarşamba']),
-            thursday: parseWorkingHours(row['Perşembe']),
-            friday: parseWorkingHours(row['Cuma'])
-          }
+          working_hours: workingHoursString
         };
         
-        // Validate required fields
         if (!teacherData.name || !teacherData.email || !teacherData.faculty || !teacherData.department) {
           throw new Error('Tüm alanların doldurulması zorunludur.');
         }
-        
-        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(teacherData.email)) {
           throw new Error('Geçersiz e-posta formatı.');
         }
-        
-        // Create teacher
         await createTeacher(teacherData, token);
       }
-      
-      // Refresh the list
       await fetchTeachers();
     } catch (err) {
-      console.error('Error importing teachers:', err);
       setError(err.message || 'Öğretmenler içe aktarılırken bir hata oluştu.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const parseWorkingHours = (hoursStr) => {
-    if (!hoursStr) return {};
-    const hours = {};
-    const timeSlots = hoursStr.split(',').map(slot => slot.trim());
-    timeSlots.forEach(slot => {
-      hours[slot] = true;
-    });
-    return hours;
   };
 
   const handleExcelExport = async () => {
