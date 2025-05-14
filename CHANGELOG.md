@@ -2,6 +2,11 @@
 
 Tüm önemli değişiklikler bu dosyada belgelenecektir.
 
+## [1.0.1] - 2025-05-14
+
+### Eklenenler
+- Excel işlemleri eklendi
+
 ## [1.0.0] - 2025-04-05
 
 ### Eklenenler
