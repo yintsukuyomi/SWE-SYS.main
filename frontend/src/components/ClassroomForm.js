@@ -9,7 +9,7 @@ const ClassroomForm = ({ token }) => {
   const [formData, setFormData] = useState({
     name: '',
     capacity: 30,
-    type: 'Lecture Hall',
+    type: 'teorik',
     faculty: '',
     department: ''
   });
@@ -116,13 +116,13 @@ const ClassroomForm = ({ token }) => {
             onChange={handleChange}
             required
           >
-            <option value="Theoretical">Teorik</option>
-            <option value="Lab">Laboratuvar</option>
+            <option value="teorik">Teorik</option>
+            <option value="lab">Laboratuvar</option>
           </select>
         </div>
 
         <div className="form-group">
-          <label htmlFor="faculty">Faculty</label>
+          <label htmlFor="faculty">Fakülte</label>
           <select
             id="faculty"
             name="faculty"
@@ -130,7 +130,7 @@ const ClassroomForm = ({ token }) => {
             onChange={handleChange}
             required
           >
-            <option value="">Select a faculty</option>
+            <option value="">Fakülte seçin</option>
             {FACULTIES.map(faculty => (
               <option key={faculty.id} value={faculty.id}>
                 {faculty.name}
@@ -140,7 +140,7 @@ const ClassroomForm = ({ token }) => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="department">Department</label>
+          <label htmlFor="department">Bölüm</label>
           <select
             id="department"
             name="department"
@@ -149,7 +149,7 @@ const ClassroomForm = ({ token }) => {
             required
             disabled={!formData.faculty}
           >
-            <option value="">Select a department</option>
+            <option value="">Bölüm seçin</option>
             {departments.map(department => (
               <option key={department.id} value={department.id}>
                 {department.name}

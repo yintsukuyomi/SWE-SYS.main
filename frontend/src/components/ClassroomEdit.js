@@ -176,8 +176,8 @@ const ClassroomEdit = ({ token }) => {
             onChange={handleChange}
             required
           >
-            <option value="Theoretical">Teorik</option>
-            <option value="Lab">Laboratuvar</option>
+            <option value="teorik">Teorik</option>
+            <option value="lab">Laboratuvar</option>
           </select>
         </div>
 

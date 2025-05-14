@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getClassrooms, deleteClassroom, updateClassroom } from "../api";
+import { getClassrooms, deleteClassroom, updateClassroom, createClassroom } from "../api";
+import ExcelOperations from './ExcelOperations';
+import * as XLSX from 'xlsx';
 import "../styles/ListView.css";
 import "../styles/ClassroomList.css";
 import "../styles/CourseList.css";
 import "../styles/SearchStyles.css";
 import { FACULTIES } from '../constants/facultiesAndDepartments';
+import ExcelJS from 'exceljs';
 
 const ClassroomList = ({ token, user }) => {
   const [classrooms, setClassrooms] = useState([]);
@@ -62,7 +65,7 @@ const ClassroomList = ({ token, user }) => {
       setLoading(false);
     } catch (error) {
       console.error("Error fetching classrooms:", error);
-      setError("Failed to load classrooms");
+      setError("Derslikler yüklenirken bir hata oluştu");
       setLoading(false);
     }
   };
@@ -180,6 +183,93 @@ const ClassroomList = ({ token, user }) => {
     }
   };
 
+  const handleExcelImport = async (data) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Validate and process each row
+      for (const row of data) {
+        const classroomData = {
+          name: row['Derslik Adı/Numarası'],
+          capacity: parseInt(row['Kapasite']),
+          type: row['Tür'],
+          faculty: row['Fakülte'],
+          department: row['Bölüm']
+        };
+        
+        // Validate required fields
+        if (!classroomData.name || !classroomData.capacity || !classroomData.type || 
+            !classroomData.faculty || !classroomData.department) {
+          throw new Error('Tüm alanların doldurulması zorunludur.');
+        }
+        
+        // Validate type
+        if (!['teorik', 'lab'].includes(classroomData.type.toLowerCase())) {
+          throw new Error('Geçersiz derslik türü. Tür "teorik" veya "lab" olmalıdır.');
+        }
+        
+        // Create classroom
+        await createClassroom(classroomData, token);
+      }
+      
+      // Refresh the list
+      await fetchClassrooms();
+    } catch (err) {
+      console.error('Error importing classrooms:', err);
+      setError(err.message || 'Derslikler içe aktarılırken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExcelExport = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Derslikler');
+    
+    // Add headers
+    worksheet.addRow([
+      'Derslik Adı/Numarası',
+      'Kapasite',
+      'Tür',
+      'Fakülte',
+      'Bölüm',
+      'Durum'
+    ]);
+    
+    // Add data
+    classrooms.forEach(classroom => {
+      worksheet.addRow([
+        classroom.name,
+        classroom.capacity,
+        classroom.type,
+        classroom.faculty,
+        classroom.department,
+        classroom.is_active ? 'Aktif' : 'Pasif'
+      ]);
+    });
+    
+    // Generate and download file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'derslikler.xlsx';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const classroomTemplate = [
+    {
+      'Derslik Adı/Numarası': 'A101',
+      'Kapasite': '30',
+      'Tür': 'teorik',
+      'Fakülte': 'Mühendislik Fakültesi',
+      'Bölüm': 'Bilgisayar Mühendisliği'
+    }
+  ];
+
   const renderFacultiesPage = () => {
     return (
       <div className="list-container">
@@ -189,9 +279,17 @@ const ClassroomList = ({ token, user }) => {
             <p className="list-subtitle">Fakülte ve bölümlere göre derslikleri görüntüleyin</p>
           </div>
           {isAdmin && (
-            <Link to="/classrooms/new" className="add-button">
-              <span className="btn-icon">+</span> Yeni Derslik Ekle
-            </Link>
+            <>
+              <Link to="/classrooms/new" className="add-button">
+                <span className="btn-icon">+</span> Yeni Derslik Ekle
+              </Link>
+              <ExcelOperations
+                onImport={handleExcelImport}
+                onExport={handleExcelExport}
+                templateData={classroomTemplate}
+                templateFileName="derslik_sablonu"
+              />
+            </>
           )}
         </div>
         

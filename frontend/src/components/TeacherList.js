@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getTeachers, deleteTeacher, updateTeacher } from "../api";
+import { getTeachers, deleteTeacher, updateTeacher, createTeacher } from "../api";
+import ExcelOperations from './ExcelOperations';
+import * as XLSX from 'xlsx';
 import "../styles/ListView.css";
 import "../styles/TeacherList.css";
 import "../styles/CourseList.css";
 import "../styles/SearchStyles.css";
 import { FACULTIES } from '../constants/facultiesAndDepartments';
+import ExcelJS from 'exceljs';
 
 const TeacherList = ({ token, user }) => {
   const [teachers, setTeachers] = useState([]);
@@ -179,6 +182,127 @@ const TeacherList = ({ token, user }) => {
       setError(error.response?.data?.detail || "Öğretmen durumu güncellenirken bir hata oluştu.");
     }
   };
+
+  const handleExcelImport = async (data) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Validate and process each row
+      for (const row of data) {
+        const teacherData = {
+          name: row['Ad Soyad'],
+          email: row['E-posta'],
+          faculty: row['Fakülte'],
+          department: row['Bölüm'],
+          working_hours: {
+            monday: parseWorkingHours(row['Pazartesi']),
+            tuesday: parseWorkingHours(row['Salı']),
+            wednesday: parseWorkingHours(row['Çarşamba']),
+            thursday: parseWorkingHours(row['Perşembe']),
+            friday: parseWorkingHours(row['Cuma'])
+          }
+        };
+        
+        // Validate required fields
+        if (!teacherData.name || !teacherData.email || !teacherData.faculty || !teacherData.department) {
+          throw new Error('Tüm alanların doldurulması zorunludur.');
+        }
+        
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(teacherData.email)) {
+          throw new Error('Geçersiz e-posta formatı.');
+        }
+        
+        // Create teacher
+        await createTeacher(teacherData, token);
+      }
+      
+      // Refresh the list
+      await fetchTeachers();
+    } catch (err) {
+      console.error('Error importing teachers:', err);
+      setError(err.message || 'Öğretmenler içe aktarılırken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const parseWorkingHours = (hoursStr) => {
+    if (!hoursStr) return {};
+    const hours = {};
+    const timeSlots = hoursStr.split(',').map(slot => slot.trim());
+    timeSlots.forEach(slot => {
+      hours[slot] = true;
+    });
+    return hours;
+  };
+
+  const handleExcelExport = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Öğretmenler');
+    
+    // Add headers
+    worksheet.addRow([
+      'Ad Soyad',
+      'E-posta',
+      'Fakülte',
+      'Bölüm',
+      'Pazartesi',
+      'Salı',
+      'Çarşamba',
+      'Perşembe',
+      'Cuma',
+      'Durum'
+    ]);
+    
+    // Add data
+    teachers.forEach(teacher => {
+      worksheet.addRow([
+        teacher.name,
+        teacher.email,
+        teacher.faculty,
+        teacher.department,
+        formatWorkingHours(teacher.working_hours?.monday),
+        formatWorkingHours(teacher.working_hours?.tuesday),
+        formatWorkingHours(teacher.working_hours?.wednesday),
+        formatWorkingHours(teacher.working_hours?.thursday),
+        formatWorkingHours(teacher.working_hours?.friday),
+        teacher.is_active ? 'Aktif' : 'Pasif'
+      ]);
+    });
+    
+    // Generate and download file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ogretmenler.xlsx';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const formatWorkingHours = (hours) => {
+    if (!hours) return '';
+    return Object.keys(hours).filter(hour => hours[hour]).join(', ');
+  };
+
+  const teacherTemplate = [
+    {
+      'Ad Soyad': 'Örnek Öğretmen',
+      'E-posta': 'ornek@universite.edu.tr',
+      'Fakülte': 'Mühendislik Fakültesi',
+      'Bölüm': 'Bilgisayar Mühendisliği',
+      'Pazartesi': '09:00-10:30, 13:00-14:30',
+      'Salı': '10:30-12:00, 14:30-16:00',
+      'Çarşamba': '09:00-10:30, 13:00-14:30',
+      'Perşembe': '10:30-12:00, 14:30-16:00',
+      'Cuma': '09:00-10:30, 13:00-14:30',
+      'Durum': 'Aktif'
+    }
+  ];
 
   const renderFacultiesPage = () => {
     return (
@@ -489,6 +613,26 @@ const TeacherList = ({ token, user }) => {
           </div>
         </div>
       )}
+      
+      <div className="list-header">
+        <div className="header-content">
+          <h1>Öğretmenler</h1>
+          <p className="list-subtitle">Tüm öğretmenleri görüntüleyin ve yönetin</p>
+        </div>
+        {isAdmin && (
+          <>
+            <Link to="/teachers/new" className="add-button">
+              <span className="btn-icon">+</span> Yeni Öğretmen Ekle
+            </Link>
+            <ExcelOperations
+              onImport={handleExcelImport}
+              onExport={handleExcelExport}
+              templateData={teacherTemplate}
+              templateFileName="ogretmen_sablonu"
+            />
+          </>
+        )}
+      </div>
       
       {renderContent()}
     </div>

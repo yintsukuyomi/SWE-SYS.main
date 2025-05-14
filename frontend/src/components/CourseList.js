@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getCourses, deleteCourse, updateCourse } from "../api"; // Eklendi: updateCourse
+import { getCourses, deleteCourse, updateCourse, createCourse } from "../api";
+import ExcelOperations from './ExcelOperations';
+import * as XLSX from 'xlsx';
 import "../styles/ListView.css";
 import "../styles/CourseList.css";
 import "../styles/SearchStyles.css";
 import { FACULTIES, DEPARTMENTS } from '../constants/facultiesAndDepartments';
+import ExcelJS from 'exceljs';
 
 const CourseList = ({ token, user }) => {
   const [courses, setCourses] = useState([]);
@@ -576,6 +579,148 @@ const CourseList = ({ token, user }) => {
     );
   };
 
+  const handleExcelImport = async (data) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Validate and process each row
+      for (const row of data) {
+        const courseData = {
+          name: row['Ders Adı'],
+          code: row['Ders Kodu'],
+          teacher_id: parseInt(row['Öğretmen ID']),
+          faculty: row['Fakülte'],
+          level: row['Seviye'],
+          type: row['Tür'],
+          category: row['Kategori'],
+          semester: row['Dönem'],
+          ects: parseInt(row['AKTS']),
+          total_hours: parseInt(row['Toplam Saat']),
+          is_active: row['Durum']?.toLowerCase() === 'aktif',
+          sessions: [
+            {
+              type: row['Oturum Türü'],
+              hours: parseInt(row['Oturum Saati'])
+            }
+          ],
+          departments: [
+            {
+              department: row['Bölüm'],
+              student_count: parseInt(row['Öğrenci Sayısı'])
+            }
+          ]
+        };
+        
+        // Validate required fields
+        if (!courseData.name || !courseData.code || !courseData.teacher_id || 
+            !courseData.faculty || !courseData.level || !courseData.type || 
+            !courseData.category || !courseData.semester || !courseData.ects || 
+            !courseData.total_hours || !courseData.sessions[0].type || 
+            !courseData.sessions[0].hours || !courseData.departments[0].department || 
+            !courseData.departments[0].student_count) {
+          throw new Error('Tüm alanların doldurulması zorunludur.');
+        }
+        
+        // Validate type
+        if (!['teorik', 'lab'].includes(courseData.type.toLowerCase())) {
+          throw new Error('Geçersiz ders türü. Tür "teorik" veya "lab" olmalıdır.');
+        }
+        
+        // Validate category
+        if (!['zorunlu', 'secmeli'].includes(courseData.category.toLowerCase())) {
+          throw new Error('Geçersiz kategori. Kategori "zorunlu" veya "secmeli" olmalıdır.');
+        }
+        
+        // Create course
+        await createCourse(courseData, token);
+      }
+      
+      // Refresh the list
+      await fetchCourses();
+    } catch (err) {
+      console.error('Error importing courses:', err);
+      setError(err.message || 'Dersler içe aktarılırken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExcelExport = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Dersler');
+    
+    // Add headers
+    worksheet.addRow([
+      'Ders Adı',
+      'Ders Kodu',
+      'Öğretmen ID',
+      'Fakülte',
+      'Seviye',
+      'Tür',
+      'Kategori',
+      'Dönem',
+      'AKTS',
+      'Toplam Saat',
+      'Durum',
+      'Oturum Türü',
+      'Oturum Saati',
+      'Bölüm',
+      'Öğrenci Sayısı'
+    ]);
+    
+    // Add data
+    courses.forEach(course => {
+      worksheet.addRow([
+        course.name,
+        course.code,
+        course.teacher_id,
+        course.faculty,
+        course.level,
+        course.type,
+        course.category,
+        course.semester,
+        course.ects,
+        course.total_hours,
+        course.is_active ? 'Aktif' : 'Pasif',
+        course.sessions[0]?.type || '',
+        course.sessions[0]?.hours || '',
+        course.departments[0]?.department || '',
+        course.departments[0]?.student_count || ''
+      ]);
+    });
+    
+    // Generate and download file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'dersler.xlsx';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const courseTemplate = [
+    {
+      'Ders Adı': 'Örnek Ders',
+      'Ders Kodu': 'DERS101',
+      'Öğretmen ID': '1',
+      'Fakülte': 'Mühendislik Fakültesi',
+      'Seviye': 'Lisans',
+      'Tür': 'teorik',
+      'Kategori': 'zorunlu',
+      'Dönem': 'Güz',
+      'AKTS': '6',
+      'Toplam Saat': '3',
+      'Durum': 'Aktif',
+      'Oturum Türü': 'teorik',
+      'Oturum Saati': '3',
+      'Bölüm': 'Bilgisayar Mühendisliği',
+      'Öğrenci Sayısı': '30'
+    }
+  ];
+
   // Hangi sayfayı göstereceğimize karar ver
   const renderContent = () => {
     if (loading) {
@@ -632,6 +777,25 @@ const CourseList = ({ token, user }) => {
           </div>
         </div>
       )}
+      <div className="list-header">
+        <div className="header-content">
+          <h1>Dersler</h1>
+          <p className="list-subtitle">Tüm dersleri görüntüleyin ve yönetin</p>
+        </div>
+        {isAdmin && (
+          <>
+            <Link to="/courses/new" className="add-button">
+              <span className="btn-icon">+</span> Yeni Ders Ekle
+            </Link>
+            <ExcelOperations
+              onImport={handleExcelImport}
+              onExport={handleExcelExport}
+              templateData={courseTemplate}
+              templateFileName="ders_sablonu"
+            />
+          </>
+        )}
+      </div>
       {renderContent()}
     </div>
   );  

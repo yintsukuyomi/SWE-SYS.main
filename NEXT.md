@@ -11,7 +11,7 @@
 - [x]  Responsive arayüz/mümkünse mobile uyarlama senaryosu değerlendirilecek.***
 - [x]  Dil Türkçe olarak değiştirilecek.***
 - [x]  Tüm program kartlar yerine listview kullanacak.***
-- [ ]  Excell toplu veri girişi eklenecek.(Süreci hızlandırmak, hatayı minimize etmek adına excel şablonu form kopyalanıp yapay zekaya atılarak oluşturulabilir)***
+- [x]  Excell toplu veri girişi eklenecek.(Süreci hızlandırmak, hatayı minimize etmek adına excel şablonu form kopyalanıp yapay zekaya atılarak oluşturulabilir)***
 
 # Dashboard
 

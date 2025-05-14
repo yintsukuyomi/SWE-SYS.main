@@ -1,0 +1,71 @@
+.excel-operations {
+  margin: 15px 0;
+}
+
+.excel-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.excel-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+.excel-button:hover {
+  background-color: #e9ecef;
+  transform: translateY(-1px);
+}
+
+.button-icon {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.import-button {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.import-button:hover {
+  background-color: #bbdefb;
+}
+
+.export-button {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.export-button:hover {
+  background-color: #c8e6c9;
+}
+
+.template-button {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+.template-button:hover {
+  background-color: #ffe0b2;
+}
+
+@media (max-width: 768px) {
+  .excel-buttons {
+    flex-direction: column;
+  }
+  
+  .excel-button {
+    width: 100%;
+    justify-content: center;
+  }
+} 
