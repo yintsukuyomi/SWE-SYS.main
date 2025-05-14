@@ -28,19 +28,20 @@
   font-size: 16px;
 }
 
-/* Generic ListView styles */
+/* Common List View Styles */
 .list-container {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-  min-height: 80vh;
 }
 
 .list-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .header-content {
@@ -48,128 +49,246 @@
 }
 
 .header-content h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
   margin: 0 0 8px 0;
-  color: var(--text-color);
-  font-size: 28px;
 }
 
 .list-subtitle {
+  font-size: 14px;
   color: #666;
   margin: 0;
 }
 
 .header-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
 }
 
-.back-button {
-  background-color: #f0f0f0;
-  color: #333;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 16px;
-  cursor: pointer;
+/* Search Container */
+.search-container {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.search-container.with-search-icon {
   display: flex;
   align-items: center;
-  font-size: 14px;
-  transition: background-color 0.2s;
-  text-decoration: none;
 }
 
-.back-button:hover {
-  background-color: #e0e0e0;
-  text-decoration: none;
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #666;
 }
 
-.add-button {
-  display: inline-flex;
-  align-items: center;
-  background-color: var(--primary-color);
-  color: white;
-  padding: 10px 20px;
+.search-input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border: 1px solid #ddd;
   border-radius: 6px;
-  text-decoration: none;
-  font-weight: 500;
-  transition: background-color 0.2s, transform 0.1s;
+  font-size: 14px;
+  transition: border-color 0.2s;
 }
 
-.add-button:hover {
-  background-color: #2980b9;
-  text-decoration: none;
+.search-input:focus {
+  outline: none;
+  border-color: #007bff;
 }
 
-.add-button:active {
-  transform: scale(0.98);
-}
-
-.btn-icon {
-  margin-right: 8px;
+.clear-search-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
   font-size: 18px;
-  font-weight: bold;
+  padding: 0;
 }
 
-/* Table styles */
+/* Table Styles */
 .list-table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
+  background: white;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.list-table th,
+.list-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
 }
 
 .list-table th {
-  background: var(--primary-color);
-  color: #fff;
-  text-align: left;
-  padding: 12px 15px;
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
 }
 
 .list-table td {
-  padding: 12px 15px;
-  border-bottom: 1px solid var(--border-color);
+  font-size: 14px;
+  color: #444;
 }
 
 .list-table tr:last-child td {
   border-bottom: none;
 }
 
-.list-table tr:nth-child(even) {
-  background: #f8f9fa;
-}
-
 .list-table tr:hover {
-  background: #ecf0f1;
+  background-color: #f8f9fa;
 }
 
-/* Status and action buttons */
-.view-details-btn {
-  display: inline-block;
-  background-color: var(--primary-color);
+/* Buttons */
+.add-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: #007bff;
   color: white;
-  padding: 6px 12px;
-  border-radius: 4px;
-  text-decoration: none;
-  font-size: 14px;
-  transition: background-color 0.2s;
   border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  text-align: center;
-  min-width: 100px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.add-button:hover {
+  background-color: #0056b3;
+}
+
+.btn-icon {
+  margin-right: 6px;
+  font-size: 16px;
+}
+
+.back-button {
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-button:hover {
+  background-color: #e9ecef;
+  border-color: #ccc;
+}
+
+.view-details-btn {
+  padding: 6px 12px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .view-details-btn:hover {
-  background-color: #2980b9;
-  text-decoration: none;
+  background-color: #218838;
 }
 
+/* Item List Styles */
+.course-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.course-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.course-details {
+  flex: 1;
+}
+
+.course-code-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.course-code {
+  font-size: 14px;
+  color: #666;
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.course-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.course-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  color: #666;
+}
+
+.course-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-edit,
+.btn-delete {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-edit {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.btn-edit:hover {
+  background-color: #138496;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-delete:hover {
+  background-color: #c82333;
+}
+
+/* Status Badge */
 .status-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
 }
@@ -184,56 +303,152 @@
   color: #721c24;
 }
 
-/* Utility classes */
-.text-center {
-  text-align: center;
+.status-badge.clickable {
+  cursor: pointer;
 }
 
+/* Loading and Error States */
 .loading {
   text-align: center;
-  padding: 30px;
-  font-size: 18px;
-  color: var(--primary-color);
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
 }
 
 .error-message {
-  color: #e74c3c;
-  background-color: #fdecea;
-  padding: 15px;
-  border-radius: 6px;
-  margin-bottom: 20px;
+  text-align: center;
+  padding: 40px;
+  color: #dc3545;
   font-size: 16px;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 40px;
 }
 
 .no-data-message {
-  text-align: center;
-  padding: 40px 20px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
+  color: #666;
   font-size: 16px;
-  color: #6c757d;
-  margin-top: 20px;
+  margin-bottom: 16px;
 }
 
-/* Responsive styles */
+.empty-state-action {
+  margin-top: 16px;
+}
+
+/* Modal Styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.delete-confirmation-modal {
+  background: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+}
+
+.modal-body {
+  padding: 16px;
+}
+
+.modal-body p {
+  margin: 0 0 8px 0;
+  color: #444;
+}
+
+.warning-text {
+  color: #dc3545;
+  font-size: 14px;
+}
+
+.modal-footer {
+  padding: 16px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn-cancel {
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background-color: #e9ecef;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
+  .list-container {
+    padding: 16px;
+  }
+
   .list-header {
     flex-direction: column;
-    align-items: flex-start;
+    gap: 16px;
   }
-  
+
   .header-actions {
-    margin-top: 15px;
     width: 100%;
+    justify-content: flex-start;
   }
-  
+
+  .course-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .course-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
   .list-table {
-    font-size: 14px;
-  }
-  
-  .list-table th, 
-  .list-table td {
-    padding: 10px 8px;
+    display: block;
+    overflow-x: auto;
   }
 }
 

@@ -1,30 +1,35 @@
 .excel-operations {
   margin: 15px 0;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .excel-buttons {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .excel-button {
   display: inline-flex;
   align-items: center;
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 10px 18px;
+  border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
-  background-color: #f8f9fa;
-  color: #333;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  min-width: 140px;
+  justify-content: center;
 }
 
 .excel-button:hover {
-  background-color: #e9ecef;
   transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .button-icon {
@@ -35,37 +40,48 @@
 .import-button {
   background-color: #e3f2fd;
   color: #1565c0;
+  border-color: #bbdefb;
 }
 
 .import-button:hover {
   background-color: #bbdefb;
+  border-color: #90caf9;
 }
 
 .export-button {
   background-color: #e8f5e9;
   color: #2e7d32;
+  border-color: #c8e6c9;
 }
 
 .export-button:hover {
   background-color: #c8e6c9;
+  border-color: #a5d6a7;
 }
 
 .template-button {
   background-color: #fff3e0;
   color: #ef6c00;
+  border-color: #ffe0b2;
 }
 
 .template-button:hover {
   background-color: #ffe0b2;
+  border-color: #ffcc80;
 }
 
 @media (max-width: 768px) {
   .excel-buttons {
     flex-direction: column;
+    width: 100%;
   }
   
   .excel-button {
     width: 100%;
-    justify-content: center;
+    margin-bottom: 8px;
+  }
+  
+  .excel-button:last-child {
+    margin-bottom: 0;
   }
 } 

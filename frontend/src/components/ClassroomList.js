@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getClassrooms, deleteClassroom, updateClassroom, createClassroom } from "../api";
 import ExcelOperations from './ExcelOperations';
+import PageHeader from './PageHeader';
 import * as XLSX from 'xlsx';
 import "../styles/ListView.css";
 import "../styles/ClassroomList.css";
@@ -273,25 +274,17 @@ const ClassroomList = ({ token, user }) => {
   const renderFacultiesPage = () => {
     return (
       <div className="list-container">
-        <div className="list-header">
-          <div className="header-content">
-            <h1>Derslikler</h1>
-            <p className="list-subtitle">Fakülte ve bölümlere göre derslikleri görüntüleyin</p>
-          </div>
-          {isAdmin && (
-            <>
-              <Link to="/classrooms/new" className="add-button">
-                <span className="btn-icon">+</span> Yeni Derslik Ekle
-              </Link>
-              <ExcelOperations
-                onImport={handleExcelImport}
-                onExport={handleExcelExport}
-                templateData={classroomTemplate}
-                templateFileName="derslik_sablonu"
-              />
-            </>
-          )}
-        </div>
+        <PageHeader
+          title="Derslikler"
+          subtitle="Fakülte ve bölümlere göre derslikleri görüntüleyin"
+          isAdmin={isAdmin}
+          addButtonText="Yeni Derslik Ekle"
+          addButtonLink="/classrooms/new"
+          onImport={handleExcelImport}
+          onExport={handleExcelExport}
+          templateData={classroomTemplate}
+          templateFileName="derslik_sablonu"
+        />
         
         <div className="search-container with-search-icon">
           <span className="search-icon">🔍</span>
@@ -370,22 +363,19 @@ const ClassroomList = ({ token, user }) => {
     
     return (
       <div className="list-container">
-        <div className="list-header">
-          <div className="header-content">
-            <h1>{selectedFaculty}</h1>
-            <p className="list-subtitle">Bölümlere göre derslikleri görüntüleyin</p>
-          </div>
-          <div className="header-actions">
-            <button className="back-button" onClick={handleBackToFaculties}>
-              ← Fakültelere Dön
-            </button>
-            {isAdmin && (
-              <Link to="/classrooms/new" className="add-button">
-                <span className="btn-icon">+</span> Yeni Derslik Ekle
-              </Link>
-            )}
-          </div>
-        </div>
+        <PageHeader
+          title={selectedFaculty}
+          subtitle="Bölümlere göre derslikleri görüntüleyin"
+          isAdmin={isAdmin}
+          addButtonText="Yeni Derslik Ekle"
+          addButtonLink="/classrooms/new"
+          backButtons={[
+            {
+              text: "← Fakültelere Dön",
+              onClick: handleBackToFaculties
+            }
+          ]}
+        />
         
         <div className="search-container with-search-icon">
           <span className="search-icon">🔍</span>
@@ -460,25 +450,23 @@ const ClassroomList = ({ token, user }) => {
     
     return (
       <div className="classrooms-page">
-        <div className="list-header">
-          <div className="header-content">
-            <h1>{selectedDepartment}</h1>
-            <p className="list-subtitle">{selectedFaculty}</p>
-          </div>
-          <div className="header-actions">
-            <button className="back-button" onClick={handleBackToFaculties}>
-              ← Fakültelere Dön
-            </button>
-            <button className="back-button" onClick={handleBackToDepartments}>
-              ← Bölümlere Dön
-            </button>
-            {isAdmin && (
-              <Link to="/classrooms/new" className="add-button">
-                <span className="btn-icon">+</span> Yeni Derslik Ekle
-              </Link>
-            )}
-          </div>
-        </div>
+        <PageHeader
+          title={selectedDepartment}
+          subtitle={selectedFaculty}
+          isAdmin={isAdmin}
+          addButtonText="Yeni Derslik Ekle"
+          addButtonLink="/classrooms/new"
+          backButtons={[
+            {
+              text: "← Fakültelere Dön",
+              onClick: handleBackToFaculties
+            },
+            {
+              text: "← Bölümlere Dön",
+              onClick: handleBackToDepartments
+            }
+          ]}
+        />
         
         <div className="search-container with-search-icon">
           <span className="search-icon">🔍</span>

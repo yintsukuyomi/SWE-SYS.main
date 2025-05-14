@@ -57,7 +57,10 @@
 .department-section, .department-card-item { background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden; }
 .department-name { font-size: 18px; padding: 15px 20px; background: #f5f5f5; border-bottom: 1px solid var(--border-color); margin: 0; }
 .no-teachers { text-align: center; padding: 40px 20px; background: #f8f9fa; border-radius: 8px; font-size: 16px; color: #6c757d; margin-top: 20px; }
-.teachers-container { padding: 20px; max-width: 1200px; margin: 0 auto; min-height: 80vh; }
+.teachers-container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
 .page-title { font-size: 32px; color: var(--text-color); margin-bottom: 10px; }
 .page-description { color: #666; margin-bottom: 30px; }
 .page-navigation { display: flex; margin-bottom: 20px; gap: 10px; }
@@ -95,5 +98,64 @@
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+}
+.teacher-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+.teacher-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.teacher-details {
+  flex: 1;
+}
+.teacher-name-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.teacher-title {
+  font-size: 14px;
+  color: #666;
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.teacher-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+.teacher-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  color: #666;
+}
+.teacher-email {
+  color: #666;
+}
+@media (max-width: 768px) {
+  .teachers-page {
+    padding: 16px;
+  }
+  .teacher-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .teacher-meta-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 }
 
