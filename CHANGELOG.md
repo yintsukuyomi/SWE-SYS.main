@@ -21,7 +21,7 @@ Tüm önemli değişiklikler bu dosyada listelenir.
 
 ---
 
-## [1.1.0] - 2025-05-15
+## [1.1.0] - 2025-05-18
 ### Yenilikler
 - Toplu Excel ile veri girişi ve dışa aktarma
 - Programda başarı oranı ve programlanamayan derslerin gösterimi
@@ -32,7 +32,7 @@ Tüm önemli değişiklikler bu dosyada listelenir.
 
 ---
 
-## [1.0.0] - 2024-05-01
+## [1.0.0] - 2025-04-01
 ### İlk Yayın
 - Temel ders, öğretmen, sınıf ve program yönetimi
 - Klasik algoritma ile otomatik program oluşturma
