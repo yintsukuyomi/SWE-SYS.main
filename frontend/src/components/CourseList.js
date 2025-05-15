@@ -330,7 +330,6 @@ const CourseList = ({ token, user }) => {
           isAdmin={isAdmin}
           addButtonText="Yeni Ders Ekle"
           addButtonLink="/courses/new"
-          onImport={handleExcelImport}
           onExport={handleExcelExport}
           templateData={courseTemplate}
           templateFileName="ders_sablonu"
@@ -668,6 +667,9 @@ const CourseList = ({ token, user }) => {
   };
 
   const handleExcelImport = async (data) => {
+    const filteredData = data.filter(row =>
+      Object.values(row).some(val => val !== null && val !== undefined && String(val).trim() !== '')
+    );
     try {
       const teachers = await getTeachers(token);
       const typeMap = {
@@ -693,8 +695,8 @@ const CourseList = ({ token, user }) => {
         'electives': 'secmeli'
       };
       const courseMap = {};
-      for (let i = 0; i < data.length; i++) {
-        const row = data[i];
+      for (let i = 0; i < filteredData.length; i++) {
+        const row = filteredData[i];
         if (!row['Ders Adı'] || !row['Ders Kodu'] || !row['Fakülte'] || !row['Kategori'] || !row['Dönem'] || !row['AKTS']) {
           setExcelError(`Satır ${i + 2}: Eksik zorunlu alan. (Ders Adı, Ders Kodu, Fakülte, Kategori, Dönem, AKTS)`);
           return;
@@ -809,7 +811,6 @@ const CourseList = ({ token, user }) => {
             isAdmin={isAdmin}
             addButtonText="Yeni Ders Ekle"
             addButtonLink="/courses/new"
-            onImport={handleExcelImport}
             onExport={handleExcelExport}
             templateData={courseTemplate}
             templateFileName="ders_sablonu"

@@ -158,6 +158,9 @@ const ClassroomList = ({ token, user }) => {
   };
 
   const handleExcelImport = async (data) => {
+    const filteredData = data.filter(row =>
+      Object.values(row).some(val => val !== null && val !== undefined && String(val).trim() !== '')
+    );
     try {
       const typeMap = {
         'teorik': 'teorik',
@@ -167,7 +170,7 @@ const ClassroomList = ({ token, user }) => {
         'laboratory': 'lab',
         'laboratuvar': 'lab'
       };
-      for (const row of data) {
+      for (const row of filteredData) {
         const rawType = (row['Tür'] || '').toLowerCase();
         const mappedType = typeMap[rawType];
         if (!mappedType) {
@@ -176,7 +179,7 @@ const ClassroomList = ({ token, user }) => {
         }
         row['Tür'] = mappedType;
       }
-      setPendingExcelData(data);
+      setPendingExcelData(filteredData);
       setShowExcelModal(true);
     } catch (err) {
       setExcelError(err.message || 'Derslikler içe aktarılırken bir hata oluştu.');

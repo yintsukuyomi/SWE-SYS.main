@@ -195,6 +195,9 @@ const TeacherList = ({ token, user }) => {
   };
 
   const handleExcelImport = async (data) => {
+    const filteredData = data.filter(row =>
+      Object.values(row).some(val => val !== null && val !== undefined && String(val).trim() !== '')
+    );
     try {
       // Saat aralığını slotlara bölen yardımcı fonksiyon
       function expandTimeRange(range) {
@@ -218,8 +221,8 @@ const TeacherList = ({ token, user }) => {
         if (Array.isArray(val)) return val;
         return val.split(',').flatMap(s => expandTimeRange(s.trim()));
       };
-      for (let i = 0; i < data.length; i++) {
-        const row = data[i];
+      for (let i = 0; i < filteredData.length; i++) {
+        const row = filteredData[i];
         const name = (row['Ad'] || row['Ad Soyad'] || row['Name'] || row['Adı Soyadı'] || '').trim();
         const email = (row['E-posta'] || row['Eposta'] || row['E-Mail'] || row['Email'] || '').trim();
         const faculty = (row['Fakülte'] || row['Fakulte'] || row['Faculty'] || '').trim();
@@ -244,7 +247,7 @@ const TeacherList = ({ token, user }) => {
         row['Perşembe'] = parseHours(row['Perşembe']);
         row['Cuma'] = parseHours(row['Cuma']);
       }
-      setPendingExcelData(data);
+      setPendingExcelData(filteredData);
       setShowExcelModal(true);
     } catch (err) {
       setExcelError(err.message || 'Öğretmenler içe aktarılırken bir hata oluştu.');
