@@ -1,50 +1,40 @@
-# Değişiklik Günlüğü
+# Değişiklik Günlüğü (CHANGELOG)
 
-Tüm önemli değişiklikler bu dosyada belgelenecektir.
+Tüm önemli değişiklikler bu dosyada listelenir.
 
-## [1.0.1] - 2025-05-14
+---
 
-### Eklenenler
-- Excel işlemleri eklendi
+## [1.2.0] - 2025-05-15
+### Öne Çıkanlar
+- **Yapay Zeka (Genetik Algoritma) ile Otomatik Program Oluşturma** özelliği eklendi
+- Program oluşturucu arayüzünde iki algoritma seçeneği (klasik & yapay zeka)
+- Dökümantasyon dosyaları tamamen modernize edildi
 
-## [1.0.0] - 2025-04-05
+### İyileştirmeler
+- Kullanıcı ve API dökümantasyonu güncellendi
+- Kullanıcı arayüzünde açıklamalar ve ipuçları eklendi
+- Kod ve testlerde küçük hata düzeltmeleri
 
-### Eklenenler
-- Fakülte ve bölüm bazlı kullanıcı yönetimi
-- Öğretmen yönetimi (ekleme, düzenleme, silme)
-- Ders yönetimi (ekleme, düzenleme, silme)
-- Sınıf yönetimi (ekleme, düzenleme, silme)
-- Program oluşturma ve yönetimi
-- Otomatik program oluşturma
-- Filtreleme ve arama özellikleri
-- Admin ve normal kullanıcı rolleri
-- Responsive tasarım
-- Excel ile toplu veri girişi
-- Bildirim sistemi
-- Aktivite takibi
+### Notlar
+- Genetik algoritma ile oluşturulan programlar, çakışmasız ve kapasiteye uygun şekilde optimize edilir
+- Dökümantasyon ve kullanıcı kılavuzu güncel tutulmalıdır
 
-### Değişiklikler
-- Tüm program kartlar yerine listview kullanımına geçildi
-- Dil Türkçe olarak değiştirildi
-- Arayüz iyileştirmeleri yapıldı
-- Öğretmenler uygun saati bir tablodan işaretleyebilir hale geldi
-- Dersler teorik ve lab olarak ayrıldı
-- Aktif/pasif durumlar listview olarak yana buton olarak eklendi
-- Dersleri saat olarak ayırma seçeneği eklendi
-- Lab ve Teorik sessionları olan derslerde lab sonra konacak şekilde düzenlendi
-- Derslik tipleri lab ve teorik olarak sadeleştirildi
+---
 
-### Planlananlar
-- Bölüm bazlı kullanıcı girişi yapılacak ve her bölüm yalnızca kendi derslerinde düzenleme yapabilecek
-- Veri tabanı ayrılacak, gerekirse daha sağlam bir veri tabanı kullanılacak
-- Ders programı oluşturma ekranında döneme göre ders, derslik hoca dönem seçilebilir olmalı
-- Ders programı oluşturma fonksiyonu bölüm bazlı olacak şekilde küçültülerek sistem yükü azaltılmalı
-- Algoritma yeni değişikliklere göre yeniden düzenlenmeli
+## [1.1.0] - 2025-05-15
+### Yenilikler
+- Toplu Excel ile veri girişi ve dışa aktarma
+- Programda başarı oranı ve programlanamayan derslerin gösterimi
 
-## [0.1.0] - 2025-03-12
+### Düzeltmeler
+- Öğretmen uygunluk saatleriyle ilgili hata düzeltildi
+- UI/UX iyileştirmeleri
 
-### Eklenenler
-- İlk sürüm
-- Temel CRUD işlemleri
-- Basit kullanıcı arayüzü
-- Temel veritabanı yapısı 
+---
+
+## [1.0.0] - 2024-05-01
+### İlk Yayın
+- Temel ders, öğretmen, sınıf ve program yönetimi
+- Klasik algoritma ile otomatik program oluşturma
+- JWT tabanlı kimlik doğrulama
+- Modern React arayüzü

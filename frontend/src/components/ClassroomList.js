@@ -157,43 +157,6 @@ const ClassroomList = ({ token, user }) => {
       .sort((a, b) => a.localeCompare(b, 'tr'));
   };
 
-  const toggleClassroomStatus = async (classroomId, isCurrentlyActive) => {
-    try {
-      const classroom = classrooms.find(c => c.id === classroomId);
-      if (!classroom) return;
-  
-      const updateData = {
-        ...classroom,
-        is_active: !isCurrentlyActive
-      };
-  
-      await updateClassroom(classroomId, updateData, token);
-      
-      setClassrooms(prevClassrooms => 
-        prevClassrooms.map(c => 
-          c.id === classroomId ? { ...c, is_active: !isCurrentlyActive } : c
-        )
-      );
-  
-      setGroupedClassrooms(prevGrouped => {
-        const newGrouped = { ...prevGrouped };
-        Object.keys(newGrouped).forEach(faculty => {
-          Object.keys(newGrouped[faculty]).forEach(department => {
-            newGrouped[faculty][department] = newGrouped[faculty][department].map(c => 
-              c.id === classroomId ? { ...c, is_active: !isCurrentlyActive } : c
-            );
-          });
-        });
-        return newGrouped;
-      });
-      toast.success("Derslik durumu güncellendi.");
-    } catch (error) {
-      console.error("Error updating classroom status:", error);
-      setError(error.response?.data?.detail || "Derslik durumu güncellenirken bir hata oluştu.");
-      toast.error(error.response?.data?.detail || "Derslik durumu güncellenirken bir hata oluştu.");
-    }
-  };
-
   const handleExcelImport = async (data) => {
     try {
       const typeMap = {
@@ -496,19 +459,6 @@ const ClassroomList = ({ token, user }) => {
                 <div className="course-meta-row">
                   <span className="classroom-type">{classroom.type}</span>
                   <span className="classroom-capacity">Kapasite: {classroom.capacity}</span>
-                  {isAdmin ? (
-                    <span 
-                      className={`status-badge ${classroom.is_active ? 'active' : 'inactive'} clickable`}
-                      onClick={() => toggleClassroomStatus(classroom.id, classroom.is_active)}
-                      title={classroom.is_active ? 'Pasif yap' : 'Aktif yap'}
-                    >
-                      {classroom.is_active ? 'Aktif' : 'Pasif'}
-                    </span>
-                  ) : (
-                    <span className={`status-badge ${classroom.is_active ? 'active' : 'inactive'}`}>
-                      {classroom.is_active ? 'Aktif' : 'Pasif'}
-                    </span>
-                  )}
                 </div>
               </div>
               {isAdmin && (

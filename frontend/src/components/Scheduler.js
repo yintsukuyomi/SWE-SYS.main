@@ -12,6 +12,7 @@ const Scheduler = ({ token }) => {
   const [groupedSchedules, setGroupedSchedules] = useState({});
   const [sortedDays, setSortedDays] = useState([]);
   const [showDetails, setShowDetails] = useState(false);
+  const [lastMethod, setLastMethod] = useState('classic'); // classic veya genetic
   
   useEffect(() => {
     // Fetch current schedule status when component loads
@@ -56,18 +57,16 @@ const Scheduler = ({ token }) => {
     }
   };
   
-  const handleGenerateSchedule = async () => {
+  const handleGenerateSchedule = async (method = 'classic') => {
     setGenerating(true);
     setError(null);
     setResult(null);
-    
+    setLastMethod(method);
     try {
-      const data = await generateSchedule(token);
+      const data = await generateSchedule(token, method);
       setResult(data);
       await fetchStatus();  // Update status after generation
       await fetchExistingSchedules();  // Refresh schedule list
-      
-      // Unscheduled kurslar için detaylı bilgi göster
       if (data.unscheduled && data.unscheduled.length > 0) {
         const twoHourCourses = data.unscheduled.filter(c => c.total_hours === 2);
         if (twoHourCourses.length > 0) {
@@ -137,11 +136,19 @@ const Scheduler = ({ token }) => {
         
         <div className="scheduler-generate">
           <button 
-            onClick={handleGenerateSchedule} 
+            onClick={() => handleGenerateSchedule('classic')} 
             disabled={generating}
             className="generate-btn"
           >
-            {generating ? 'Oluşturuluyor...' : 'Yeni Program Oluştur'}
+            {generating && lastMethod === 'classic' ? 'Oluşturuluyor...' : 'Klasik Algoritma ile Oluştur'}
+          </button>
+          <button
+            onClick={() => handleGenerateSchedule('genetic')}
+            disabled={generating}
+            className="generate-btn"
+            style={{ marginLeft: 10, background: '#6c63ff' }}
+          >
+            {generating && lastMethod === 'genetic' ? 'Yapay Zeka Çalışıyor...' : 'Yapay Zeka ile Oluştur'}
           </button>
           <p className="warning-text">Uyarı: Bu işlem mevcut programın yerini alacaktır!</p>
         </div>
@@ -151,6 +158,15 @@ const Scheduler = ({ token }) => {
         <div className="scheduler-result">
           <h3>Oluşturma Sonuçları</h3>
           <div className="result-summary">
+            <div className="result-item">
+              <span className="result-label">Kullanılan Algoritma:</span>
+              <span className="result-value">
+                {lastMethod === 'genetic' ? 'Yapay Zeka (Genetik Algoritma)' : 'Klasik Algoritma'}
+                {result.perfect !== undefined && lastMethod === 'genetic' && (
+                  result.perfect ? ' (Kusursuz Çözüm)' : ' (Kusursuz Değil)'
+                )}
+              </span>
+            </div>
             <div className="result-item">
               <span className="result-label">Başarıyla Programlanan:</span>
               <span className="result-value">{result.scheduled_count} ders</span>
@@ -237,8 +253,8 @@ const Scheduler = ({ token }) => {
                         return (
                           <tr key={schedule.id}>
                             <td>{schedule.time_range}</td>
-                            <td>{schedule.course ? `${schedule.course.name} (${schedule.course.code})` : 'Unknown Course'}</td>
-                            <td>{schedule.classroom ? schedule.classroom.name : 'Unknown Classroom'}</td>
+                            <td>{schedule.course && schedule.course.name ? `${schedule.course.name} (${schedule.course.code})` : 'Unknown Course'}</td>
+                            <td>{schedule.classroom && schedule.classroom.name ? schedule.classroom.name : 'Unknown Classroom'}</td>
                             <td className={capacityClass}>
                               {studentCount} / {classroomCapacity}
                               {capacityRatio > 90 && <span className="capacity-warning"> ⚠️</span>}

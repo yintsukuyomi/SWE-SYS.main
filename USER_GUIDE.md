@@ -1,186 +1,96 @@
 # Kullanıcı Kılavuzu
 
-Bu kılavuz, Ders Programı Yönetim Sistemi'nin kullanımını adım adım açıklar.
+Bu kılavuz, SWE-SYS Ders Programı Yönetim Sistemi'nin kullanımını adım adım açıklar.
 
 ## İçindekiler
+1. [Giriş ve Hızlı Başlangıç](#giriş-ve-hızlı-başlangıç)
+2. [Kullanıcı Rolleri](#kullanıcı-rolleri)
+3. [Temel İşlemler](#temel-işlemler)
+4. [Otomatik Program Oluşturucu](#otomatik-program-oluşturucu)
+5. [Sıkça Sorulan Sorular & İpuçları](#sıkça-sorulan-sorular--ipuçları)
 
-1. [Giriş](#giriş)
-2. [Sisteme Giriş](#sisteme-giriş)
-3. [Admin Paneli](#admin-paneli)
-4. [Öğretmen Yönetimi](#öğretmen-yönetimi)
-5. [Ders Yönetimi](#ders-yönetimi)
-6. [Sınıf Yönetimi](#sınıf-yönetimi)
-7. [Program Yönetimi](#program-yönetimi)
-8. [Program Görüntüleme](#program-görüntüleme)
-9. [Sık Sorulan Sorular](#sık-sorulan-sorular)
+---
 
-## Giriş
+## Giriş ve Hızlı Başlangıç
 
-Ders Programı Yönetim Sistemi, üniversitelerin ders programlarını oluşturmasına ve yönetmesine olanak sağlayan bir web uygulamasıdır. Sistem iki farklı kullanıcı rolüne sahiptir:
+SWE-SYS, üniversiteler için modern, web tabanlı bir ders programı yönetim sistemidir. Hem klasik hem de yapay zeka (genetik algoritma) ile otomatik program oluşturma desteği sunar.
 
-- **Admin**: Tüm yönetim işlemlerini yapabilir
-- **Normal Kullanıcı**: Sadece program görüntüleme ve arama yapabilir
+**Başlamak için:**
+1. Tarayıcıda `http://localhost:3000` adresine gidin.
+2. Giriş ekranında kullanıcı adı ve şifrenizi girin.
+3. Rolünüze göre yönetim paneline veya program görüntüleme ekranına yönlendirilirsiniz.
 
-## Sisteme Giriş
+---
 
-1. Tarayıcınızda `http://localhost:3000` adresine gidin
-2. Giriş sayfasında kullanıcı adı ve şifrenizi girin
-3. "Giriş Yap" butonuna tıklayın
+## Kullanıcı Rolleri
 
-## Admin Paneli
+- **Admin:** Tüm yönetim işlemlerini yapabilir (öğretmen, ders, sınıf, program ekleme/düzenleme/silme, otomatik program oluşturma).
+- **Normal Kullanıcı:** Sadece programları görüntüleyebilir ve arama/filtreleme yapabilir.
 
-Admin paneline giriş yaptıktan sonra erişebilirsiniz. Panel şu bölümlerden oluşur:
+---
 
-- Öğretmenler
-- Dersler
-- Sınıflar
-- Programlar
+## Temel İşlemler
 
-Her bölümün kendi yönetim sayfası bulunur.
+### 1. Öğretmen Yönetimi
+- **Ekle:** "Öğretmenler" sayfasında "Ekle" butonuna tıklayın, formu doldurun ve kaydedin.
+- **Düzenle:** Listeden öğretmenin yanındaki "Düzenle" butonuna tıklayın, değişiklikleri yapıp kaydedin.
+- **Sil:** Listeden öğretmenin yanındaki "Sil" butonuna tıklayın, onaylayın.
 
-## Öğretmen Yönetimi
+### 2. Ders Yönetimi
+- **Ekle:** "Dersler" sayfasında "Ekle" butonuna tıklayın, formu doldurun ve kaydedin.
+- **Düzenle/Sil:** Listeden ilgili dersin yanındaki butonları kullanın.
 
-### Öğretmen Ekleme
+### 3. Sınıf Yönetimi
+- **Ekle:** "Sınıflar" sayfasında "Ekle" butonuna tıklayın, formu doldurun ve kaydedin.
+- **Düzenle/Sil:** Listeden ilgili sınıfın yanındaki butonları kullanın.
 
-1. "Öğretmenler" sayfasına gidin
-2. "Öğretmen Ekle" butonuna tıklayın
-3. Açılan formda:
-   - Ad Soyad
-   - E-posta
-   - Fakülte
-   - Bölüm
-   - Çalışma Günleri
-   - Çalışma Saatleri
-   bilgilerini girin
-4. "Kaydet" butonuna tıklayın
+### 4. Program Yönetimi
+- **Ekle:** "Programlar" sayfasında "Ekle" veya "Oluştur" butonuna tıklayın, formu doldurun ve kaydedin.
+- **Düzenle/Sil:** Listeden ilgili programın yanındaki butonları kullanın.
+- **Görüntüle:** Programlar sayfasında günlük veya haftalık görünüm seçeneklerini kullanın.
+- **Filtrele:** Fakülte, bölüm, öğretmen veya sınıfa göre filtreleme yapabilirsiniz.
 
-### Öğretmen Düzenleme
+---
 
-1. Öğretmen listesinde düzenlemek istediğiniz öğretmenin yanındaki "Düzenle" butonuna tıklayın
-2. Açılan formda gerekli değişiklikleri yapın
-3. "Kaydet" butonuna tıklayın
+## Otomatik Program Oluşturucu
 
-### Öğretmen Silme
+Sistemde iki farklı otomatik program oluşturma algoritması bulunur:
 
-1. Öğretmen listesinde silmek istediğiniz öğretmenin yanındaki "Sil" butonuna tıklayın
-2. Onay penceresinde "Evet" butonuna tıklayın
+### 1. Klasik Algoritma
+- "Program Oluşturucu" sayfasında "Klasik Algoritma ile Oluştur" butonuna tıklayın.
+- Sistem, temel kurallara göre otomatik program oluşturur.
 
-## Ders Yönetimi
+### 2. Yapay Zeka (Genetik Algoritma)
+- Aynı sayfada "Yapay Zeka ile Oluştur" butonuna tıklayın.
+- Sistem, çakışmasız ve kapasiteye uygun, optimize edilmiş bir program üretir.
+- Sonuç kutusunda "Kusursuz Çözüm" etiketi varsa, hiçbir kısıt ihlali yoktur.
 
-### Ders Ekleme
+**İpucu:**
+- Otomatik oluşturucu mevcut programı siler ve yenisiyle değiştirir.
+- Program oluşturma sonrası başarı oranı ve programlanamayan dersler ekranda gösterilir.
 
-1. "Dersler" sayfasına gidin
-2. "Ders Ekle" butonuna tıklayın
-3. Açılan formda:
-   - Ders Adı
-   - Ders Kodu
-   - Öğretmen
-   - Fakülte
-   - Bölümler
-   - Seviye
-   - Tip
-   - Dönem
-   - ECTS
-   - Toplam Saat
-   - Öğrenci Sayısı
-   bilgilerini girin
-4. "Kaydet" butonuna tıklayın
+---
 
-### Ders Düzenleme
+## Sıkça Sorulan Sorular & İpuçları
 
-1. Ders listesinde düzenlemek istediğiniz dersin yanındaki "Düzenle" butonuna tıklayın
-2. Açılan formda gerekli değişiklikleri yapın
-3. "Kaydet" butonuna tıklayın
+**S: Programda çakışma olursa ne olur?**
+C: Sistem otomatik olarak çakışmaları engeller. Yapay zeka algoritması, çakışmasız program bulamazsa en iyiye yakın çözümü sunar.
 
-### Ders Silme
+**S: Öğretmen uygunlukları nasıl dikkate alınır?**
+C: Öğretmenlerin çalışma günleri ve saatleri kaydedilir, program oluşturulurken bu bilgiler kullanılır.
 
-1. Ders listesinde silmek istediğiniz dersin yanındaki "Sil" butonuna tıklayın
-2. Onay penceresinde "Evet" butonuna tıklayın
+**S: Programı Excel/PDF olarak dışa aktarabilir miyim?**
+Evet, program listesinde "Dışa Aktar" butonunu kullanabilirsiniz.
 
-## Sınıf Yönetimi
+**S: Toplu veri girişi mümkün mü?**
+Evet, Excel şablonunu indirip toplu veri yükleyebilirsiniz.
 
-### Sınıf Ekleme
+**S: Programı manuel olarak düzenleyebilir miyim?**
+Evet, programdaki her dersi tek tek düzenleyebilir veya silebilirsiniz.
 
-1. "Sınıflar" sayfasına gidin
-2. "Sınıf Ekle" butonuna tıklayın
-3. Açılan formda:
-   - Sınıf Adı
-   - Kapasite
-   - Tip
-   - Fakülte
-   - Bölüm
-   bilgilerini girin
-4. "Kaydet" butonuna tıklayın
+**İpucu:**
+- Herhangi bir sorunla karşılaşırsanız, sayfayı yenileyin veya yöneticinize başvurun.
+- Detaylı teknik bilgi için [API Dokümantasyonu](API.md) dosyasına bakabilirsiniz.
 
-### Sınıf Düzenleme
-
-1. Sınıf listesinde düzenlemek istediğiniz sınıfın yanındaki "Düzenle" butonuna tıklayın
-2. Açılan formda gerekli değişiklikleri yapın
-3. "Kaydet" butonuna tıklayın
-
-### Sınıf Silme
-
-1. Sınıf listesinde silmek istediğiniz sınıfın yanındaki "Sil" butonuna tıklayın
-2. Onay penceresinde "Evet" butonuna tıklayın
-
-## Program Yönetimi
-
-### Program Oluşturma
-
-1. "Programlar" sayfasına gidin
-2. "Program Oluştur" butonuna tıklayın
-3. Açılan formda:
-   - Gün
-   - Saat Aralığı
-   - Ders
-   - Sınıf
-   bilgilerini girin
-4. "Kaydet" butonuna tıklayın
-
-### Program Düzenleme
-
-1. Program listesinde düzenlemek istediğiniz programın yanındaki "Düzenle" butonuna tıklayın
-2. Açılan formda gerekli değişiklikleri yapın
-3. "Kaydet" butonuna tıklayın
-
-### Program Silme
-
-1. Program listesinde silmek istediğiniz programın yanındaki "Sil" butonuna tıklayın
-2. Onay penceresinde "Evet" butonuna tıklayın
-
-## Program Görüntüleme
-
-### Günlük Program
-
-1. "Programlar" sayfasına gidin
-2. Üst menüden günü seçin
-3. Program listesi seçilen güne göre filtrelenecektir
-
-### Haftalık Program
-
-1. "Programlar" sayfasına gidin
-2. "Haftalık Görünüm" butonuna tıklayın
-3. Tüm haftanın programı tablo halinde görüntülenecektir
-
-### Filtreleme
-
-1. Program listesinin üstündeki filtreleme seçeneklerini kullanın:
-   - Fakülte
-   - Bölüm
-   - Öğretmen
-   - Sınıf
-2. Seçtiğiniz kriterlere göre program listesi filtrelenecektir
-
-## Sık Sorulan Sorular
-
-### Program çakışması nasıl önlenir?
-Sistem otomatik olarak program çakışmalarını kontrol eder. Aynı sınıfa veya öğretmene aynı saatte ders atanması durumunda uyarı verir.
-
-### Öğretmen müsaitlik durumu nasıl kontrol edilir?
-Öğretmenlerin çalışma günleri ve saatleri kaydedilir. Program oluştururken bu bilgiler dikkate alınır.
-
-### Ders programı nasıl dışa aktarılır?
-Program listesinin üstündeki "Dışa Aktar" butonuna tıklayarak programı PDF veya Excel formatında indirebilirsiniz.
-
-### Toplu program oluşturma nasıl yapılır?
-"Toplu Program Oluştur" butonuna tıklayarak, seçtiğiniz dersler için otomatik program oluşturabilirsiniz. Sistem, öğretmen müsaitlikleri ve sınıf kapasitelerini dikkate alarak en uygun programı oluşturur. 
+---
+Daha fazla bilgi için dökümantasyon dosyalarını inceleyin veya teknik destek ekibine ulaşın. 

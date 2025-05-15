@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from database import get_db
 from schemas.schedule import ScheduleCreate, ScheduleResponse
 from services.schedules_service import (
@@ -12,6 +12,7 @@ from services.schedules_service import (
 )
 from pydantic import BaseModel
 from typing import List
+from models import Schedule
 
 router = APIRouter()
 
@@ -20,29 +21,87 @@ class DaysDeleteRequest(BaseModel):
 
 @router.get("")
 def get_schedules(db: Session = Depends(get_db)):
-    schedules = get_all_schedules(db)
-    # Burada ScheduleResponse ile serialize edilebilir
-    return [ScheduleResponse(**{
-        "id": s.id,
-        "day": s.day,
-        "time_range": s.time_range,
-        "course_id": s.course_id,
-        "classroom_id": s.classroom_id
-    }).dict() for s in schedules]
+    schedules = db.query(Schedule).options(
+        joinedload(Schedule.course),
+        joinedload(Schedule.classroom)
+    ).all()
+    result = []
+    for s in schedules:
+        course = s.course
+        classroom = s.classroom
+        student_count = 0
+        if course and hasattr(course, 'departments') and course.departments:
+            try:
+                student_count = sum(getattr(dept, 'student_count', 0) for dept in course.departments)
+            except Exception:
+                student_count = getattr(course, 'student_count', 0)
+        else:
+            student_count = getattr(course, 'student_count', 0)
+        result.append({
+            "id": s.id,
+            "day": s.day,
+            "time_range": s.time_range,
+            "course": {
+                "id": course.id if course else None,
+                "name": course.name if course else None,
+                "code": course.code if course else None,
+                "teacher_id": course.teacher_id if course else None,
+                "teacher": {
+                    "id": course.teacher.id,
+                    "name": course.teacher.name,
+                    "email": course.teacher.email,
+                    "faculty": course.teacher.faculty,
+                    "department": course.teacher.department
+                } if course and course.teacher else None,
+                "total_hours": getattr(course, 'total_hours', None),
+                "student_count": student_count
+            } if course else None,
+            "classroom": {
+                "id": classroom.id if classroom else None,
+                "name": classroom.name if classroom else None,
+                "type": classroom.type if classroom else None,
+                "capacity": classroom.capacity if classroom else None
+            } if classroom else None
+        })
+    return result
 
 @router.get("/{schedule_id}")
 def get_schedule_endpoint(schedule_id: int, db: Session = Depends(get_db)):
-    schedule = get_schedule_by_id(schedule_id, db)
-    if not schedule:
+    s = db.query(Schedule).options(
+        joinedload(Schedule.course),
+        joinedload(Schedule.classroom)
+    ).filter(Schedule.id == schedule_id).first()
+    if not s:
         from fastapi import HTTPException, status
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule not found")
-    return ScheduleResponse(**{
-        "id": schedule.id,
-        "day": schedule.day,
-        "time_range": schedule.time_range,
-        "course_id": schedule.course_id,
-        "classroom_id": schedule.classroom_id
-    }).dict()
+    course = s.course
+    classroom = s.classroom
+    return {
+        "id": s.id,
+        "day": s.day,
+        "time_range": s.time_range,
+        "course": {
+            "id": course.id if course else None,
+            "name": course.name if course else None,
+            "code": course.code if course else None,
+            "teacher_id": course.teacher_id if course else None,
+            "teacher": {
+                "id": course.teacher.id,
+                "name": course.teacher.name,
+                "email": course.teacher.email,
+                "faculty": course.teacher.faculty,
+                "department": course.teacher.department
+            } if course and course.teacher else None,
+            "total_hours": getattr(course, 'total_hours', None),
+            "student_count": getattr(course, 'student_count', 0)
+        } if course else None,
+        "classroom": {
+            "id": classroom.id if classroom else None,
+            "name": classroom.name if classroom else None,
+            "type": classroom.type if classroom else None,
+            "capacity": classroom.capacity if classroom else None
+        } if classroom else None
+    }
 
 @router.post("", status_code=201)
 def create_schedule_endpoint(schedule: ScheduleCreate, db: Session = Depends(get_db)):

@@ -1,44 +1,29 @@
-### *** Acil 
-### **  Gerekli 
-### *   Opsiyonel
+# Yol Haritası (NEXT)
 
-# SWE-SYS Whats Coming?
+Bu dosya, SWE-SYS projesinin gelecek geliştirme planlarını ve önerilerini içerir.
 
-# Common
+---
 
-- [ ]  Bölüm bazlı kullanıcı girişi yapılacak ve her bölüm yalnızca kendi derslerinde düzenleme yapabilecek(sona bırakılması daha uygun).***
-- [ ]  Veri tabanı ayrılacak, gerekirse daha sağlam bir veri tabanı kullanılacak.***
-- [x]  Responsive arayüz/mümkünse mobile uyarlama senaryosu değerlendirilecek.***
-- [x]  Dil Türkçe olarak değiştirilecek.***
-- [x]  Tüm program kartlar yerine listview kullanacak.***
-- [x]  Excell toplu veri girişi eklenecek.(Süreci hızlandırmak, hatayı minimize etmek adına excel şablonu form kopyalanıp yapay zekaya atılarak oluşturulabilir)***
+## Kısa Vadeli (Öncelikli)
+- Program oluşturucuya daha fazla algoritma seçeneği eklenmesi
+- Programlama sonuçlarının PDF/Excel olarak dışa aktarılması
+- Kullanıcı arayüzünde daha fazla yardım ve ipucu
+- Bildirim sisteminin geliştirilmesi (gerçek zamanlı uyarılar)
+- Test kapsamının artırılması
 
-# Dashboard
+## Orta Vadeli
+- Mobil uyumlu arayüz iyileştirmeleri
+- Öğrenci ve danışman rollerinin eklenmesi
+- Program öneri sistemi (AI tabanlı)
+- API üzerinden toplu veri güncelleme
+- Kullanıcı aktiviteleri ve loglama
 
-- [ ]  Bildirim sistemi eklenecek.*
-- [ ]  Son aktiviteler mock data yerine canlı bilgi sunacak.**
+## Uzun Vadeli
+- Çoklu dil desteği (İngilizce, Almanca, vb.)
+- Takvim entegrasyonu (Google Calendar, Outlook)
+- Gelişmiş raporlama ve istatistikler
+- Bulut tabanlı dağıtım ve ölçeklenebilirlik
+- Topluluk katkıları için eklenti/tema altyapısı
 
-# Faculties & Programs
-
-- [x]  Arayüz iyileştirmeleri yapılacak.***
-
-# Teachers
-
-- [x]  Öğretmenler uygun saati bir tablodan işaretleyecek(dakika dahil olacak).***
-
-# Courses
-
-- [x]  Dersler teorik ve lab olarak ayrılacak.***
-- [x]  Aktif pasif gibi durumlar listview olarak yana buton olarak eklenecek.***
-- [x]  Dersleri saat olarak ayırma seçeneği sunacak.***
-- [x]  Lab ve Teorik sessionları olan derslerde lab sonra konacak.***
-
-# Classrooms
-
-- [x]  Derslik tipleri lab ve teorik olarak sadeleştirilecek.***
-
-# Scheduler
-
-- [ ]  Ders programı oluşturma ekranında _döneme_ göre ders, derslik hoca dönem seçilebilir olmalı.**
-- [ ]  Ders programı oluşturma fonksiyonu bölüm bazlı olacak şekilde küçültülerek sistem yükü azaltılmalı.**
-- [ ]  Algoritma yeni değişikliklere göre yeniden düzenlenmeli.********
+---
+Topluluk katkılarına ve yeni önerilere her zaman açığız! Fikirlerinizi GitHub Issues üzerinden paylaşabilirsiniz.

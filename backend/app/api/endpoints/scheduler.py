@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 from database import get_db
 from models import Course, Teacher, Classroom, Schedule, CourseSession
 from datetime import datetime, time
 from typing import List, Dict, Tuple, Any
 import random
+import json
+import copy
+import numpy as np
 
 router = APIRouter()
 
@@ -51,13 +54,16 @@ def get_teacher_availability(teacher):
 
 def get_suitable_classrooms(course_type, available_classrooms, student_count):
     suitable_rooms = []
+    # Türkçe ve İngilizce tip eşlemesi
     type_mapping = {
-        "Lab": ["Lab"],
-        "Theoretical": ["Theoretical"]
+        "lab": ["lab", "laboratuvar", "uygulama", "uygulamalı", "uygulamali", "uygulamalı ders", "uygulamali ders", "laboratory"],
+        "teorik": ["teorik", "theoretical", "lecture", "teori", "ders"]
     }
-    matching_types = type_mapping.get(course_type, ["Theoretical"])
+    # course_type küçük harfe çevrilerek eşleştirilir
+    key = course_type.lower()
+    matching_types = type_mapping.get(key, [key])
     for classroom in available_classrooms:
-        if classroom.type in matching_types and classroom.capacity >= student_count:
+        if classroom.type.lower() in [t.lower() for t in matching_types] and classroom.capacity >= student_count:
             suitable_rooms.append(classroom)
     return suitable_rooms
 
@@ -82,6 +88,23 @@ def is_conflict(schedule_entries, day, time_slot, teacher_id, classroom_id, depa
                 return True
     return False
 
+def find_consecutive_slots(available_slots, required_duration):
+    # available_slots: ['09:00', '09:30', ...]
+    slot_minutes = 30
+    needed_slots = int(required_duration * 60 / slot_minutes)
+    for i in range(len(available_slots) - needed_slots + 1):
+        group = available_slots[i:i+needed_slots]
+        if are_consecutive(group):
+            yield group
+
+def are_consecutive(slots):
+    for i in range(len(slots)-1):
+        h1, m1 = map(int, slots[i].split(':'))
+        h2, m2 = map(int, slots[i+1].split(':'))
+        if (h2*60 + m2) - (h1*60 + m1) != 30:
+            return False
+    return True
+
 def schedule_course_sessions(course, teacher, teacher_days, suitable_time_slots, suitable_classrooms, schedule_entries, db):
     sessions = get_course_sessions(course, db)
     if not sessions:
@@ -92,30 +115,39 @@ def schedule_course_sessions(course, teacher, teacher_days, suitable_time_slots,
         return False, "Course has no departments assigned"
     sessions.sort(key=lambda x: 0 if x.type == "teorik" else 1)
     scheduled_sessions = []
+    teacher_availability = {}
+    try:
+        teacher_availability = json.loads(getattr(teacher, 'working_hours', '{}'))
+    except Exception:
+        teacher_availability = {}
     for session in sessions:
         session_scheduled = False
-        random.shuffle(teacher_days)
-        session_suitable_time_slots = []
-        for time_slot in suitable_time_slots:
-            duration = calculate_duration(time_slot)
-            if abs(duration - session.hours) <= 0.5:
-                session_suitable_time_slots.append(time_slot)
-        if not session_suitable_time_slots:
-            return False, f"{session.hours} saatlik {session.type} oturumu için uygun zaman dilimi yok"
+        session_debug = []
         for day in teacher_days:
-            if session_scheduled:
-                break
-            random.shuffle(session_suitable_time_slots)
-            for time_slot in session_suitable_time_slots:
-                if session_scheduled:
-                    break
+            day_key = day.lower()
+            available_slots = teacher_availability.get(day_key, [])
+            if not available_slots:
+                session_debug.append(f"{day.capitalize()}: Öğretmen uygun slotu yok")
+                continue
+            found_slot = False
+            for slot_group in find_consecutive_slots(available_slots, session.hours):
+                slot_start = slot_group[0]
+                slot_end = slot_group[-1]
+                h, m = map(int, slot_end.split(':'))
+                m += 30
+                if m >= 60:
+                    h += 1
+                    m -= 60
+                slot_end_str = f"{h:02d}:{m:02d}"
+                time_slot = f"{slot_start}-{slot_end_str}"
                 session_suitable_classrooms = get_suitable_classrooms(
                     "Lab" if session.type == "lab" else "Theoretical",
                     suitable_classrooms,
                     total_students
                 )
                 if not session_suitable_classrooms:
-                    return False, f"{session.type} oturumu için uygun derslik yok"
+                    session_debug.append(f"{day.capitalize()} {time_slot}: Uygun derslik yok (kapasite/tip)")
+                    continue
                 random.shuffle(session_suitable_classrooms)
                 for classroom in session_suitable_classrooms:
                     if session.type == "lab":
@@ -125,30 +157,41 @@ def schedule_course_sessions(course, teacher, teacher_days, suitable_time_slots,
                         )
                         if not theoretical_scheduled:
                             continue
-                    if not is_conflict(
+                    if is_conflict(
                         schedule_entries, day, time_slot, 
                         teacher.id, classroom.id, departments, course.level
                     ):
-                        new_schedule = Schedule(
-                            day=day.capitalize(),
-                            time_range=time_slot,
-                            course_id=course.id,
-                            classroom_id=classroom.id
-                        )
-                        db.add(new_schedule)
-                        schedule_entries.append({
-                            "day": day,
-                            "time_slot": time_slot,
-                            "teacher_id": teacher.id,
-                            "classroom_id": classroom.id,
-                            "departments": departments,
-                            "level": course.level,
-                            "session_type": session.type,
-                            "session_hours": session.hours
-                        })
-                        scheduled_sessions.append(session)
-                        session_scheduled = True
-                        break
+                        session_debug.append(f"{day.capitalize()} {time_slot}: Çakışma var (öğretmen/derslik/bölüm)")
+                        continue
+                    # Başarılı planlama
+                    new_schedule = Schedule(
+                        day=day.capitalize(),
+                        time_range=time_slot,
+                        course_id=course.id,
+                        classroom_id=classroom.id
+                    )
+                    db.add(new_schedule)
+                    schedule_entries.append({
+                        "day": day,
+                        "time_slot": time_slot,
+                        "teacher_id": teacher.id,
+                        "classroom_id": classroom.id,
+                        "departments": departments,
+                        "level": course.level,
+                        "session_type": session.type,
+                        "session_hours": session.hours
+                    })
+                    scheduled_sessions.append(session)
+                    session_scheduled = True
+                    found_slot = True
+                    break
+                if found_slot:
+                    break
+            if session_scheduled:
+                break
+        if not session_scheduled:
+            debug_msg = "; ".join(session_debug) if session_debug else "Uygun zaman dilimi yok"
+            return False, f"{session.hours} saatlik {session.type} oturumu için planlama yapılamadı: {debug_msg}"
     return len(scheduled_sessions) == len(sessions), "All sessions scheduled successfully"
 
 def get_time_slots():
@@ -183,8 +226,146 @@ def calculate_duration(time_range):
     end_minutes = end_h * 60 + end_m
     return (end_minutes - start_minutes) / 60
 
+def fitness_function(schedule, courses, teachers, classrooms):
+    # KUSURSUZ: Herhangi bir kısıt ihlali varsa 0 puan, yoksa yüksek puan
+    for i, entry in enumerate(schedule):
+        # Çakışma kontrolü (aynı anda aynı öğretmen veya sınıf birden fazla derste olamaz)
+        for j, other in enumerate(schedule):
+            if i == j:
+                continue
+            if entry['day'] == other['day'] and entry['time_slot'] == other['time_slot']:
+                if entry['teacher_id'] == other['teacher_id'] or entry['classroom_id'] == other['classroom_id']:
+                    return 0  # Kısıt ihlali
+        # Kapasite uygunluğu
+        classroom = next((c for c in classrooms if c.id == entry['classroom_id']), None)
+        course = next((c for c in courses if c.id == entry['course_id']), None)
+        if classroom and course:
+            if getattr(classroom, 'capacity', 0) < getattr(course, 'student_count', 0):
+                return 0  # Kısıt ihlali
+        # (İsteğe bağlı: Diğer kısıtlar buraya eklenebilir)
+    # Hiçbir kısıt ihlali yoksa, programlanan oturum sayısı kadar puan ver
+    return len(schedule)
+
+def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200, pop_size=100, mutation_rate=0.05):
+    time_slots = [f"{start}-{end}" for start, end in get_time_slots()]
+    days = [d.capitalize() for d in DAYS]
+    population = []
+    # Popülasyon oluştur
+    for _ in range(pop_size):
+        individual = []
+        for course in courses:
+            teacher = teachers.get(course.teacher_id)
+            if not teacher:
+                continue
+            for session in get_course_sessions(course, db):
+                day = np.random.choice(days)
+                time_slot = np.random.choice(time_slots)
+                suitable_classrooms = get_suitable_classrooms(session.type, classrooms, sum([d.student_count for d in course.departments]))
+                if not suitable_classrooms:
+                    continue
+                classroom = np.random.choice(suitable_classrooms)
+                individual.append({
+                    'day': day,
+                    'time_slot': time_slot,
+                    'teacher_id': teacher.id,
+                    'classroom_id': classroom.id,
+                    'course_id': course.id,
+                    'session_type': session.type,
+                    'session_hours': session.hours,
+                    'departments': [d.department for d in course.departments],
+                    'level': course.level
+                })
+        population.append(individual)
+    # Evrim döngüsü
+    for gen in range(generations):
+        fitness_scores = [fitness_function(ind, courses, teachers.values(), classrooms) for ind in population]
+        # Kısıt ihlali olanları (fitness=0) popülasyondan çıkar
+        filtered_population = [ind for ind, fit in zip(population, fitness_scores) if fit > 0]
+        if not filtered_population:
+            # Eğer hiç kusursuz birey yoksa, mevcut popülasyonu koru
+            filtered_population = population
+        # Seçim (turnuva)
+        selected = []
+        for _ in range(pop_size):
+            i, j = np.random.randint(0, len(filtered_population), 2)
+            fit_i = fitness_function(filtered_population[i], courses, teachers.values(), classrooms)
+            fit_j = fitness_function(filtered_population[j], courses, teachers.values(), classrooms)
+            winner = filtered_population[i] if fit_i > fit_j else filtered_population[j]
+            selected.append(copy.deepcopy(winner))
+        # Çaprazlama
+        next_population = []
+        for i in range(0, pop_size, 2):
+            parent1 = selected[i]
+            parent2 = selected[(i+1)%pop_size]
+            cut = np.random.randint(1, len(parent1)) if len(parent1) > 1 else 1
+            child1 = parent1[:cut] + parent2[cut:]
+            child2 = parent2[:cut] + parent1[cut:]
+            next_population.extend([child1, child2])
+        # Mutasyon
+        for ind in next_population:
+            if np.random.rand() < mutation_rate:
+                if ind:
+                    gene = np.random.choice(ind)
+                    gene['day'] = np.random.choice(days)
+                    gene['time_slot'] = np.random.choice(time_slots)
+        population = next_population[:pop_size]
+    # En iyi bireyi bul
+    fitness_scores = [fitness_function(ind, courses, teachers.values(), classrooms) for ind in population]
+    best_idx = np.argmax(fitness_scores)
+    best_schedule = population[best_idx]
+    # Veritabanına kaydet
+    db.query(Schedule).delete()
+    for entry in best_schedule:
+        new_schedule = Schedule(
+            day=entry['day'],
+            time_range=entry['time_slot'],
+            course_id=entry['course_id'],
+            classroom_id=entry['classroom_id']
+        )
+        db.add(new_schedule)
+    db.commit()
+    # Sonuçları hazırla
+    new_schedule_db = db.query(Schedule).options(
+        joinedload(Schedule.course),
+        joinedload(Schedule.classroom)
+    ).all()
+    schedule_summary = []
+    for entry in new_schedule_db:
+        classroom_capacity = entry.classroom.capacity if entry.classroom else 0
+        student_count = entry.course.student_count if entry.course else 0
+        capacity_ratio = (student_count / classroom_capacity * 100) if classroom_capacity > 0 else 0
+        duration = calculate_duration(entry.time_range)
+        schedule_summary.append({
+            "id": entry.id,
+            "day": entry.day,
+            "time_range": entry.time_range,
+            "duration": round(duration, 1),
+            "course": {
+                "id": entry.course.id if entry.course else None,
+                "name": entry.course.name if entry.course else None,
+                "code": entry.course.code if entry.course else None,
+                "teacher_id": entry.course.teacher_id if entry.course else None,
+                "total_hours": entry.course.total_hours if entry.course else None,
+                "student_count": student_count
+            },
+            "classroom": {
+                "id": entry.classroom.id if entry.classroom else None,
+                "name": entry.classroom.name if entry.classroom else None,
+                "type": entry.classroom.type if entry.classroom else None,
+                "capacity": classroom_capacity
+            },
+            "capacity_ratio": round(capacity_ratio, 1)
+        })
+    return {
+        "success": True,
+        "message": f"Genetik algoritma ile program oluşturuldu. {len(schedule_summary)} oturum planlandı.",
+        "scheduled_count": len(schedule_summary),
+        "schedule": schedule_summary,
+        "perfect": fitness_function(best_schedule, courses, teachers.values(), classrooms) == len(best_schedule)
+    }
+
 @router.post("/generate")
-async def generate_schedule(db: Session = Depends(get_db)):
+async def generate_schedule(db: Session = Depends(get_db), method: str = Query("classic", description="Program oluşturma yöntemi: classic veya genetic")):
     try:
         active_courses = db.query(Course).filter(Course.is_active == True).options(
             joinedload(Course.teacher)
@@ -195,6 +376,9 @@ async def generate_schedule(db: Session = Depends(get_db)):
         classrooms = db.query(Classroom).all()
         if not classrooms:
             return {"message": "Programlama için uygun derslik bulunamadı"}
+        if method == "genetic":
+            return generate_schedule_genetic(active_courses, teachers, classrooms, db)
+        # --- klasik algoritma ---
         db.query(Schedule).delete()
         db.commit()
         prioritized_courses = sorted(
@@ -216,7 +400,17 @@ async def generate_schedule(db: Session = Depends(get_db)):
                 continue
             teacher_days = teacher.working_days.split(',') if teacher.working_days else []
             if not teacher_days:
-                unscheduled_courses.append((course, "Öğretmenin uygun günü yok"))
+                # Çalışma günleri boşsa, çalışma saatlerinden günleri çıkar
+                try:
+                    wh = json.loads(getattr(teacher, 'working_hours', '{}'))
+                    teacher_days = list(wh.keys())
+                except Exception:
+                    teacher_days = []
+            if not teacher_days:
+                unscheduled_courses.append((
+                    course,
+                    f"Öğretmenin uygun günü yok. (Çalışma günleri: {getattr(teacher, 'working_days', 'yok')}, Çalışma saatleri: {getattr(teacher, 'working_hours', 'yok')})"
+                ))
                 continue
             suitable_time_slots = [f"{start}-{end}" for start, end in time_slots]
             suitable_classrooms = classrooms
