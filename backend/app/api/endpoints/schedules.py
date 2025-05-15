@@ -38,9 +38,9 @@ def get_schedules(db: Session = Depends(get_db)):
         else:
             student_count = getattr(course, 'student_count', 0)
         result.append({
-            "id": s.id,
-            "day": s.day,
-            "time_range": s.time_range,
+        "id": s.id,
+        "day": s.day,
+        "time_range": s.time_range,
             "course": {
                 "id": course.id if course else None,
                 "name": course.name if course else None,

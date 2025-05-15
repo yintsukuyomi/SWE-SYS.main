@@ -34,7 +34,7 @@ Yanıt:
 ```json
 {
   "access_token": "...",
-  "token_type": "bearer"
+    "token_type": "bearer"
 }
 ```
 
@@ -51,7 +51,7 @@ Yanıt:
 **Örnek Yanıt:**
 ```json
 [
-  {
+    {
     "id": 1,
     "name": "John Doe",
     "email": "john@example.com",
@@ -59,7 +59,7 @@ Yanıt:
     "department": "Computer Science",
     "working_days": "Monday,Tuesday",
     "working_hours": "09:00-17:00"
-  }
+    }
 ]
 ```
 
@@ -72,7 +72,7 @@ Yanıt:
 **Örnek Yanıt:**
 ```json
 [
-  {
+    {
     "id": 1,
     "name": "Algoritmalar",
     "code": "CSE101",
@@ -86,7 +86,7 @@ Yanıt:
     "total_hours": 3,
     "is_active": true,
     "student_count": 40
-  }
+    }
 ]
 ```
 
@@ -99,14 +99,14 @@ Yanıt:
 **Örnek Yanıt:**
 ```json
 [
-  {
+    {
     "id": 1,
     "name": "A101",
     "capacity": 40,
     "type": "teorik",
     "faculty": "Engineering",
     "department": "Computer Science"
-  }
+    }
 ]
 ```
 
@@ -119,7 +119,7 @@ Yanıt:
 **Örnek Yanıt:**
 ```json
 [
-  {
+    {
     "id": 1,
     "day": "Monday",
     "time_range": "09:00-10:30",
@@ -127,7 +127,7 @@ Yanıt:
     "classroom_id": 1,
     "course": { "name": "Algoritmalar", "code": "CSE101", "teacher": { "name": "John Doe" } },
     "classroom": { "name": "A101" }
-  }
+    }
 ]
 ```
 
