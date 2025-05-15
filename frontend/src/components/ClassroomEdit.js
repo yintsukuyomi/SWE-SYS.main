@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getClassroomById, updateClassroom } from '../api';
 import { FACULTIES, getDepartmentsByFaculty } from '../constants/facultiesAndDepartments';
 import '../styles/ClassroomForm.css';
+import { toast } from 'react-toastify';
 
 const ClassroomEdit = ({ token }) => {
   const navigate = useNavigate();
@@ -71,6 +72,7 @@ const ClassroomEdit = ({ token }) => {
       } catch (err) {
         console.error('Error fetching classroom:', err);
         setError('Derslik bilgileri yüklenemedi. Lütfen tekrar deneyin.');
+        toast.error('Derslik bilgileri yüklenemedi. Lütfen tekrar deneyin.');
         setLoading(false);
       }
     };
@@ -124,10 +126,12 @@ const ClassroomEdit = ({ token }) => {
 
     try {
       await updateClassroom(id, submissionData, token);
+      toast.success("Derslik başarıyla güncellendi.");
       navigate('/classrooms');
     } catch (err) {
       console.error('Error updating classroom:', err);
       setError(err.detail || 'Derslik güncellenirken bir hata oluştu. Lütfen tekrar deneyin.');
+      toast.error(err.detail || 'Derslik güncellenirken bir hata oluştu. Lütfen tekrar deneyin.');
       setLoading(false);
     }
   };

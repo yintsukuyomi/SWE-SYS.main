@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createClassroom } from '../api';
 import { FACULTIES, getDepartmentsByFaculty } from '../constants/facultiesAndDepartments';
 import '../styles/ClassroomForm.css';
+import { toast } from 'react-toastify';
 
 const ClassroomForm = ({ token }) => {
   const navigate = useNavigate();
@@ -65,10 +66,12 @@ const ClassroomForm = ({ token }) => {
 
     try {
       await createClassroom(submissionData, token);
+      toast.success("Derslik başarıyla eklendi.");
       navigate('/classrooms');
     } catch (err) {
       console.error('Error creating classroom:', err);
       setError(err.detail || 'Derslik oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+      toast.error(err.detail || 'Derslik oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
     }

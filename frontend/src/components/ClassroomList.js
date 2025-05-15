@@ -10,6 +10,7 @@ import "../styles/CourseList.css";
 import "../styles/SearchStyles.css";
 import { FACULTIES } from '../constants/facultiesAndDepartments';
 import ExcelJS from 'exceljs';
+import { toast } from 'react-toastify';
 
 const ClassroomList = ({ token, user }) => {
   const [classrooms, setClassrooms] = useState([]);
@@ -25,6 +26,9 @@ const ClassroomList = ({ token, user }) => {
   const [selectedFaculty, setSelectedFaculty] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [pendingExcelData, setPendingExcelData] = useState(null);
+  const [excelError, setExcelError] = useState(null);
+  const [showExcelModal, setShowExcelModal] = useState(false);
 
   useEffect(() => {
     fetchClassrooms();
@@ -63,10 +67,12 @@ const ClassroomList = ({ token, user }) => {
 
       setGroupedClassrooms(groupedObj);
       setFacultyList([...faculties].sort());
-      setLoading(false);
+      toast.success("Derslikler başarıyla yüklendi.");
     } catch (error) {
       console.error("Error fetching classrooms:", error);
       setError("Derslikler yüklenirken bir hata oluştu");
+      toast.error("Derslikler yüklenirken bir hata oluştu");
+    } finally {
       setLoading(false);
     }
   };
@@ -90,6 +96,7 @@ const ClassroomList = ({ token, user }) => {
   const confirmDelete = async () => {
     try {
       await deleteClassroom(deleteConfirm.classroomId, token);
+      toast.success("Derslik başarıyla silindi.");
       setDeleteConfirm({
         show: false,
         classroomId: null,
@@ -99,6 +106,7 @@ const ClassroomList = ({ token, user }) => {
     } catch (error) {
       console.error("Error deleting classroom:", error);
       setError("Failed to delete classroom. " + (error.detail || ""));
+      toast.error("Derslik silinemedi. " + (error.detail || ""));
     }
   };
 
@@ -178,39 +186,37 @@ const ClassroomList = ({ token, user }) => {
         });
         return newGrouped;
       });
+      toast.success("Derslik durumu güncellendi.");
     } catch (error) {
       console.error("Error updating classroom status:", error);
       setError(error.response?.data?.detail || "Derslik durumu güncellenirken bir hata oluştu.");
+      toast.error(error.response?.data?.detail || "Derslik durumu güncellenirken bir hata oluştu.");
     }
   };
 
   const handleExcelImport = async (data) => {
     try {
-      setLoading(true);
-      setError(null);
-      
+      const typeMap = {
+        'teorik': 'teorik',
+        'lab': 'lab',
+        'theoretical': 'teorik',
+        'lecture': 'teorik',
+        'laboratory': 'lab',
+        'laboratuvar': 'lab'
+      };
       for (const row of data) {
-        const classroomData = {
-          name: row['Derslik Adı/Numarası'],
-          capacity: parseInt(row['Kapasite']),
-          type: (row['Tür'] || '').toLowerCase(),
-          faculty: row['Fakülte'],
-          department: row['Bölüm']
-        };
-        if (!classroomData.name || isNaN(classroomData.capacity) || !classroomData.type || 
-            !classroomData.faculty || !classroomData.department) {
-          throw new Error('Tüm alanların doldurulması zorunludur.');
+        const rawType = (row['Tür'] || '').toLowerCase();
+        const mappedType = typeMap[rawType];
+        if (!mappedType) {
+          setExcelError('Geçersiz derslik türü. Tür "teorik" veya "lab" olmalıdır.');
+          return;
         }
-        if (!['teorik', 'lab'].includes(classroomData.type)) {
-          throw new Error('Geçersiz derslik türü. Tür "teorik" veya "lab" olmalıdır.');
-        }
-        await createClassroom(classroomData, token);
+        row['Tür'] = mappedType;
       }
-      await fetchClassrooms();
+      setPendingExcelData(data);
+      setShowExcelModal(true);
     } catch (err) {
-      setError(err.message || 'Derslikler içe aktarılırken bir hata oluştu.');
-    } finally {
-      setLoading(false);
+      setExcelError(err.message || 'Derslikler içe aktarılırken bir hata oluştu.');
     }
   };
 
@@ -249,6 +255,7 @@ const ClassroomList = ({ token, user }) => {
     a.download = 'derslikler.xlsx';
     a.click();
     window.URL.revokeObjectURL(url);
+    toast.success("Derslikler başarıyla dışa aktarıldı.");
   };
 
   const classroomTemplate = [
@@ -536,14 +543,18 @@ const ClassroomList = ({ token, user }) => {
     if (classrooms.length === 0) {
       return (
         <div className="empty-state">
+          <PageHeader
+            title="Derslikler"
+            subtitle="Fakülte ve bölümlere göre derslikleri görüntüleyin"
+            isAdmin={isAdmin}
+            addButtonText="Yeni Derslik Ekle"
+            addButtonLink="/classrooms/new"
+            onImport={handleExcelImport}
+            onExport={handleExcelExport}
+            templateData={classroomTemplate}
+            templateFileName="derslik_sablonu"
+          />
           <div className="no-data-message">Hiç derslik bulunamadı.</div>
-          {isAdmin && (
-            <div className="empty-state-action">
-              <Link to="/classrooms/new" className="add-button">
-                <span className="btn-icon">+</span> Yeni Derslik Ekle
-              </Link>
-            </div>
-          )}
         </div>
       );
     }
@@ -575,6 +586,91 @@ const ClassroomList = ({ token, user }) => {
             <div className="modal-footer">
               <button onClick={cancelDelete} className="btn-cancel">İptal</button>
               <button onClick={confirmDelete} className="btn-delete">Sil</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {excelError && (
+        <div className="modal-backdrop">
+          <div className="delete-confirmation-modal">
+            <div className="modal-header">
+              <h3>Hata</h3>
+              <button className="close-button" onClick={() => setExcelError(null)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <p>{excelError}</p>
+            </div>
+            <div className="modal-footer">
+              <button onClick={() => setExcelError(null)} className="btn-cancel">Tamam</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {showExcelModal && pendingExcelData && (
+        <div className="modal-backdrop">
+          <div className="delete-confirmation-modal">
+            <div className="modal-header">
+              <h3>Excel'den Eklenecek Derslikler</h3>
+              <button className="close-button" onClick={() => setShowExcelModal(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-info">
+                <strong>{pendingExcelData.length}</strong> adet derslik eklenecek. Lütfen kontrol edin:
+              </p>
+              <div className="excel-preview-table-wrapper">
+                <table className="excel-preview-table">
+                  <thead>
+                    <tr>
+                      <th>Derslik Adı/Numarası</th>
+                      <th>Kapasite</th>
+                      <th>Tür</th>
+                      <th>Fakülte</th>
+                      <th>Bölüm</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingExcelData.map((row, idx) => (
+                      <tr key={idx}>
+                        <td>{row['Derslik Adı/Numarası'] || row['name']}</td>
+                        <td>{row['Kapasite'] || row['capacity']}</td>
+                        <td>{row['Tür'] || row['type']}</td>
+                        <td>{row['Fakülte'] || row['faculty']}</td>
+                        <td>{row['Bölüm'] || row['department']}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="warning-text">Bu işlem geri alınamaz. Onaylıyor musunuz?</p>
+            </div>
+            <div className="modal-footer">
+              <button onClick={() => setShowExcelModal(false)} className="btn-cancel">İptal</button>
+              <button onClick={async () => {
+                setShowExcelModal(false);
+                try {
+                  setLoading(true);
+                  setExcelError(null);
+                  for (const row of pendingExcelData) {
+                    const classroomData = {
+                      name: row['Derslik Adı/Numarası'],
+                      capacity: parseInt(row['Kapasite']),
+                      type: (row['Tür'] || '').toLowerCase(),
+                      faculty: row['Fakülte'],
+                      department: row['Bölüm']
+                    };
+                    await createClassroom(classroomData, token);
+                  }
+                  toast.success('Derslikler başarıyla eklendi.');
+                  fetchClassrooms();
+                } catch (err) {
+                  setExcelError(err.message || 'Derslikler eklenirken hata oluştu.');
+                } finally {
+                  setLoading(false);
+                  setPendingExcelData(null);
+                }
+              }} className="btn-submit">Ekle</button>
             </div>
           </div>
         </div>

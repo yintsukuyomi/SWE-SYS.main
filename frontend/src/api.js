@@ -126,9 +126,8 @@ export const deleteSchedulesByDay = async (day, token) => {
 
 export const deleteSchedulesByDays = async (days, token) => {
   try {
-    const response = await axios.delete(`${API_URL}/schedules/days`, {
-      headers: { Authorization: `Bearer ${token}` },
-      data: { days }
+    const response = await axios.post(`${API_URL}/schedules/days/delete`, { days }, {
+      headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   } catch (error) {

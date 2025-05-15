@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getCourses, deleteCourse, updateCourse, createCourse } from "../api";
+import { getCourses, deleteCourse, updateCourse, createCourse, getTeachers } from "../api";
 import ExcelOperations from './ExcelOperations';
 import PageHeader from './PageHeader';
 import * as XLSX from 'xlsx';
@@ -9,6 +9,7 @@ import "../styles/CourseList.css";
 import "../styles/SearchStyles.css";
 import { FACULTIES, DEPARTMENTS } from '../constants/facultiesAndDepartments';
 import ExcelJS from 'exceljs';
+import { toast } from 'react-toastify';
 
 const CourseList = ({ token, user }) => {
   const [courses, setCourses] = useState([]);
@@ -24,6 +25,9 @@ const CourseList = ({ token, user }) => {
   const [selectedFaculty, setSelectedFaculty] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [pendingExcelData, setPendingExcelData] = useState(null);
+  const [excelError, setExcelError] = useState(null);
+  const [showExcelModal, setShowExcelModal] = useState(false);
 
   useEffect(() => {
     fetchCourses();
@@ -96,10 +100,12 @@ const CourseList = ({ token, user }) => {
 
       setGroupedCourses(groupedObj);
       setFacultyList([...faculties].sort());
-      setLoading(false);
+      toast.success("Dersler başarıyla yüklendi.");
     } catch (error) {
       console.error("Error fetching courses:", error);
-      setError("Failed to load courses");
+      setError("Dersler yüklenirken bir hata oluştu");
+      toast.error("Dersler yüklenirken bir hata oluştu");
+    } finally {
       setLoading(false);
     }
   };
@@ -126,6 +132,7 @@ const CourseList = ({ token, user }) => {
   const confirmDelete = async () => {
     try {
       await deleteCourse(deleteConfirm.courseId, token);
+      toast.success("Ders başarıyla silindi.");
       setDeleteConfirm({
         show: false,
         courseId: null,
@@ -134,21 +141,14 @@ const CourseList = ({ token, user }) => {
       // Ders listesini yeniden yükle
       fetchCourses();
     } catch (error) {
-      console.error("Error deleting course:", error);
-      
-      // Hatayı daha kullanıcı dostu bir şekilde göster
-      let errorMessage = "Failed to delete course.";
-      
-      // Programda kullanılan derslerin silinememesi için özel mesaj
+      let errorMessage = "Ders silinemedi.";
       if (error.detail && error.detail.includes("used in schedules")) {
-        errorMessage = "This course cannot be deleted because it is currently scheduled in the timetable. Please remove all schedule entries for this course first.";
+        errorMessage = "Bu ders programda kullanıldığı için silinemez. Önce programdan kaldırın.";
       } else if (error.detail) {
         errorMessage += " " + error.detail;
       }
-      
       setError(errorMessage);
-      
-      // Hata olsa bile modal'ı kapat
+      toast.error(errorMessage);
       setDeleteConfirm({
         show: false,
         courseId: null,
@@ -254,9 +254,11 @@ const CourseList = ({ token, user }) => {
         });
         return newGrouped;
       });
+      toast.success("Ders durumu güncellendi.");
     } catch (error) {
       console.error("Error updating course status:", error);
       setError(error.response?.data?.detail || "Ders durumu güncellenirken bir hata oluştu.");
+      toast.error(error.response?.data?.detail || "Ders durumu güncellenirken bir hata oluştu.");
     }
   };
 
@@ -575,106 +577,84 @@ const CourseList = ({ token, user }) => {
     );
   };
 
-  const handleExcelImport = async (data) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      for (const row of data) {
-        const courseData = {
-          name: row['Ders Adı'],
-          code: row['Ders Kodu'],
-          teacher_id: parseInt(row['Öğretmen ID']),
-          faculty: row['Fakülte'],
-          level: row['Seviye'],
-          type: (row['Tür'] || '').toLowerCase(),
-          category: (row['Kategori'] || '').toLowerCase(),
-          semester: row['Dönem'],
-          ects: parseInt(row['AKTS']),
-          total_hours: parseInt(row['Toplam Saat']),
-          is_active: row['Durum']?.toLowerCase() === 'aktif',
-          sessions: [
-            {
-              type: (row['Oturum Türü'] || '').toLowerCase(),
-              hours: parseInt(row['Oturum Saati'])
-            }
-          ],
-          departments: [
-            {
-              department: row['Bölüm'],
-              student_count: parseInt(row['Öğrenci Sayısı'])
-            }
-          ]
-        };
-        // Alan validasyonları
-        if (!courseData.name || !courseData.code || !courseData.teacher_id || 
-            !courseData.faculty || !courseData.level || !courseData.type || 
-            !courseData.category || !courseData.semester || isNaN(courseData.ects) || 
-            isNaN(courseData.total_hours) || !courseData.sessions[0].type || 
-            isNaN(courseData.sessions[0].hours) || !courseData.departments[0].department || 
-            isNaN(courseData.departments[0].student_count)) {
-          throw new Error('Tüm alanların doldurulması zorunludur.');
-        }
-        if (!['teorik', 'lab'].includes(courseData.type)) {
-          throw new Error('Geçersiz ders türü. Tür "teorik" veya "lab" olmalıdır.');
-        }
-        if (!['zorunlu', 'secmeli'].includes(courseData.category)) {
-          throw new Error('Geçersiz kategori. Kategori "zorunlu" veya "secmeli" olmalıdır.');
-        }
-        await createCourse(courseData, token);
-      }
-      await fetchCourses();
-    } catch (err) {
-      setError(err.message || 'Dersler içe aktarılırken bir hata oluştu.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleExcelExport = async () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Dersler');
-    
-    // Add headers
+
+    // Add headers (Toplam Saat kaldırıldı)
     worksheet.addRow([
       'Ders Adı',
       'Ders Kodu',
-      'Öğretmen ID',
+      'Öğretmen Adı',
       'Fakülte',
       'Seviye',
-      'Tür',
       'Kategori',
       'Dönem',
       'AKTS',
-      'Toplam Saat',
       'Durum',
-      'Oturum Türü',
-      'Oturum Saati',
       'Bölüm',
-      'Öğrenci Sayısı'
+      'Öğrenci Sayısı',
+      'Oturum Türü',
+      'Oturum Saati'
     ]);
-    
-    // Add data
+
+    // Her dersin her bölümü ve her oturumu için ayrı satır oluştur
     courses.forEach(course => {
-      worksheet.addRow([
-        course.name,
-        course.code,
-        course.teacher_id,
-        course.faculty,
-        course.level,
-        course.type,
-        course.category,
-        course.semester,
-        course.ects,
-        course.total_hours,
-        course.is_active ? 'Aktif' : 'Pasif',
-        course.sessions[0]?.type || '',
-        course.sessions[0]?.hours || '',
-        course.departments[0]?.department || '',
-        course.departments[0]?.student_count || ''
-      ]);
+      const isActive = course.is_active ? 'Aktif' : 'Pasif';
+      const teacherName = (course.teacher && course.teacher.name) || course.teacher_name || '';
+      const faculty = course.faculty;
+      const levelMap = {
+        'undergraduate': 'Lisans',
+        'graduate': 'Yüksek Lisans',
+        'phd': 'Doktora',
+        'prep': 'Hazırlık',
+        '1': '1. Sınıf',
+        '2': '2. Sınıf',
+        '3': '3. Sınıf',
+        '4': '4. Sınıf',
+        '5': '5. Sınıf',
+        '6': '6. Sınıf'
+      };
+      let level = course.level;
+      if (level && levelMap[level.toLowerCase()]) {
+        level = levelMap[level.toLowerCase()];
+      }
+      const category = course.category;
+      const semester = course.semester;
+      const ects = course.ects;
+      const code = course.code;
+      const name = course.name;
+      const departments = Array.isArray(course.departments) ? course.departments : [];
+      const sessions = Array.isArray(course.sessions) ? course.sessions : [];
+      if (departments.length === 0) {
+        if (sessions.length === 0) {
+          worksheet.addRow([
+            name, code, teacherName, faculty, level, category, semester, ects, isActive, '', '', '', ''
+          ]);
+        } else {
+          sessions.forEach(session => {
+            worksheet.addRow([
+              name, code, teacherName, faculty, level, category, semester, ects, isActive, '', '', session.type, session.hours
+            ]);
+          });
+        }
+      } else {
+        departments.forEach(dept => {
+          if (sessions.length === 0) {
+            worksheet.addRow([
+              name, code, teacherName, faculty, level, category, semester, ects, isActive, dept.department, dept.student_count, '', ''
+            ]);
+          } else {
+            sessions.forEach(session => {
+              worksheet.addRow([
+                name, code, teacherName, faculty, level, category, semester, ects, isActive, dept.department, dept.student_count, session.type, session.hours
+              ]);
+            });
+          }
+        });
+      }
     });
-    
+
     // Generate and download file
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -684,20 +664,124 @@ const CourseList = ({ token, user }) => {
     a.download = 'dersler.xlsx';
     a.click();
     window.URL.revokeObjectURL(url);
+    toast.success('Dersler başarıyla dışa aktarıldı.');
+  };
+
+  const handleExcelImport = async (data) => {
+    try {
+      const teachers = await getTeachers(token);
+      const typeMap = {
+        'teorik': 'teorik',
+        'lab': 'lab',
+        'theoretical': 'teorik',
+        'lecture': 'teorik',
+        'laboratory': 'lab',
+        'laboratuvar': 'lab',
+        'uygulama': 'lab',
+        'uygulamalı': 'lab',
+        'uygulamali': 'lab',
+        'uygulamalı ders': 'lab',
+        'uygulamali ders': 'lab'
+      };
+      const categoryMap = {
+        'zorunlu': 'zorunlu',
+        'secmeli': 'secmeli',
+        'seçmeli': 'secmeli',
+        'compulsory': 'zorunlu',
+        'mandatory': 'zorunlu',
+        'elective': 'secmeli',
+        'electives': 'secmeli'
+      };
+      const courseMap = {};
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        if (!row['Ders Adı'] || !row['Ders Kodu'] || !row['Fakülte'] || !row['Kategori'] || !row['Dönem'] || !row['AKTS']) {
+          setExcelError(`Satır ${i + 2}: Eksik zorunlu alan. (Ders Adı, Ders Kodu, Fakülte, Kategori, Dönem, AKTS)`);
+          return;
+        }
+        let teacherId;
+        if (row['Öğretmen Adı']) {
+          const found = teachers.find(t => t.name.trim().toLowerCase() === row['Öğretmen Adı'].trim().toLowerCase());
+          if (!found) {
+            setExcelError(`Satır ${i + 2}: Öğretmen bulunamadı: "${row['Öğretmen Adı']}"`);
+            return;
+          }
+          teacherId = found.id;
+        }
+        // Kullanıcı dostu: 'Tür' boşsa 'Oturum Türü'nden al
+        let rawType = (row['Tür'] || row['Oturum Türü'] || '').toLowerCase();
+        const mappedType = typeMap[rawType];
+        if (!mappedType) {
+          setExcelError(`Satır ${i + 2}: Geçersiz ders türü "${row['Tür'] ? row['Tür'] : row['Oturum Türü'] ? row['Oturum Türü'] : 'boş'}". Tür "teorik" veya "lab" olmalıdır.`);
+          return;
+        }
+        row['Tür'] = mappedType;
+        const rawCategory = (row['Kategori'] || '').toLowerCase();
+        const mappedCategory = categoryMap[rawCategory];
+        if (!mappedCategory) {
+          setExcelError(`Satır ${i + 2}: Geçersiz kategori "${row['Kategori'] ? row['Kategori'] : 'boş'}". Kategori "zorunlu" veya "secmeli" olmalıdır.`);
+          return;
+        }
+        row['Kategori'] = mappedCategory;
+        const key = `${row['Ders Kodu']}|${row['Ders Adı']}`;
+        if (!courseMap[key]) {
+          courseMap[key] = {
+            name: row['Ders Adı'],
+            code: row['Ders Kodu'],
+            teacher_id: teacherId,
+            faculty: row['Fakülte'],
+            level: row['Seviye'] || '',
+            type: mappedType,
+            category: mappedCategory,
+            semester: row['Dönem'],
+            ects: parseInt(row['AKTS']),
+            is_active: (row['Durum'] || '').toLowerCase() === 'aktif',
+            departments: [],
+            sessions: []
+          };
+        }
+        if (row['Bölüm']) {
+          // Aynı bölüm daha önce eklendi mi kontrol et
+          if (!courseMap[key].departments.some(
+            d => d.department === row['Bölüm'] && d.student_count === (row['Öğrenci Sayısı'] ? parseInt(row['Öğrenci Sayısı']) : 0)
+          )) {
+            courseMap[key].departments.push({
+              department: row['Bölüm'],
+              student_count: row['Öğrenci Sayısı'] ? parseInt(row['Öğrenci Sayısı']) : 0
+            });
+          }
+        }
+        if (row['Oturum Türü'] && row['Oturum Saati']) {
+          // Aynı oturum daha önce eklendi mi kontrol et
+          if (!courseMap[key].sessions.some(
+            s => s.type === (row['Oturum Türü'] || '').toLowerCase() && s.hours === parseInt(row['Oturum Saati'])
+          )) {
+            courseMap[key].sessions.push({
+              type: (row['Oturum Türü'] || '').toLowerCase(),
+              hours: parseInt(row['Oturum Saati'])
+            });
+          }
+        }
+      }
+      const mergedCourses = Object.values(courseMap);
+      setPendingExcelData(mergedCourses);
+      setShowExcelModal(true);
+    } catch (err) {
+      setExcelError(err.message || 'Dersler içe aktarılırken bir hata oluştu.');
+    }
   };
 
   const courseTemplate = [
     {
       'Ders Adı': 'Örnek Ders',
       'Ders Kodu': 'DERS101',
-      'Öğretmen ID': '1',
+      'Öğretmen Adı': 'Örnek Öğretmen',
       'Fakülte': 'Mühendislik Fakültesi',
       'Seviye': 'Lisans',
       'Tür': 'teorik',
       'Kategori': 'zorunlu',
       'Dönem': 'Güz',
       'AKTS': '6',
-      'Toplam Saat': '3',
       'Durum': 'Aktif',
       'Oturum Türü': 'teorik',
       'Oturum Saati': '3',
@@ -719,14 +803,18 @@ const CourseList = ({ token, user }) => {
     if (courses.length === 0) {
       return (
         <div className="empty-state">
+          <PageHeader
+            title="Dersler"
+            subtitle="Fakülte ve bölümlere göre dersleri görüntüleyin"
+            isAdmin={isAdmin}
+            addButtonText="Yeni Ders Ekle"
+            addButtonLink="/courses/new"
+            onImport={handleExcelImport}
+            onExport={handleExcelExport}
+            templateData={courseTemplate}
+            templateFileName="ders_sablonu"
+          />
           <div className="no-data-message">Hiç ders bulunamadı.</div>
-          {isAdmin && (
-            <div className="empty-state-action">
-              <Link to="/courses/new" className="add-button">
-                <span className="btn-icon">+</span> Yeni Ders Ekle
-              </Link>
-            </div>
-          )}
         </div>
       );
     }
@@ -758,6 +846,84 @@ const CourseList = ({ token, user }) => {
             <div className="modal-footer">
               <button onClick={cancelDelete} className="btn-cancel">İptal</button>
               <button onClick={confirmDelete} className="btn-delete">Sil</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {excelError && (
+        <div className="modal-backdrop">
+          <div className="delete-confirmation-modal">
+            <div className="modal-header">
+              <h3>Hata</h3>
+              <button className="close-button" onClick={() => setExcelError(null)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <p>{excelError}</p>
+            </div>
+            <div className="modal-footer">
+              <button onClick={() => setExcelError(null)} className="btn-cancel">Tamam</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showExcelModal && pendingExcelData && (
+        <div className="modal-backdrop">
+          <div className="delete-confirmation-modal">
+            <div className="modal-header">
+              <h3>Excel'den Eklenecek Dersler</h3>
+              <button className="close-button" onClick={() => setShowExcelModal(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-info">
+                <strong>{pendingExcelData.length}</strong> adet ders eklenecek. Lütfen kontrol edin:
+              </p>
+              <div className="excel-preview-table-wrapper">
+                <table className="excel-preview-table">
+                  <thead>
+                    <tr>
+                      <th>Ders Adı</th>
+                      <th>Kod</th>
+                      <th>Tür</th>
+                      <th>Fakülte</th>
+                      <th>Bölümler</th>
+                      <th>Oturumlar</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingExcelData.map((course, idx) => (
+                      <tr key={idx}>
+                        <td>{course.name}</td>
+                        <td>{course.code}</td>
+                        <td>{course.type}</td>
+                        <td>{course.faculty}</td>
+                        <td>{course.departments && course.departments.length > 0 ? course.departments.map(d => d.department).join(', ') : '-'}</td>
+                        <td>{course.sessions && course.sessions.length > 0 ? course.sessions.map(s => `${s.type} (${s.hours} saat)`).join(', ') : '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="warning-text">Bu işlem geri alınamaz. Onaylıyor musunuz?</p>
+            </div>
+            <div className="modal-footer">
+              <button onClick={() => setShowExcelModal(false)} className="btn-cancel">İptal</button>
+              <button onClick={async () => {
+                setShowExcelModal(false);
+                try {
+                  setLoading(true);
+                  setExcelError(null);
+                  for (const courseData of pendingExcelData) {
+                    await createCourse(courseData, token);
+                  }
+                  toast.success('Dersler başarıyla eklendi.');
+                  fetchCourses();
+                } catch (err) {
+                  setExcelError(err.message || 'Dersler eklenirken hata oluştu.');
+                } finally {
+                  setLoading(false);
+                  setPendingExcelData(null);
+                }
+              }} className="btn-submit">Ekle</button>
             </div>
           </div>
         </div>

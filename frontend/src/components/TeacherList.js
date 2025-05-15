@@ -10,6 +10,7 @@ import "../styles/CourseList.css";
 import "../styles/SearchStyles.css";
 import { FACULTIES } from '../constants/facultiesAndDepartments';
 import ExcelJS from 'exceljs';
+import { toast } from 'react-toastify';
 
 const TeacherList = ({ token, user }) => {
   const [teachers, setTeachers] = useState([]);
@@ -25,6 +26,9 @@ const TeacherList = ({ token, user }) => {
   const [selectedFaculty, setSelectedFaculty] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [pendingExcelData, setPendingExcelData] = useState(null);
+  const [excelError, setExcelError] = useState(null);
+  const [showExcelModal, setShowExcelModal] = useState(false);
 
   useEffect(() => {
     fetchTeachers();
@@ -63,10 +67,12 @@ const TeacherList = ({ token, user }) => {
 
       setGroupedTeachers(groupedObj);
       setFacultyList([...faculties].sort());
-      setLoading(false);
+      toast.success("Öğretmenler başarıyla yüklendi.");
     } catch (error) {
       console.error("Error fetching teachers:", error);
-      setError("Failed to load teachers");
+      setError("Öğretmenler yüklenirken bir hata oluştu");
+      toast.error("Öğretmenler yüklenirken bir hata oluştu");
+    } finally {
       setLoading(false);
     }
   };
@@ -90,6 +96,7 @@ const TeacherList = ({ token, user }) => {
   const confirmDelete = async () => {
     try {
       await deleteTeacher(deleteConfirm.teacherId, token);
+      toast.success("Öğretmen başarıyla silindi.");
       setDeleteConfirm({
         show: false,
         teacherId: null,
@@ -98,7 +105,8 @@ const TeacherList = ({ token, user }) => {
       fetchTeachers();
     } catch (error) {
       console.error("Error deleting teacher:", error);
-      setError("Failed to delete teacher. " + (error.detail || ""));
+      setError("Öğretmen silinemedi. " + (error.detail || ""));
+      toast.error("Öğretmen silinemedi. " + (error.detail || ""));
     }
   };
 
@@ -178,50 +186,76 @@ const TeacherList = ({ token, user }) => {
         });
         return newGrouped;
       });
+      toast.success("Öğretmen durumu güncellendi.");
     } catch (error) {
       console.error("Error updating teacher status:", error);
       setError(error.response?.data?.detail || "Öğretmen durumu güncellenirken bir hata oluştu.");
+      toast.error(error.response?.data?.detail || "Öğretmen durumu güncellenirken bir hata oluştu.");
     }
   };
 
   const handleExcelImport = async (data) => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      for (const row of data) {
-        // working_hours string format: "monday:09:00-10:30,tuesday:10:30-12:00,..."
-        const workingHoursString = [
-          row['Pazartesi'] ? `monday:${row['Pazartesi']}` : null,
-          row['Salı'] ? `tuesday:${row['Salı']}` : null,
-          row['Çarşamba'] ? `wednesday:${row['Çarşamba']}` : null,
-          row['Perşembe'] ? `thursday:${row['Perşembe']}` : null,
-          row['Cuma'] ? `friday:${row['Cuma']}` : null,
-        ].filter(Boolean).join(',');
-
-        const teacherData = {
-          name: row['Ad Soyad'],
-          email: row['E-posta'],
-          faculty: row['Fakülte'],
-          department: row['Bölüm'],
-          working_hours: workingHoursString
-        };
-        
-        if (!teacherData.name || !teacherData.email || !teacherData.faculty || !teacherData.department) {
-          throw new Error('Tüm alanların doldurulması zorunludur.');
+      // Saat aralığını slotlara bölen yardımcı fonksiyon
+      function expandTimeRange(range) {
+        if (!range) return [];
+        if (!range.includes('-')) return [range.trim()];
+        const [start, end] = range.split('-').map(s => s.trim());
+        const slots = [];
+        let [h, m] = start.split(':').map(Number);
+        const [endH, endM] = end.split(':').map(Number);
+        while (h < endH || (h === endH && m <= endM)) {
+          slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+          m += 30;
+          if (m >= 60) { h++; m = 0; }
+          if (h > endH || (h === endH && m > endM)) break;
         }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(teacherData.email)) {
-          throw new Error('Geçersiz e-posta formatı.');
-        }
-        await createTeacher(teacherData, token);
+        return slots;
       }
-      await fetchTeachers();
+      // Saatleri slotlara bölen fonksiyon
+      const parseHours = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val;
+        return val.split(',').flatMap(s => expandTimeRange(s.trim()));
+      };
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        const name = (row['Ad'] || row['Ad Soyad'] || row['Name'] || row['Adı Soyadı'] || '').trim();
+        const email = (row['E-posta'] || row['Eposta'] || row['E-Mail'] || row['Email'] || '').trim();
+        const faculty = (row['Fakülte'] || row['Fakulte'] || row['Faculty'] || '').trim();
+        const department = (row['Bölüm'] || row['Bolum'] || row['Department'] || '').trim();
+        if (!name || !email || !faculty || !department) {
+          setExcelError(`Satır ${i + 2}: Tüm alanların doldurulması zorunludur. (Ad, E-posta, Fakülte, Bölüm)`);
+          return;
+        }
+        // Basit e-posta kontrolü
+        if (!email.includes('@') || !email.includes('.')) {
+          setExcelError(`Satır ${i + 2}: Geçersiz e-posta adresi: ${email}`);
+          return;
+        }
+        row['Ad'] = name;
+        row['E-posta'] = email;
+        row['Fakülte'] = faculty;
+        row['Bölüm'] = department;
+        // Çalışma saatlerini slotlara böl
+        row['Pazartesi'] = parseHours(row['Pazartesi']);
+        row['Salı'] = parseHours(row['Salı']);
+        row['Çarşamba'] = parseHours(row['Çarşamba']);
+        row['Perşembe'] = parseHours(row['Perşembe']);
+        row['Cuma'] = parseHours(row['Cuma']);
+      }
+      setPendingExcelData(data);
+      setShowExcelModal(true);
     } catch (err) {
-      setError(err.message || 'Öğretmenler içe aktarılırken bir hata oluştu.');
-    } finally {
-      setLoading(false);
+      setExcelError(err.message || 'Öğretmenler içe aktarılırken bir hata oluştu.');
     }
+  };
+
+  const formatWorkingHours = (hours) => {
+    if (!hours) return '';
+    if (Array.isArray(hours)) return hours.join(', ');
+    if (typeof hours === 'string') return hours;
+    return '';
   };
 
   const handleExcelExport = async () => {
@@ -244,16 +278,24 @@ const TeacherList = ({ token, user }) => {
     
     // Add data
     teachers.forEach(teacher => {
+      let wh = teacher.working_hours;
+      if (typeof wh === 'string') {
+        try {
+          wh = JSON.parse(wh);
+        } catch {
+          wh = {};
+        }
+      }
       worksheet.addRow([
         teacher.name,
         teacher.email,
         teacher.faculty,
         teacher.department,
-        formatWorkingHours(teacher.working_hours?.monday),
-        formatWorkingHours(teacher.working_hours?.tuesday),
-        formatWorkingHours(teacher.working_hours?.wednesday),
-        formatWorkingHours(teacher.working_hours?.thursday),
-        formatWorkingHours(teacher.working_hours?.friday),
+        formatWorkingHours(wh?.monday),
+        formatWorkingHours(wh?.tuesday),
+        formatWorkingHours(wh?.wednesday),
+        formatWorkingHours(wh?.thursday),
+        formatWorkingHours(wh?.friday),
         teacher.is_active ? 'Aktif' : 'Pasif'
       ]);
     });
@@ -267,11 +309,7 @@ const TeacherList = ({ token, user }) => {
     a.download = 'ogretmenler.xlsx';
     a.click();
     window.URL.revokeObjectURL(url);
-  };
-
-  const formatWorkingHours = (hours) => {
-    if (!hours) return '';
-    return Object.keys(hours).filter(hour => hours[hour]).join(', ');
+    toast.success("Öğretmenler başarıyla dışa aktarıldı.");
   };
 
   const teacherTemplate = [
@@ -281,10 +319,10 @@ const TeacherList = ({ token, user }) => {
       'Fakülte': 'Mühendislik Fakültesi',
       'Bölüm': 'Bilgisayar Mühendisliği',
       'Pazartesi': '09:00-10:30, 13:00-14:30',
-      'Salı': '10:30-12:00, 14:30-16:00',
-      'Çarşamba': '09:00-10:30, 13:00-14:30',
-      'Perşembe': '10:30-12:00, 14:30-16:00',
-      'Cuma': '09:00-10:30, 13:00-14:30',
+      'Salı': '10:30-12:00',
+      'Çarşamba': '',
+      'Perşembe': '',
+      'Cuma': '',
       'Durum': 'Aktif'
     }
   ];
@@ -550,14 +588,18 @@ const TeacherList = ({ token, user }) => {
     if (teachers.length === 0) {
       return (
         <div className="empty-state">
+          <PageHeader
+            title="Öğretmenler"
+            subtitle="Fakülte ve bölümlere göre öğretmenleri görüntüleyin"
+            isAdmin={isAdmin}
+            addButtonText="Yeni Öğretmen Ekle"
+            addButtonLink="/teachers/new"
+            onImport={handleExcelImport}
+            onExport={handleExcelExport}
+            templateData={teacherTemplate}
+            templateFileName="ogretmen_sablonu"
+          />
           <div className="no-data-message">Hiç öğretmen bulunamadı.</div>
-          {isAdmin && (
-            <div className="empty-state-action">
-              <Link to="/teachers/new" className="add-button">
-                <span className="btn-icon">+</span> Yeni Öğretmen Ekle
-              </Link>
-            </div>
-          )}
         </div>
       );
     }
@@ -589,6 +631,114 @@ const TeacherList = ({ token, user }) => {
             <div className="modal-footer">
               <button onClick={cancelDelete} className="btn-cancel">İptal</button>
               <button onClick={confirmDelete} className="btn-delete">Sil</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {excelError && (
+        <div className="modal-backdrop">
+          <div className="delete-confirmation-modal">
+            <div className="modal-header">
+              <h3>Hata</h3>
+              <button className="close-button" onClick={() => setExcelError(null)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <p>{excelError}</p>
+            </div>
+            <div className="modal-footer">
+              <button onClick={() => setExcelError(null)} className="btn-cancel">Tamam</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {showExcelModal && pendingExcelData && (
+        <div className="modal-backdrop">
+          <div className="delete-confirmation-modal">
+            <div className="modal-header">
+              <h3>Excel'den Eklenecek Öğretmenler</h3>
+              <button className="close-button" onClick={() => setShowExcelModal(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-info">
+                <strong>{pendingExcelData.length}</strong> adet öğretmen eklenecek. Lütfen kontrol edin:
+              </p>
+              <p className="modal-info" style={{fontSize: '13px', color: '#555', marginBottom: '8px'}}>
+                Çalışma saatlerini <b>aralık</b> olarak yazabilirsiniz (örn. <b>09:00-10:30, 13:00-14:30</b>). Birden fazla aralık için virgül kullanın.
+              </p>
+              <div className="excel-preview-table-wrapper">
+                <table className="excel-preview-table">
+                  <thead>
+                    <tr>
+                      <th>Ad Soyad</th>
+                      <th>E-posta</th>
+                      <th>Fakülte</th>
+                      <th>Bölüm</th>
+                      <th>Pazartesi</th>
+                      <th>Salı</th>
+                      <th>Çarşamba</th>
+                      <th>Perşembe</th>
+                      <th>Cuma</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingExcelData.map((teacher, idx) => (
+                      <tr key={idx}>
+                        <td>{teacher['Ad'] || teacher['Ad Soyad'] || teacher['Name'] || teacher['Adı Soyadı']}</td>
+                        <td>{teacher['E-posta'] || teacher['Eposta'] || teacher['E-Mail'] || teacher['Email']}</td>
+                        <td>{teacher['Fakülte'] || teacher['Fakulte'] || teacher['Faculty']}</td>
+                        <td>{teacher['Bölüm'] || teacher['Bolum'] || teacher['Department']}</td>
+                        <td>{Array.isArray(teacher['Pazartesi']) ? teacher['Pazartesi'].join(', ') : teacher['Pazartesi']}</td>
+                        <td>{Array.isArray(teacher['Salı']) ? teacher['Salı'].join(', ') : teacher['Salı']}</td>
+                        <td>{Array.isArray(teacher['Çarşamba']) ? teacher['Çarşamba'].join(', ') : teacher['Çarşamba']}</td>
+                        <td>{Array.isArray(teacher['Perşembe']) ? teacher['Perşembe'].join(', ') : teacher['Perşembe']}</td>
+                        <td>{Array.isArray(teacher['Cuma']) ? teacher['Cuma'].join(', ') : teacher['Cuma']}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="warning-text">Bu işlem geri alınamaz. Onaylıyor musunuz?</p>
+            </div>
+            <div className="modal-footer">
+              <button onClick={() => setShowExcelModal(false)} className="btn-cancel">İptal</button>
+              <button onClick={async () => {
+                setShowExcelModal(false);
+                try {
+                  setLoading(true);
+                  setExcelError(null);
+                  for (const row of pendingExcelData) {
+                    const parseHours = (val) => {
+                      if (!val) return [];
+                      if (Array.isArray(val)) return val;
+                      return val.split(',').map(s => s.trim()).filter(Boolean);
+                    };
+                    const working_hours_obj = {
+                      monday: parseHours(row['Pazartesi']),
+                      tuesday: parseHours(row['Salı']),
+                      wednesday: parseHours(row['Çarşamba']),
+                      thursday: parseHours(row['Perşembe']),
+                      friday: parseHours(row['Cuma'])
+                    };
+                    const teacherData = {
+                      name: (row['Ad'] || row['Ad Soyad'] || row['Name'] || row['Adı Soyadı'] || '').trim(),
+                      email: (row['E-posta'] || row['Eposta'] || row['E-Mail'] || row['Email'] || '').trim(),
+                      faculty: (row['Fakülte'] || row['Fakulte'] || row['Faculty'] || '').trim(),
+                      department: (row['Bölüm'] || row['Bolum'] || row['Department'] || '').trim(),
+                      working_hours: JSON.stringify(working_hours_obj)
+                    };
+                    await createTeacher(teacherData, token);
+                  }
+                  toast.success('Öğretmenler başarıyla eklendi.');
+                  fetchTeachers();
+                } catch (err) {
+                  setExcelError(err.message || 'Öğretmenler eklenirken hata oluştu.');
+                } finally {
+                  setLoading(false);
+                  setPendingExcelData(null);
+                }
+              }} className="btn-submit">Ekle</button>
             </div>
           </div>
         </div>

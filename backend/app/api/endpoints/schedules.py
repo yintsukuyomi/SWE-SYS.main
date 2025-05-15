@@ -76,7 +76,7 @@ def delete_schedules_by_day_endpoint(day: str, db: Session = Depends(get_db)):
     delete_schedules_by_day_service(day, db)
     return {"detail": f"All schedules for {day} deleted successfully"}
 
-@router.delete("/days")
+@router.post("/days/delete")
 def delete_schedules_by_days_endpoint(request: DaysDeleteRequest, db: Session = Depends(get_db)):
     delete_schedules_by_days_service(request.days, db)
     return {"detail": f"All schedules for {', '.join(request.days)} deleted successfully"} 

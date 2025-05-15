@@ -3,6 +3,7 @@ import { getSchedules, deleteSchedulesByDay, deleteSchedulesByDays, deleteSchedu
 import "../styles/ScheduleList.css";
 import "../styles/ListView.css";
 import "../styles/CourseList.css";
+import { toast } from 'react-toastify';
 
 const ScheduleList = ({ token, user }) => {
   const [schedules, setSchedules] = useState([]);
@@ -53,27 +54,32 @@ const ScheduleList = ({ token, user }) => {
     "Sunday": 7
   };
 
+  // fetchSchedules fonksiyonunu component fonksiyonunun başında tanımla
+  const fetchSchedules = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getSchedules(token);
+      // Günlere göre gruplama
+      const grouped = {};
+      data.forEach(schedule => {
+        const day = schedule.day;
+        if (!grouped[day]) grouped[day] = [];
+        grouped[day].push(schedule);
+      });
+      const sorted = Object.keys(grouped).sort((a, b) => (dayOrder[a] || 99) - (dayOrder[b] || 99));
+      setGroupedSchedules(grouped);
+      setSortedDays(sorted);
+      setSchedules(data);
+    } catch (error) {
+      setError("Ders programı yüklenirken bir hata oluştu.");
+      toast.error("Ders programı yüklenirken bir hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchSchedules = async () => {
-      try {
-        const data = await getSchedules(token);
-        // Günlere göre gruplama
-        const grouped = {};
-        data.forEach(schedule => {
-          const day = schedule.day;
-          if (!grouped[day]) grouped[day] = [];
-          grouped[day].push(schedule);
-        });
-        const sorted = Object.keys(grouped).sort((a, b) => (dayOrder[a] || 99) - (dayOrder[b] || 99));
-        setGroupedSchedules(grouped);
-        setSortedDays(sorted);
-        setSchedules(data);
-        setLoading(false);
-      } catch (error) {
-        setError("Failed to load schedules");
-        setLoading(false);
-      }
-    };
     fetchSchedules();
   }, [token]);
 
@@ -93,12 +99,10 @@ const ScheduleList = ({ token, user }) => {
   };
 
   const handleDeleteMultipleDaysClick = (days) => {
-    // sortedDays Türkçe gün adı ise İngilizce'ye çevir
-    const dayNames = days.map(day => trToEnDay[day] || day);
     setDeleteConfirm({
       show: true,
-      days: dayNames,
-      dayNames: days.map(day => dayNameTr[day] || day)
+      days: Array.isArray(days) ? days : [days],
+      dayNames: Array.isArray(days) ? days : [days]
     });
   };
 
@@ -111,26 +115,17 @@ const ScheduleList = ({ token, user }) => {
   };
 
   const confirmDelete = async () => {
+    setLoading(true);
     try {
-      if (deleteConfirm.days.length === 1) {
-        await deleteSchedulesByDay(deleteConfirm.days[0], token);
-      } else {
-        await deleteSchedulesByDays(deleteConfirm.days, token);
-      }
+      await deleteSchedulesByDays(deleteConfirm.days, token);
+      toast.success("Gün(ler) başarıyla silindi.");
       setDeleteConfirm({ show: false, days: [], dayNames: [] });
-      const data = await getSchedules(token);
-      const grouped = {};
-      data.forEach(schedule => {
-        const day = schedule.day;
-        if (!grouped[day]) grouped[day] = [];
-        grouped[day].push(schedule);
-      });
-      const sorted = Object.keys(grouped).sort((a, b) => (dayOrder[a] || 99) - (dayOrder[b] || 99));
-      setGroupedSchedules(grouped);
-      setSortedDays(sorted);
-      setSchedules(data);
+      fetchSchedules();
     } catch (error) {
-      setError("Failed to delete schedule. " + (error.detail || ""));
+      setError(error.detail || "Gün(ler) silinemedi.");
+      toast.error(error.detail || "Gün(ler) silinemedi.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -151,22 +146,17 @@ const ScheduleList = ({ token, user }) => {
   };
 
   const confirmDeleteSingle = async () => {
+    setLoading(true);
     try {
       await deleteSchedule(deleteSingleConfirm.scheduleId, token);
+      toast.success("Ders başarıyla silindi.");
       setDeleteSingleConfirm({ show: false, scheduleId: null, info: null });
-      const data = await getSchedules(token);
-      const grouped = {};
-      data.forEach(schedule => {
-        const day = schedule.day;
-        if (!grouped[day]) grouped[day] = [];
-        grouped[day].push(schedule);
-      });
-      const sorted = Object.keys(grouped).sort((a, b) => (dayOrder[a] || 99) - (dayOrder[b] || 99));
-      setGroupedSchedules(grouped);
-      setSortedDays(sorted);
-      setSchedules(data);
+      fetchSchedules();
     } catch (error) {
-      setError("Failed to delete schedule. " + (error.detail || ""));
+      setError(error.detail || "Ders silinemedi.");
+      toast.error(error.detail || "Ders silinemedi.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -291,7 +281,11 @@ const ScheduleList = ({ token, user }) => {
       {loading ? (
         <div className="loading">Programlar yükleniyor...</div>
       ) : error ? (
-        <div className="error-message">{error}</div>
+        <div className="error-message">
+          {typeof error === 'string'
+            ? error
+            : error.detail || error.msg || JSON.stringify(error)}
+        </div>
       ) : schedules.length === 0 ? (
         <div className="no-data-message">
           <p>Ders programı bulunamadı. Lütfen program oluşturmak için Program Oluşturucu kullanın.</p>

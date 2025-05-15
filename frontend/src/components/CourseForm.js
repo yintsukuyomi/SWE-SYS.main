@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { createCourse, getTeachers, getCourseById, updateCourse } from '../api';
 import { FACULTIES, getDepartmentsByFaculty } from '../constants/facultiesAndDepartments';
 import '../styles/CourseForm.css';
+import { toast } from 'react-toastify';
 
 const CourseForm = ({ token }) => {
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ const CourseForm = ({ token }) => {
       });
     } catch (error) {
       setError('Ders bilgileri yüklenirken hata oluştu');
+      toast.error('Ders bilgileri yüklenirken hata oluştu');
     }
   };
 
@@ -131,12 +133,15 @@ const CourseForm = ({ token }) => {
     try {
       if (id) {
         await updateCourse(id, formData, token);
+        toast.success("Ders başarıyla güncellendi.");
       } else {
         await createCourse(formData, token);
+        toast.success("Ders başarıyla eklendi.");
       }
       navigate('/courses');
     } catch (error) {
       setError(error.message || 'Bir hata oluştu');
+      toast.error(error.message || 'Bir hata oluştu');
     } finally {
       setLoading(false);
     }

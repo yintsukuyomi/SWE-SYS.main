@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getTeacherById, updateTeacher } from '../api';
 import { FACULTIES, getDepartmentsByFaculty } from '../constants/facultiesAndDepartments';
 import '../styles/TeacherForm.css';
+import { toast } from 'react-toastify';
 
 const TeacherEdit = ({ token }) => {
   const { id } = useParams();
@@ -25,15 +26,18 @@ const TeacherEdit = ({ token }) => {
   const initializeTimeSlots = () => {
     const slots = {};
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-    const hours = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
-    
+    const hours = [
+      '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
+      '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
+      '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
+      '17:00', '17:30'
+    ];
     days.forEach(day => {
       slots[day] = {};
       hours.forEach(hour => {
         slots[day][hour] = false;
       });
     });
-    
     return slots;
   };
 
@@ -91,7 +95,9 @@ const TeacherEdit = ({ token }) => {
         }
       } catch (err) {
         console.error('Error fetching teacher:', err);
-        setError('Öğretmen bilgileri yüklenirken bir hata oluştu.');
+        setError('Öğretmen bilgileri yüklenemedi. Lütfen tekrar deneyin.');
+        toast.error('Öğretmen bilgileri yüklenemedi. Lütfen tekrar deneyin.');
+        setLoading(false);
       }
     };
 
@@ -165,11 +171,11 @@ const TeacherEdit = ({ token }) => {
 
     try {
       await updateTeacher(id, updatedFormData, token);
+      toast.success("Öğretmen başarıyla güncellendi.");
       navigate('/teachers');
-    } catch (err) {
-      console.error('Error updating teacher:', err);
-      setError(err.detail || 'Öğretmen güncellenirken bir hata oluştu. Lütfen tekrar deneyin.');
-    } finally {
+    } catch (error) {
+      setError(error.detail || 'Öğretmen güncellenirken bir hata oluştu.');
+      toast.error(error.detail || 'Öğretmen güncellenirken bir hata oluştu.');
       setLoading(false);
     }
   };

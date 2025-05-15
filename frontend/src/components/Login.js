@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { login } from "../api";
 import "../styles/Login.css";
+import { toast } from 'react-toastify';
 // Logo dosyası bulunamadığı için kaldırıldı
 // import logo from "../assets/logo.png";
 
@@ -24,9 +25,11 @@ const Login = ({ onLogin }) => {
     try {
       const data = await login(username, password);
       onLogin(data.access_token);
+      toast.success("Giriş başarılı!");
     } catch (err) {
       console.error("Login error:", err);
       setError(err.detail || "Geçersiz kullanıcı adı veya şifre");
+      toast.error(err.detail || "Geçersiz kullanıcı adı veya şifre");
     } finally {
       setIsLoading(false);
     }

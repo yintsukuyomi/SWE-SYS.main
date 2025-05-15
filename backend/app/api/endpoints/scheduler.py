@@ -87,6 +87,7 @@ def schedule_course_sessions(course, teacher, teacher_days, suitable_time_slots,
     if not sessions:
         return False, "No sessions defined for course"
     departments = [dept.department for dept in course.departments]
+    total_students = sum(dept.student_count for dept in course.departments)
     if not departments:
         return False, "Course has no departments assigned"
     sessions.sort(key=lambda x: 0 if x.type == "teorik" else 1)
@@ -111,7 +112,7 @@ def schedule_course_sessions(course, teacher, teacher_days, suitable_time_slots,
                 session_suitable_classrooms = get_suitable_classrooms(
                     "Lab" if session.type == "lab" else "Theoretical",
                     suitable_classrooms,
-                    sum(dept.student_count for dept in course.departments)
+                    total_students
                 )
                 if not session_suitable_classrooms:
                     return False, f"{session.type} oturumu için uygun derslik yok"
