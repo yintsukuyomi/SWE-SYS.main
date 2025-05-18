@@ -28,10 +28,14 @@ def get_classrooms(db: Session = Depends(get_db)):
 
 @router.get("/{classroom_id}", response_model=ClassroomResponse)
 def get_classroom(classroom_id: int, db: Session = Depends(get_db)):
-    classroom = db.query(Classroom).filter(Classroom.id == classroom_id).first()
-    if not classroom:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Classroom not found")
-    return classroom
+    try:
+        classroom = db.query(Classroom).filter(Classroom.id == classroom_id).first()
+        if not classroom:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Classroom not found")
+        return classroom
+    except Exception as e:
+        print(f"[ERROR] get_classroom: {e}")
+        raise HTTPException(status_code=500, detail=f"Derslik alınırken hata: {str(e)}")
 
 @router.post("", response_model=ClassroomResponse, status_code=status.HTTP_201_CREATED)
 def create_classroom(classroom: ClassroomCreate, db: Session = Depends(get_db)):

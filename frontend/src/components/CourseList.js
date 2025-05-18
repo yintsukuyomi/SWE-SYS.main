@@ -102,9 +102,14 @@ const CourseList = ({ token, user }) => {
       setFacultyList([...faculties].sort());
       toast.success("Dersler başarıyla yüklendi.");
     } catch (error) {
-      console.error("Error fetching courses:", error);
-      setError("Dersler yüklenirken bir hata oluştu");
-      toast.error("Dersler yüklenirken bir hata oluştu");
+      let errorMessage = "Dersler yüklenirken bir hata oluştu";
+      if (error.response && error.response.data && error.response.data.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -256,9 +261,14 @@ const CourseList = ({ token, user }) => {
       });
       toast.success("Ders durumu güncellendi.");
     } catch (error) {
-      console.error("Error updating course status:", error);
-      setError(error.response?.data?.detail || "Ders durumu güncellenirken bir hata oluştu.");
-      toast.error(error.response?.data?.detail || "Ders durumu güncellenirken bir hata oluştu.");
+      let errorMessage = "Ders durumu güncellenirken bir hata oluştu.";
+      if (error.response && error.response.data && error.response.data.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -330,6 +340,7 @@ const CourseList = ({ token, user }) => {
           isAdmin={isAdmin}
           addButtonText="Yeni Ders Ekle"
           addButtonLink="/courses/new"
+          onImport={handleExcelImport}
           onExport={handleExcelExport}
           templateData={courseTemplate}
           templateFileName="ders_sablonu"
@@ -811,6 +822,7 @@ const CourseList = ({ token, user }) => {
             isAdmin={isAdmin}
             addButtonText="Yeni Ders Ekle"
             addButtonLink="/courses/new"
+            onImport={handleExcelImport}
             onExport={handleExcelExport}
             templateData={courseTemplate}
             templateFileName="ders_sablonu"
@@ -913,6 +925,7 @@ const CourseList = ({ token, user }) => {
                 try {
                   setLoading(true);
                   setExcelError(null);
+                  toast.info('Çok sayıda kayıt ekleniyor, lütfen bekleyin...');
                   for (const courseData of pendingExcelData) {
                     await createCourse(courseData, token);
                   }

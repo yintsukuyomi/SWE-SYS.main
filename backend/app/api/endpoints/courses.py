@@ -13,14 +13,18 @@ router = APIRouter()
 
 @router.get("")
 def get_courses(db: Session = Depends(get_db)):
-    courses = get_all_courses(db)
-    # Burada CourseResponse ile serialize edilebilir
-    return [CourseResponse(**{
-        **c.__dict__,
-        "sessions": [{"id": s.id, "type": s.type, "hours": s.hours} for s in c.sessions],
-        "departments": [{"id": d.id, "department": d.department, "student_count": d.student_count} for d in c.departments],
-        "teacher": {"id": c.teacher.id, "name": c.teacher.name} if c.teacher else None
-    }).dict() for c in courses]
+    try:
+        courses = get_all_courses(db)
+        return [CourseResponse(**{
+            **c.__dict__,
+            "sessions": [{"id": s.id, "type": s.type, "hours": s.hours} for s in c.sessions],
+            "departments": [{"id": d.id, "department": d.department, "student_count": d.student_count} for d in c.departments],
+            "teacher": {"id": c.teacher.id, "name": c.teacher.name} if c.teacher else None
+        }).dict() for c in courses]
+    except Exception as e:
+        print(f"[ERROR] get_courses: {e}")
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Dersler alınırken hata: {str(e)}")
 
 @router.get("/unscheduled")
 def get_unscheduled_courses_endpoint(db: Session = Depends(get_db)):

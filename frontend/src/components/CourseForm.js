@@ -60,8 +60,9 @@ const CourseForm = ({ token }) => {
         departments: data.departments || [{ department: '', student_count: 0 }]
       });
     } catch (error) {
-      setError('Ders bilgileri yüklenirken hata oluştu');
-      toast.error('Ders bilgileri yüklenirken hata oluştu');
+      let errorMessage = (error.response && error.response.data && error.response.data.detail) || error.message || 'Ders bilgileri yüklenirken hata oluştu';
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -140,8 +141,9 @@ const CourseForm = ({ token }) => {
       }
       navigate('/courses');
     } catch (error) {
-      setError(error.message || 'Bir hata oluştu');
-      toast.error(error.message || 'Bir hata oluştu');
+      let errorMessage = (error.response && error.response.data && error.response.data.detail) || error.message || 'Bir hata oluştu';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

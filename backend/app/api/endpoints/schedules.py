@@ -67,41 +67,46 @@ def get_schedules(db: Session = Depends(get_db)):
 
 @router.get("/{schedule_id}")
 def get_schedule_endpoint(schedule_id: int, db: Session = Depends(get_db)):
-    s = db.query(Schedule).options(
-        joinedload(Schedule.course),
-        joinedload(Schedule.classroom)
-    ).filter(Schedule.id == schedule_id).first()
-    if not s:
-        from fastapi import HTTPException, status
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule not found")
-    course = s.course
-    classroom = s.classroom
-    return {
-        "id": s.id,
-        "day": s.day,
-        "time_range": s.time_range,
-        "course": {
-            "id": course.id if course else None,
-            "name": course.name if course else None,
-            "code": course.code if course else None,
-            "teacher_id": course.teacher_id if course else None,
-            "teacher": {
-                "id": course.teacher.id,
-                "name": course.teacher.name,
-                "email": course.teacher.email,
-                "faculty": course.teacher.faculty,
-                "department": course.teacher.department
-            } if course and course.teacher else None,
-            "total_hours": getattr(course, 'total_hours', None),
-            "student_count": getattr(course, 'student_count', 0)
-        } if course else None,
-        "classroom": {
-            "id": classroom.id if classroom else None,
-            "name": classroom.name if classroom else None,
-            "type": classroom.type if classroom else None,
-            "capacity": classroom.capacity if classroom else None
-        } if classroom else None
-    }
+    try:
+        s = db.query(Schedule).options(
+            joinedload(Schedule.course),
+            joinedload(Schedule.classroom)
+        ).filter(Schedule.id == schedule_id).first()
+        if not s:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule not found")
+        course = s.course
+        classroom = s.classroom
+        return {
+            "id": s.id,
+            "day": s.day,
+            "time_range": s.time_range,
+            "course": {
+                "id": course.id if course else None,
+                "name": course.name if course else None,
+                "code": course.code if course else None,
+                "teacher_id": course.teacher_id if course else None,
+                "teacher": {
+                    "id": course.teacher.id,
+                    "name": course.teacher.name,
+                    "email": course.teacher.email,
+                    "faculty": course.teacher.faculty,
+                    "department": course.teacher.department
+                } if course and course.teacher else None,
+                "total_hours": getattr(course, 'total_hours', None),
+                "student_count": getattr(course, 'student_count', 0)
+            } if course else None,
+            "classroom": {
+                "id": classroom.id if classroom else None,
+                "name": classroom.name if classroom else None,
+                "type": classroom.type if classroom else None,
+                "capacity": classroom.capacity if classroom else None
+            } if classroom else None
+        }
+    except Exception as e:
+        print(f"[ERROR] get_schedule_endpoint: {e}")
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Ders programı alınırken hata: {str(e)}")
 
 @router.post("", status_code=201)
 def create_schedule_endpoint(schedule: ScheduleCreate, db: Session = Depends(get_db)):

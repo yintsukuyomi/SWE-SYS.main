@@ -70,9 +70,9 @@ const ClassroomEdit = ({ token }) => {
         
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching classroom:', err);
-        setError('Derslik bilgileri yüklenemedi. Lütfen tekrar deneyin.');
-        toast.error('Derslik bilgileri yüklenemedi. Lütfen tekrar deneyin.');
+        let errorMessage = err.detail || (err.response && err.response.data && err.response.data.detail) || err.message || 'Derslik bilgileri yüklenemedi. Lütfen tekrar deneyin.';
+        setError(errorMessage);
+        toast.error(errorMessage);
         setLoading(false);
       }
     };
@@ -130,8 +130,9 @@ const ClassroomEdit = ({ token }) => {
       navigate('/classrooms');
     } catch (err) {
       console.error('Error updating classroom:', err);
-      setError(err.detail || 'Derslik güncellenirken bir hata oluştu. Lütfen tekrar deneyin.');
-      toast.error(err.detail || 'Derslik güncellenirken bir hata oluştu. Lütfen tekrar deneyin.');
+      let errorMessage = err.detail || (err.response && err.response.data && err.response.data.detail) || err.message || 'Derslik güncellenirken bir hata oluştu. Lütfen tekrar deneyin.';
+      setError(errorMessage);
+      toast.error(errorMessage);
       setLoading(false);
     }
   };

@@ -69,9 +69,14 @@ const ClassroomList = ({ token, user }) => {
       setFacultyList([...faculties].sort());
       toast.success("Derslikler başarıyla yüklendi.");
     } catch (error) {
-      console.error("Error fetching classrooms:", error);
-      setError("Derslikler yüklenirken bir hata oluştu");
-      toast.error("Derslikler yüklenirken bir hata oluştu");
+      let errorMessage = "Derslikler yüklenirken bir hata oluştu";
+      if (error.response && error.response.data && error.response.data.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -104,9 +109,14 @@ const ClassroomList = ({ token, user }) => {
       });
       fetchClassrooms();
     } catch (error) {
-      console.error("Error deleting classroom:", error);
-      setError("Failed to delete classroom. " + (error.detail || ""));
-      toast.error("Derslik silinemedi. " + (error.detail || ""));
+      let errorMessage = "Derslik silinemedi.";
+      if (error.response && error.response.data && error.response.data.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -605,6 +615,7 @@ const ClassroomList = ({ token, user }) => {
                 try {
                   setLoading(true);
                   setExcelError(null);
+                  toast.info('Çok sayıda kayıt ekleniyor, lütfen bekleyin...');
                   for (const row of pendingExcelData) {
                     const classroomData = {
                       name: row['Derslik Adı/Numarası'],

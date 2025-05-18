@@ -94,9 +94,9 @@ const TeacherEdit = ({ token }) => {
           setDepartments(getDepartmentsByFaculty(facultyObj.id));
         }
       } catch (err) {
-        console.error('Error fetching teacher:', err);
-        setError('Öğretmen bilgileri yüklenemedi. Lütfen tekrar deneyin.');
-        toast.error('Öğretmen bilgileri yüklenemedi. Lütfen tekrar deneyin.');
+        let errorMessage = err.detail || (err.response && err.response.data && err.response.data.detail) || err.message || 'Öğretmen bilgileri yüklenemedi. Lütfen tekrar deneyin.';
+        setError(errorMessage);
+        toast.error(errorMessage);
         setLoading(false);
       }
     };

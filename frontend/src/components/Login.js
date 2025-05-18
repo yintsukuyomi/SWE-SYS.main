@@ -27,9 +27,9 @@ const Login = ({ onLogin }) => {
       onLogin(data.access_token);
       toast.success("Giriş başarılı!");
     } catch (err) {
-      console.error("Login error:", err);
-      setError(err.detail || "Geçersiz kullanıcı adı veya şifre");
-      toast.error(err.detail || "Geçersiz kullanıcı adı veya şifre");
+      let errorMessage = (err.response && err.response.data && err.response.data.detail) || err.message || "Geçersiz kullanıcı adı veya şifre";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

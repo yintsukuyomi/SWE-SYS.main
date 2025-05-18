@@ -476,6 +476,8 @@ async def generate_schedule(db: Session = Depends(get_db), method: str = Query("
             "unscheduled": unscheduled_summary
         }
     except Exception as e:
+        import traceback
+        print(f"[ERROR] generate_schedule: {e}\n{traceback.format_exc()}")
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Program oluşturulurken hata: {str(e)}")
 

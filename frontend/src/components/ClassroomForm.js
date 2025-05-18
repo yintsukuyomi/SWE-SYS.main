@@ -69,9 +69,9 @@ const ClassroomForm = ({ token }) => {
       toast.success("Derslik başarıyla eklendi.");
       navigate('/classrooms');
     } catch (err) {
-      console.error('Error creating classroom:', err);
-      setError(err.detail || 'Derslik oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
-      toast.error(err.detail || 'Derslik oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+      let errorMessage = err.detail || (err.response && err.response.data && err.response.data.detail) || err.message || 'Derslik oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

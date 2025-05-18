@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { generateSchedule, getScheduleStatus, getSchedules, getCourses } from '../api';
 import '../styles/Scheduler.css';
+import { toast } from 'react-toastify';
 
 const Scheduler = ({ token }) => {
   const [generating, setGenerating] = useState(false);
@@ -75,8 +76,9 @@ const Scheduler = ({ token }) => {
         }
       }
     } catch (err) {
-      console.error('Program oluşturulurken hata:', err);
-      setError(err.detail || 'Program oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+      let errorMessage = err.detail || err.message || 'Program oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setGenerating(false);
     }
@@ -209,7 +211,7 @@ const Scheduler = ({ token }) => {
                       <td>{course.code}</td>
                       <td>{course.total_hours}</td>
                       <td>{course.student_count}</td>
-                      <td>{course.reason}</td>
+                      <td>{course.reason || 'Bilinmeyen neden'}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -18,11 +18,16 @@ def get_teachers(db: Session = Depends(get_db)):
 
 @router.get("/{teacher_id}")
 def get_teacher_endpoint(teacher_id: int, db: Session = Depends(get_db)):
-    teacher = get_teacher_by_id(teacher_id, db)
-    if not teacher:
-        from fastapi import HTTPException, status
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Teacher not found")
-    return TeacherResponse(**teacher.__dict__).dict()
+    try:
+        teacher = get_teacher_by_id(teacher_id, db)
+        if not teacher:
+            from fastapi import HTTPException, status
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Teacher not found")
+        return TeacherResponse(**teacher.__dict__).dict()
+    except Exception as e:
+        print(f"[ERROR] get_teacher_endpoint: {e}")
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Öğretmen alınırken hata: {str(e)}")
 
 @router.post("", status_code=201)
 def create_teacher_endpoint(teacher: TeacherCreate, db: Session = Depends(get_db)):
