@@ -179,11 +179,11 @@ const Scheduler = ({ token }) => {
             </div>
             <div className="result-item">
               <span className="result-label">Başarı Oranı:</span>
-              <span className="result-value">{result.success_rate}%</span>
+              <span className="result-value">{typeof result.success_rate === 'number' ? result.success_rate + '%' : (result.success_rate || '0%')}</span>
             </div>
           </div>
           
-          {result.unscheduled_count > 0 && (
+          {result.unscheduled_count > 0 && result.unscheduled && result.unscheduled.length > 0 ? (
             <div className="unscheduled-list">
               <h4>Programlanamayan dersler:</h4>
               <div className="scheduler-tip">
@@ -207,17 +207,21 @@ const Scheduler = ({ token }) => {
                 <tbody>
                   {result.unscheduled.map(course => (
                     <tr key={course.id} className={course.total_hours === 2 ? 'highlight-row' : ''}>
-                      <td>{course.name}</td>
-                      <td>{course.code}</td>
-                      <td>{course.total_hours}</td>
-                      <td>{course.student_count}</td>
+                      <td>{course.name || 'Bilinmiyor'}</td>
+                      <td>{course.code || '-'}</td>
+                      <td>{course.total_hours || '-'}</td>
+                      <td>{course.student_count || '-'}</td>
                       <td>{course.reason || 'Bilinmeyen neden'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          )}
+          ) : result.unscheduled_count === 0 ? (
+            <div className="unscheduled-list">
+              <h4>Tüm dersler başarıyla programlandı.</h4>
+            </div>
+          ) : null}
         </div>
       )}
       
@@ -254,9 +258,9 @@ const Scheduler = ({ token }) => {
                         
                         return (
                           <tr key={schedule.id}>
-                            <td>{schedule.time_range}</td>
-                            <td>{schedule.course && schedule.course.name ? `${schedule.course.name} (${schedule.course.code})` : 'Unknown Course'}</td>
-                            <td>{schedule.classroom && schedule.classroom.name ? schedule.classroom.name : 'Unknown Classroom'}</td>
+                            <td>{schedule.time_range || '-'}</td>
+                            <td>{schedule.course && schedule.course.name ? `${schedule.course.name} (${schedule.course.code})` : (schedule.course && schedule.course.code ? schedule.course.code : 'Bilinmiyor')}</td>
+                            <td>{schedule.classroom && schedule.classroom.name ? schedule.classroom.name : 'Bilinmiyor'}</td>
                             <td className={capacityClass}>
                               {studentCount} / {classroomCapacity}
                               {capacityRatio > 90 && <span className="capacity-warning"> ⚠️</span>}

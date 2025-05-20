@@ -197,3 +197,35 @@ input[type="checkbox"]:checked {
   flex: 1;
 }
 
+.time-slot-box {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background: #fafbfc;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-size: 18px;
+  margin: 0 auto;
+  user-select: none;
+}
+
+.time-slot-box.selected {
+  background: #4a90e2;
+  color: #fff;
+  border-color: #357abd;
+}
+
+.time-slot-box:hover {
+  background: #e3f0fc;
+  border-color: #4a90e2;
+}
+
+.time-slot-box.selected:hover {
+  background: #357abd;
+  border-color: #357abd;
+}
+

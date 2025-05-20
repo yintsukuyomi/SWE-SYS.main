@@ -271,12 +271,50 @@ const TeacherList = ({ token, user }) => {
     return '';
   };
 
-  const handleExcelExport = async () => {
+  const exportWithTemplate = async ({ data, headers, fileName, sheetName = 'Sheet', colWidth = 22 }) => {
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Öğretmenler');
-    
-    // Add headers
-    worksheet.addRow([
+    const worksheet = workbook.addWorksheet(sheetName);
+    worksheet.addRow(headers);
+    // Başlık stilleri ve koruma
+    headers.forEach((header, idx) => {
+      const cell = worksheet.getCell(1, idx + 1);
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' }
+      };
+      cell.protection = { locked: true };
+      worksheet.getColumn(idx + 1).width = colWidth;
+    });
+    // Veri satırları
+    data.forEach(rowObj => {
+      const row = headers.map(h => rowObj[h] ?? '');
+      const addedRow = worksheet.addRow(row);
+      addedRow.eachCell((cell, colNumber) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFFFF9C4' }
+        };
+        cell.protection = { locked: false };
+      });
+    });
+    worksheet.protect('sifre', {
+      selectLockedCells: true,
+      selectUnlockedCells: true
+    });
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${fileName}.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleExcelExport = async () => {
+    const headers = [
       'Ad Soyad',
       'E-posta',
       'Fakülte',
@@ -287,42 +325,33 @@ const TeacherList = ({ token, user }) => {
       'Perşembe',
       'Cuma',
       'Durum'
-    ]);
-    
-    // Add data
-    teachers.forEach(teacher => {
+    ];
+    const exportData = teachers.map(teacher => {
       let wh = teacher.working_hours;
       if (typeof wh === 'string') {
-        try {
-          wh = JSON.parse(wh);
-        } catch {
-          wh = {};
-        }
+        try { wh = JSON.parse(wh); } catch { wh = {}; }
       }
-      worksheet.addRow([
-        teacher.name,
-        teacher.email,
-        teacher.faculty,
-        teacher.department,
-        formatWorkingHours(wh?.monday),
-        formatWorkingHours(wh?.tuesday),
-        formatWorkingHours(wh?.wednesday),
-        formatWorkingHours(wh?.thursday),
-        formatWorkingHours(wh?.friday),
-        teacher.is_active ? 'Aktif' : 'Pasif'
-      ]);
+      return {
+        'Ad Soyad': teacher.name,
+        'E-posta': teacher.email,
+        'Fakülte': teacher.faculty,
+        'Bölüm': teacher.department,
+        'Pazartesi': formatWorkingHours(wh?.monday),
+        'Salı': formatWorkingHours(wh?.tuesday),
+        'Çarşamba': formatWorkingHours(wh?.wednesday),
+        'Perşembe': formatWorkingHours(wh?.thursday),
+        'Cuma': formatWorkingHours(wh?.friday),
+        'Durum': teacher.is_active ? 'Aktif' : 'Pasif'
+      };
     });
-    
-    // Generate and download file
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'ogretmenler.xlsx';
-    a.click();
-    window.URL.revokeObjectURL(url);
-    toast.success("Öğretmenler başarıyla dışa aktarıldı.");
+    await exportWithTemplate({
+      data: exportData,
+      headers,
+      fileName: 'ogretmenler',
+      sheetName: 'Öğretmenler',
+      colWidth: 22
+    });
+    toast.success('Öğretmenler başarıyla dışa aktarıldı.');
   };
 
   const teacherTemplate = [

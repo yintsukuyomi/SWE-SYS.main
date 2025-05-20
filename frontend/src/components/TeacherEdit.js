@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getTeacherById, updateTeacher } from '../api';
 import { FACULTIES, getDepartmentsByFaculty } from '../constants/facultiesAndDepartments';
@@ -21,6 +21,11 @@ const TeacherEdit = ({ token }) => {
   const [departments, setDepartments] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectValue, setSelectValue] = useState(true);
+  const [dragDay, setDragDay] = useState(null);
+  const [dragHours, setDragHours] = useState([]);
+  const tableRef = useRef(null);
 
   // Saat dilimlerini oluştur
   const initializeTimeSlots = () => {
@@ -124,7 +129,11 @@ const TeacherEdit = ({ token }) => {
     }));
   };
   
-  const handleTimeSlotChange = (day, hour) => {
+  const handleTimeSlotMouseDown = (day, hour) => {
+    setIsSelecting(true);
+    setSelectValue(!timeSlots[day][hour]);
+    setDragDay(day);
+    setDragHours([hour]);
     setTimeSlots(prev => ({
       ...prev,
       [day]: {
@@ -133,6 +142,36 @@ const TeacherEdit = ({ token }) => {
       }
     }));
   };
+
+  const handleTimeSlotMouseEnter = (day, hour) => {
+    if (isSelecting && dragDay === day) {
+      setDragHours(prev => {
+        if (!prev.includes(hour)) {
+          setTimeSlots(ts => ({
+            ...ts,
+            [day]: {
+              ...ts[day],
+              [hour]: selectValue
+            }
+          }));
+          return [...prev, hour];
+        }
+        return prev;
+      });
+    }
+  };
+
+  const handleTimeSlotMouseUp = () => {
+    setIsSelecting(false);
+    setDragDay(null);
+    setDragHours([]);
+  };
+
+  useEffect(() => {
+    const handleMouseUp = () => handleTimeSlotMouseUp();
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => window.removeEventListener('mouseup', handleMouseUp);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -263,7 +302,7 @@ const TeacherEdit = ({ token }) => {
 
         <div className="form-group working-hours-table">
           <label>Çalışma Saatleri</label>
-          <div className="table-container">
+          <div className="table-container" ref={tableRef}>
             <table>
               <thead>
                 <tr>
@@ -277,15 +316,27 @@ const TeacherEdit = ({ token }) => {
                 {Object.keys(timeSlots.monday || {}).map(hour => (
                   <tr key={hour}>
                     <td>{hour}</td>
-                    {Object.keys(dayLabels).map(day => (
-                      <td key={`${day}-${hour}`}>
-                        <input
-                          type="checkbox"
-                          checked={timeSlots[day]?.[hour] || false}
-                          onChange={() => handleTimeSlotChange(day, hour)}
-                        />
-                      </td>
-                    ))}
+                    {Object.keys(dayLabels).map(day => {
+                      const checked = timeSlots[day]?.[hour] || false;
+                      return (
+                        <td key={`${day}-${hour}`}>
+                          <div
+                            className={`time-slot-box${checked ? ' selected' : ''}`}
+                            tabIndex={0}
+                            onMouseDown={() => handleTimeSlotMouseDown(day, hour)}
+                            onMouseEnter={() => handleTimeSlotMouseEnter(day, hour)}
+                            onMouseUp={handleTimeSlotMouseUp}
+                            onKeyDown={e => {
+                              if (e.key === ' ' || e.key === 'Enter') handleTimeSlotMouseDown(day, hour);
+                            }}
+                            role="button"
+                            aria-pressed={checked}
+                          >
+                            {checked ? '✔' : ''}
+                          </div>
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>

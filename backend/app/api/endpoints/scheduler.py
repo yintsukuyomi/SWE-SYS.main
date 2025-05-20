@@ -248,9 +248,23 @@ def fitness_function(schedule, courses, teachers, classrooms):
 
 def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200, pop_size=100, mutation_rate=0.05):
     time_slots = [f"{start}-{end}" for start, end in get_time_slots()]
-    days = [d.capitalize() for d in DAYS]
+    # --- Her öğretmen için uygun gün+slotları sadece working_hours (JSON) üzerinden hesapla ---
+    teacher_available_slots = {}
+    for teacher in teachers.values():
+        available = set()
+        try:
+            wh = json.loads(getattr(teacher, 'working_hours', '{}'))
+            for day, slots in wh.items():
+                for i in range(len(slots)-1):
+                    slot_start = slots[i]
+                    slot_end = slots[i+1]
+                    time_slot = f"{slot_start}-{slot_end}"
+                    available.add((day.capitalize(), time_slot))
+        except Exception:
+            pass  # Eski sistem yok, uygunluk yok sayılır
+        teacher_available_slots[teacher.id] = list(available)
+    # ---
     population = []
-    # Popülasyon oluştur
     for _ in range(pop_size):
         individual = []
         for course in courses:
@@ -258,8 +272,10 @@ def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200
             if not teacher:
                 continue
             for session in get_course_sessions(course, db):
-                day = np.random.choice(days)
-                time_slot = np.random.choice(time_slots)
+                available_slots = teacher_available_slots.get(teacher.id, [])
+                if not available_slots:
+                    continue
+                day, time_slot = random.choice(available_slots)
                 suitable_classrooms = get_suitable_classrooms(session.type, classrooms, sum([d.student_count for d in course.departments]))
                 if not suitable_classrooms:
                     continue
@@ -306,8 +322,12 @@ def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200
             if np.random.rand() < mutation_rate:
                 if ind:
                     gene = np.random.choice(ind)
-                    gene['day'] = np.random.choice(days)
-                    gene['time_slot'] = np.random.choice(time_slots)
+                    teacher_id = gene['teacher_id']
+                    available_slots = teacher_available_slots.get(teacher_id, [])
+                    if available_slots:
+                        day, time_slot = random.choice(available_slots)
+                        gene['day'] = day
+                        gene['time_slot'] = time_slot
         population = next_population[:pop_size]
     # En iyi bireyi bul
     fitness_scores = [fitness_function(ind, courses, teachers.values(), classrooms) for ind in population]
@@ -398,19 +418,14 @@ async def generate_schedule(db: Session = Depends(get_db), method: str = Query("
             if not teacher:
                 unscheduled_courses.append((course, "Derse atanmış öğretmen yok"))
                 continue
-            teacher_days = teacher.working_days.split(',') if teacher.working_days else []
+            # Sadece working_hours (JSON) anahtarlarını gün olarak kullan
+            try:
+                wh = json.loads(getattr(teacher, 'working_hours', '{}'))
+                teacher_days = list(wh.keys())
+            except Exception:
+                teacher_days = []
             if not teacher_days:
-                # Çalışma günleri boşsa, çalışma saatlerinden günleri çıkar
-                try:
-                    wh = json.loads(getattr(teacher, 'working_hours', '{}'))
-                    teacher_days = list(wh.keys())
-                except Exception:
-                    teacher_days = []
-            if not teacher_days:
-                unscheduled_courses.append((
-                    course,
-                    f"Öğretmenin uygun günü yok. (Çalışma günleri: {getattr(teacher, 'working_days', 'yok')}, Çalışma saatleri: {getattr(teacher, 'working_hours', 'yok')})"
-                ))
+                unscheduled_courses.append((course, "Öğretmenin uygun günü yok (çalışma saatleri tanımsız)"))
                 continue
             suitable_time_slots = [f"{start}-{end}" for start, end in time_slots]
             suitable_classrooms = classrooms

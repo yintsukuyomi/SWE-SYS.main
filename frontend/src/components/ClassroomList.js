@@ -196,42 +196,71 @@ const ClassroomList = ({ token, user }) => {
     }
   };
 
-  const handleExcelExport = async () => {
+  const exportWithTemplate = async ({ data, headers, fileName, sheetName = 'Sheet', colWidth = 22 }) => {
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Derslikler');
-    
-    // Add headers
-    worksheet.addRow([
+    const worksheet = workbook.addWorksheet(sheetName);
+    worksheet.addRow(headers);
+    headers.forEach((header, idx) => {
+      const cell = worksheet.getCell(1, idx + 1);
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' }
+      };
+      cell.protection = { locked: true };
+      worksheet.getColumn(idx + 1).width = colWidth;
+    });
+    data.forEach(rowObj => {
+      const row = headers.map(h => rowObj[h] ?? '');
+      const addedRow = worksheet.addRow(row);
+      addedRow.eachCell((cell, colNumber) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFFFF9C4' }
+        };
+        cell.protection = { locked: false };
+      });
+    });
+    worksheet.protect('sifre', {
+      selectLockedCells: true,
+      selectUnlockedCells: true
+    });
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${fileName}.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleExcelExport = async () => {
+    const headers = [
       'Derslik Adı/Numarası',
       'Kapasite',
       'Tür',
       'Fakülte',
       'Bölüm',
       'Durum'
-    ]);
-    
-    // Add data
-    classrooms.forEach(classroom => {
-      worksheet.addRow([
-        classroom.name,
-        classroom.capacity,
-        classroom.type,
-        classroom.faculty,
-        classroom.department,
-        classroom.is_active ? 'Aktif' : 'Pasif'
-      ]);
+    ];
+    const exportData = classrooms.map(classroom => ({
+      'Derslik Adı/Numarası': classroom.name,
+      'Kapasite': classroom.capacity,
+      'Tür': classroom.type || classroom['Tür'] || '',
+      'Fakülte': classroom.faculty,
+      'Bölüm': classroom.department,
+      'Durum': classroom.is_active ? 'Aktif' : 'Pasif'
+    }));
+    await exportWithTemplate({
+      data: exportData,
+      headers,
+      fileName: 'derslikler',
+      sheetName: 'Derslikler',
+      colWidth: 22
     });
-    
-    // Generate and download file
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'derslikler.xlsx';
-    a.click();
-    window.URL.revokeObjectURL(url);
-    toast.success("Derslikler başarıyla dışa aktarıldı.");
+    toast.success('Derslikler başarıyla dışa aktarıldı.');
   };
 
   const classroomTemplate = [

@@ -587,48 +587,69 @@ const CourseList = ({ token, user }) => {
     );
   };
 
-  const handleExcelExport = async () => {
+  const exportWithTemplate = async ({ data, headers, fileName, sheetName = 'Sheet', colWidth = 16 }) => {
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Dersler');
+    const worksheet = workbook.addWorksheet(sheetName);
+    worksheet.addRow(headers);
+    headers.forEach((header, idx) => {
+      const cell = worksheet.getCell(1, idx + 1);
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' }
+      };
+      cell.protection = { locked: true };
+      worksheet.getColumn(idx + 1).width = colWidth;
+    });
+    data.forEach(rowObj => {
+      const row = headers.map(h => rowObj[h] ?? '');
+      const addedRow = worksheet.addRow(row);
+      addedRow.eachCell((cell, colNumber) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFFFF9C4' }
+        };
+        cell.protection = { locked: false };
+      });
+    });
+    worksheet.protect('sifre', {
+      selectLockedCells: true,
+      selectUnlockedCells: true
+    });
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${fileName}.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
 
-    // Add headers (Toplam Saat kaldırıldı)
-    worksheet.addRow([
+  const handleExcelExport = async () => {
+    const headers = [
       'Ders Adı',
       'Ders Kodu',
       'Öğretmen Adı',
       'Fakülte',
       'Seviye',
+      'Tür',
       'Kategori',
       'Dönem',
       'AKTS',
       'Durum',
-      'Bölüm',
-      'Öğrenci Sayısı',
       'Oturum Türü',
-      'Oturum Saati'
-    ]);
-
-    // Her dersin her bölümü ve her oturumu için ayrı satır oluştur
+      'Oturum Saati',
+      'Bölüm',
+      'Öğrenci Sayısı'
+    ];
+    const exportData = [];
     courses.forEach(course => {
       const isActive = course.is_active ? 'Aktif' : 'Pasif';
       const teacherName = (course.teacher && course.teacher.name) || course.teacher_name || '';
       const faculty = course.faculty;
-      const levelMap = {
-        'undergraduate': 'Lisans',
-        'graduate': 'Yüksek Lisans',
-        'phd': 'Doktora',
-        'prep': 'Hazırlık',
-        '1': '1. Sınıf',
-        '2': '2. Sınıf',
-        '3': '3. Sınıf',
-        '4': '4. Sınıf',
-        '5': '5. Sınıf',
-        '6': '6. Sınıf'
-      };
-      let level = course.level;
-      if (level && levelMap[level.toLowerCase()]) {
-        level = levelMap[level.toLowerCase()];
-      }
+      const level = course.level;
       const category = course.category;
       const semester = course.semester;
       const ects = course.ects;
@@ -638,42 +659,91 @@ const CourseList = ({ token, user }) => {
       const sessions = Array.isArray(course.sessions) ? course.sessions : [];
       if (departments.length === 0) {
         if (sessions.length === 0) {
-          worksheet.addRow([
-            name, code, teacherName, faculty, level, category, semester, ects, isActive, '', '', '', ''
-          ]);
+          exportData.push({
+            'Ders Adı': name,
+            'Ders Kodu': code,
+            'Öğretmen Adı': teacherName,
+            'Fakülte': faculty,
+            'Seviye': level,
+            'Tür': course.type || (course.sessions && course.sessions[0]?.type) || course['Tür'] || '',
+            'Kategori': category,
+            'Dönem': semester,
+            'AKTS': ects,
+            'Durum': isActive,
+            'Oturum Türü': '',
+            'Oturum Saati': '',
+            'Bölüm': '',
+            'Öğrenci Sayısı': ''
+          });
         } else {
           sessions.forEach(session => {
-            worksheet.addRow([
-              name, code, teacherName, faculty, level, category, semester, ects, isActive, '', '', session.type, session.hours
-            ]);
+            exportData.push({
+              'Ders Adı': name,
+              'Ders Kodu': code,
+              'Öğretmen Adı': teacherName,
+              'Fakülte': faculty,
+              'Seviye': level,
+              'Tür': course.type || (course.sessions && course.sessions[0]?.type) || course['Tür'] || '',
+              'Kategori': category,
+              'Dönem': semester,
+              'AKTS': ects,
+              'Durum': isActive,
+              'Oturum Türü': session.type,
+              'Oturum Saati': session.hours,
+              'Bölüm': '',
+              'Öğrenci Sayısı': ''
+            });
           });
         }
       } else {
         departments.forEach(dept => {
           if (sessions.length === 0) {
-            worksheet.addRow([
-              name, code, teacherName, faculty, level, category, semester, ects, isActive, dept.department, dept.student_count, '', ''
-            ]);
+            exportData.push({
+              'Ders Adı': name,
+              'Ders Kodu': code,
+              'Öğretmen Adı': teacherName,
+              'Fakülte': faculty,
+              'Seviye': level,
+              'Tür': course.type || (course.sessions && course.sessions[0]?.type) || course['Tür'] || '',
+              'Kategori': category,
+              'Dönem': semester,
+              'AKTS': ects,
+              'Durum': isActive,
+              'Oturum Türü': '',
+              'Oturum Saati': '',
+              'Bölüm': dept.department,
+              'Öğrenci Sayısı': dept.student_count
+            });
           } else {
             sessions.forEach(session => {
-              worksheet.addRow([
-                name, code, teacherName, faculty, level, category, semester, ects, isActive, dept.department, dept.student_count, session.type, session.hours
-              ]);
+              exportData.push({
+                'Ders Adı': name,
+                'Ders Kodu': code,
+                'Öğretmen Adı': teacherName,
+                'Fakülte': faculty,
+                'Seviye': level,
+                'Tür': course.type || (course.sessions && course.sessions[0]?.type) || course['Tür'] || '',
+                'Kategori': category,
+                'Dönem': semester,
+                'AKTS': ects,
+                'Durum': isActive,
+                'Oturum Türü': session.type,
+                'Oturum Saati': session.hours,
+                'Bölüm': dept.department,
+                'Öğrenci Sayısı': dept.student_count
+              });
             });
           }
         });
       }
     });
-
-    // Generate and download file
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'dersler.xlsx';
-    a.click();
-    window.URL.revokeObjectURL(url);
+    await exportWithTemplate({
+      data: exportData,
+      headers,
+      fileName: 'dersler',
+      sheetName: 'Dersler',
+      colWidth: 16
+    });
     toast.success('Dersler başarıyla dışa aktarıldı.');
   };
 
