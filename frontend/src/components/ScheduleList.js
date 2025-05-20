@@ -54,6 +54,15 @@ const ScheduleList = ({ token, user }) => {
     "Sunday": 7
   };
 
+  const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const TIME_SLOTS = [
+    "08:00-08:30", "08:30-09:00", "09:00-09:30", "09:30-10:00",
+    "10:00-10:30", "10:30-11:00", "11:00-11:30", "11:30-12:00",
+    "12:00-12:30", "12:30-13:00", "13:00-13:30", "13:30-14:00",
+    "14:00-14:30", "14:30-15:00", "15:00-15:30", "15:30-16:00",
+    "16:00-16:30", "16:30-17:00"
+  ];
+
   // fetchSchedules fonksiyonunu component fonksiyonunun başında tanımla
   const fetchSchedules = async () => {
     setLoading(true);
@@ -216,6 +225,89 @@ const ScheduleList = ({ token, user }) => {
     );
   };
 
+  function getScheduleGrid(schedule) {
+    const grid = {};
+    for (const day of DAYS) {
+      grid[day] = {};
+      for (const slot of TIME_SLOTS) {
+        grid[day][slot] = [];
+      }
+    }
+    schedule.forEach(item => {
+      const { day, time_range } = item;
+      const [start, end] = time_range.split("-");
+      const toMinutes = t => {
+        const [h, m] = t.split(":").map(Number);
+        return h * 60 + m;
+      };
+      const startMin = toMinutes(start);
+      const endMin = toMinutes(end);
+      TIME_SLOTS.forEach(slot => {
+        const [slotStart, slotEnd] = slot.split("-");
+        const slotStartMin = toMinutes(slotStart);
+        const slotEndMin = toMinutes(slotEnd);
+        if (slotStartMin >= startMin && slotEndMin <= endMin) {
+          if (DAYS.includes(day)) {
+            grid[day][slot].push(item);
+          }
+        }
+      });
+    });
+    return grid;
+  }
+
+  function renderScheduleGrid(schedule) {
+    const grid = getScheduleGrid(schedule);
+    return (
+      <div className="schedule-grid-wrapper">
+        <table className="schedule-grid-table">
+          <thead>
+            <tr>
+              <th></th>
+              {DAYS.map(day => (
+                <th key={day}>{day}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {TIME_SLOTS.map(slot => (
+              <tr key={slot}>
+                <td className="time-header">{slot}</td>
+                {DAYS.map(day => {
+                  const items = grid[day][slot];
+                  return (
+                    <td key={day + slot} className="schedule-cell">
+                      {items.length === 0 ? (
+                        <div className="empty-slot"></div>
+                      ) : (
+                        items.map((item, idx) => {
+                          const cap = item.classroom?.capacity || 0;
+                          const stu = item.course?.student_count || 0;
+                          const isFull = cap > 0 && stu >= cap;
+                          return (
+                            <div
+                              key={idx}
+                              className={`lesson-box${isFull ? " full" : ""}`}
+                              title={`${item.course?.name || ""} (${item.course?.code || ""})\n${item.classroom?.name || ""} | ${stu} / ${cap}`}
+                            >
+                              <div className="lesson-title">{item.course?.name} <span className="lesson-code">({item.course?.code})</span></div>
+                              <div className="lesson-room">{item.classroom?.name}</div>
+                              <div className="lesson-capacity">{stu} / {cap}</div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   return (
     <div className="list-container">
       <div className="list-header">
@@ -291,69 +383,9 @@ const ScheduleList = ({ token, user }) => {
           <p>Ders programı bulunamadı. Lütfen program oluşturmak için Program Oluşturucu kullanın.</p>
         </div>
       ) : (
-        <div className="schedule-by-day">
-          {sortedDays.map(day => (
-            <div className="day-schedule" key={day}>
-              <div className="day-header">
-                <h2>{dayNameTr[day] || day}</h2>
-              </div>
-              <table className="schedule-table">
-                <thead>
-                  <tr>
-                    <th>Time</th>
-                    <th>Course</th>
-                    <th>Teacher</th>
-                    <th>Classroom</th>
-                    <th>Students / Capacity</th>
-                    {isAdmin && <th>Actions</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {groupedSchedules[day]
-                    .sort((a, b) => {
-                      const aTime = a.time_range.split('-')[0];
-                      const bTime = b.time_range.split('-')[0];
-                      return aTime.localeCompare(bTime);
-                    })
-                    .map(schedule => {
-                      const studentCount = schedule.course?.student_count || 0;
-                      const classroomCapacity = schedule.classroom?.capacity || 0;
-                      const capacityClass = getCapacityStatusClass(schedule);
-                      const rowSpan = calculateRowspan(schedule.time_range);
-                      const courseName = schedule.course?.name || 'Unknown Course';
-                      const teacherName = schedule.course?.teacher?.name || 'Unknown Teacher';
-                      const classroomName = schedule.classroom?.name || 'Unknown Classroom';
-                      
-                      return (
-                        <tr key={schedule.id} className={rowSpan > 1 ? "long-course" : ""}>
-                          <td className="time-cell">{formatTimeRange(schedule.time_range, schedule.course)}</td>
-                          <td>
-                            <div className="course-info">
-                              <div className="course-title">{courseName}</div>
-                              <div className="course-code">{schedule.course?.code || ''}</div>
-                            </div>
-                          </td>
-                          <td>{teacherName}</td>
-                          <td>{classroomName}</td>
-                          <td className={capacityClass}>
-                            {studentCount} / {classroomCapacity}
-                            {studentCount > classroomCapacity && <span className="capacity-warning"> ⚠️</span>}
-                          </td>
-                          {isAdmin && (
-                            <td className="actions-cell">
-                              <button className="btn-delete" onClick={() => handleDeleteScheduleClick(schedule)}>
-                                Sil
-                              </button>
-                            </td>
-                          )}
-                        </tr>
-                      );
-                    })
-                  }
-                </tbody>
-              </table>
-            </div>
-          ))}
+        <div className="current-schedule">
+          <h3>Ders Programı</h3>
+          {renderScheduleGrid(schedules)}
         </div>
       )}
     </div>

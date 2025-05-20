@@ -1,4 +1,4 @@
-# SWE-SYS (Ders Programı Yönetim Sistemi)
+# PlanEdu (Ders Programı Yönetim Sistemi)
 
 Modern, kullanıcı dostu ve yapay zeka destekli bir üniversite ders programı yönetim sistemi.
 

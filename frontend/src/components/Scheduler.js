@@ -101,6 +101,98 @@ const Scheduler = ({ token }) => {
     return 'capacity-good';
   };
   
+  const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const TIME_SLOTS = [
+    "08:00-08:30", "08:30-09:00", "09:00-09:30", "09:30-10:00",
+    "10:00-10:30", "10:30-11:00", "11:00-11:30", "11:30-12:00",
+    "12:00-12:30", "12:30-13:00", "13:00-13:30", "13:30-14:00",
+    "14:00-14:30", "14:30-15:00", "15:00-15:30", "15:30-16:00",
+    "16:00-16:30", "16:30-17:00"
+  ];
+
+  function getScheduleGrid(schedule) {
+    const grid = {};
+    for (const day of DAYS) {
+      grid[day] = {};
+      for (const slot of TIME_SLOTS) {
+        grid[day][slot] = [];
+      }
+    }
+    schedule.forEach(item => {
+      const { day, time_range } = item;
+      const [start, end] = time_range.split("-");
+      const toMinutes = t => {
+        const [h, m] = t.split(":").map(Number);
+        return h * 60 + m;
+      };
+      const startMin = toMinutes(start);
+      const endMin = toMinutes(end);
+      TIME_SLOTS.forEach(slot => {
+        const [slotStart, slotEnd] = slot.split("-");
+        const slotStartMin = toMinutes(slotStart);
+        const slotEndMin = toMinutes(slotEnd);
+        if (slotStartMin >= startMin && slotEndMin <= endMin) {
+          if (DAYS.includes(day)) {
+            grid[day][slot].push(item);
+          }
+        }
+      });
+    });
+    return grid;
+  }
+
+  function renderScheduleGrid(schedule) {
+    const grid = getScheduleGrid(schedule);
+    return (
+      <div className="schedule-grid-wrapper">
+        <table className="schedule-grid-table">
+          <thead>
+            <tr>
+              <th></th>
+              {DAYS.map(day => (
+                <th key={day}>{day}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {TIME_SLOTS.map(slot => (
+              <tr key={slot}>
+                <td className="time-header">{slot}</td>
+                {DAYS.map(day => {
+                  const items = grid[day][slot];
+                  return (
+                    <td key={day + slot} className="schedule-cell">
+                      {items.length === 0 ? (
+                        <div className="empty-slot"></div>
+                      ) : (
+                        items.map((item, idx) => {
+                          const cap = item.classroom?.capacity || 0;
+                          const stu = item.course?.student_count || 0;
+                          const isFull = cap > 0 && stu >= cap;
+                          return (
+                            <div
+                              key={idx}
+                              className={`lesson-box${isFull ? " full" : ""}`}
+                              title={`${item.course?.name || ""} (${item.course?.code || ""})\n${item.classroom?.name || ""} | ${stu} / ${cap}`}
+                            >
+                              <div className="lesson-title">{item.course?.name} <span className="lesson-code">({item.course?.code})</span></div>
+                              <div className="lesson-room">{item.classroom?.name}</div>
+                              <div className="lesson-capacity">{stu} / {cap}</div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   return (
     <div className="scheduler-container">
       <div className="scheduler-header">
@@ -225,57 +317,12 @@ const Scheduler = ({ token }) => {
         </div>
       )}
       
-      <div className="current-schedule">
-        <h3>Mevcut Program</h3>
-        {schedules.length === 0 ? (
-          <p className="no-schedule">Henüz oluşturulmuş bir program yok.</p>
-        ) : (
-          <div className="schedule-by-day">
-            {sortedDays.map(day => (
-              <div className="day-schedule" key={day}>
-                <h4>{day}</h4>
-                <table className="schedule-table">
-                  <thead>
-                    <tr>
-                      <th>Time</th>
-                      <th>Course</th>
-                      <th>Classroom</th>
-                      <th>Students / Capacity</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {groupedSchedules[day]
-                      .sort((a, b) => {
-                        const aTime = a.time_range.split('-')[0];
-                        const bTime = b.time_range.split('-')[0];
-                        return aTime.localeCompare(bTime);
-                      })
-                      .map(schedule => {
-                        const studentCount = schedule.course ? schedule.course.student_count || 0 : 0;
-                        const classroomCapacity = schedule.classroom ? schedule.classroom.capacity || 0 : 0;
-                        const capacityRatio = classroomCapacity > 0 ? (studentCount / classroomCapacity) * 100 : 0;
-                        const capacityClass = getCapacityStatusClass(capacityRatio);
-                        
-                        return (
-                          <tr key={schedule.id}>
-                            <td>{schedule.time_range || '-'}</td>
-                            <td>{schedule.course && schedule.course.name ? `${schedule.course.name} (${schedule.course.code})` : (schedule.course && schedule.course.code ? schedule.course.code : 'Bilinmiyor')}</td>
-                            <td>{schedule.classroom && schedule.classroom.name ? schedule.classroom.name : 'Bilinmiyor'}</td>
-                            <td className={capacityClass}>
-                              {studentCount} / {classroomCapacity}
-                              {capacityRatio > 90 && <span className="capacity-warning"> ⚠️</span>}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    }
-                  </tbody>
-                </table>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {result && result.schedule && result.schedule.length > 0 && (
+        <div className="current-schedule">
+          <h3>Mevcut Program</h3>
+          {renderScheduleGrid(result.schedule)}
+        </div>
+      )}
     </div>
   );
 };

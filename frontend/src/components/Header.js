@@ -6,7 +6,7 @@ const Header = ({ user, onLogout }) => {
   return (
     <header className="header">
       <div className="header-logo">
-        <Link to="/">SWE-SYS</Link>
+        <a href="/">PlanEdu</a>
       </div>
       
       {user && (

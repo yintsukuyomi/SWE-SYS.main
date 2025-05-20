@@ -319,7 +319,7 @@ const TeacherEdit = ({ token }) => {
                     {Object.keys(dayLabels).map(day => {
                       const checked = timeSlots[day]?.[hour] || false;
                       return (
-                        <td key={`${day}-${hour}`}>
+                      <td key={`${day}-${hour}`}>
                           <div
                             className={`time-slot-box${checked ? ' selected' : ''}`}
                             tabIndex={0}
@@ -334,7 +334,7 @@ const TeacherEdit = ({ token }) => {
                           >
                             {checked ? '✔' : ''}
                           </div>
-                        </td>
+                      </td>
                       );
                     })}
                   </tr>

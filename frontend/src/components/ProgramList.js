@@ -103,41 +103,36 @@ const ProgramList = ({ token }) => {
     coursesByLevel[level.id] = courses.filter(course => getLevelId(course.level) === level.id);
   });
   
-  // Ders programı tablosu için haftalık saat aralıklarını tanımla
+  // Haftalık program için 30 dakikalık slotlar
   const timeSlots = [
-    '08:30-10:00', '10:15-11:45', '12:00-13:30', 
-    '13:45-15:15', '15:30-17:00', '17:15-18:45'
+    '08:00-08:30', '08:30-09:00', '09:00-09:30', '09:30-10:00',
+    '10:00-10:30', '10:30-11:00', '11:00-11:30', '11:30-12:00',
+    '12:00-12:30', '12:30-13:00', '13:00-13:30', '13:30-14:00',
+    '14:00-14:30', '14:30-15:00', '15:00-15:30', '15:30-16:00',
+    '16:00-16:30', '16:30-17:00'
   ];
   
-  // Ders süresine göre aralık eşleştirme
+  // Slot ile ders zaman aralığı çakışıyorsa eşleşsin
   const matchTimeSlot = (schedule) => {
     const { time_range } = schedule;
-    
-    // Tam eşleşme kontrolü
-    if (timeSlots.includes(time_range)) {
-      return time_range;
-    }
-    
-    // Zaman dilimleri arasında çakışma kontrolü
     const [scheduleStart, scheduleEnd] = time_range.split('-');
-    
+    const toMinutes = t => {
+      const [h, m] = t.split(":").map(Number);
+      return h * 60 + m;
+    };
+    const sStart = toMinutes(scheduleStart);
+    const sEnd = toMinutes(scheduleEnd);
     for (const slot of timeSlots) {
       const [slotStart, slotEnd] = slot.split('-');
-      
-      // Başlangıç saati aynıysa veya yakınsa eşleştir
-      if (scheduleStart === slotStart || Math.abs(parseTime(scheduleStart) - parseTime(slotStart)) < 15) {
+      const slotS = toMinutes(slotStart);
+      const slotE = toMinutes(slotEnd);
+      // Slot, dersin aralığına tamamen dahilse veya çakışıyorsa
+      if (slotS >= sStart && slotE <= sEnd) {
         return slot;
       }
     }
-    
-    // Eşleşme bulunamadı, varsayılan değer döndür
+    // Eşleşme bulunamazsa ilk slotu döndür
     return timeSlots[0];
-  };
-  
-  // Saat formatını dakika cinsinden sayısal değere dönüştürme
-  const parseTime = (timeStr) => {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    return hours * 60 + minutes;
   };
   
   // Ders süresine göre genişlik hesaplama
@@ -145,8 +140,12 @@ const ProgramList = ({ token }) => {
     const { time_range } = schedule;
     const [start, end] = time_range.split('-');
     
-    const startMinutes = parseTime(start);
-    const endMinutes = parseTime(end);
+    const toMinutes = t => {
+      const [h, m] = t.split(":").map(Number);
+      return h * 60 + m;
+    };
+    const startMinutes = toMinutes(start);
+    const endMinutes = toMinutes(end);
     
     // Süreyi saat cinsinden hesapla
     const duration = (endMinutes - startMinutes) / 60;

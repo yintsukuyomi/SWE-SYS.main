@@ -14,7 +14,7 @@ const Sidebar = ({ user }) => {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        <h3>SWE-SYS</h3>
+        <h3>PlanEdu</h3>
         <p>{user?.role === "admin" ? 'Yönetici' : 'Kullanıcı'}</p>
       </div>
       

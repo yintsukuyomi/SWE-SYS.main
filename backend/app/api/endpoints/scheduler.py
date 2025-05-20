@@ -121,6 +121,14 @@ def find_flexible_slots(available_hours, required_duration):
         if is_consecutive:
             yield group
 
+def has_minimum_break(new_start, new_end, other_start, other_end, min_break=30):
+    # Tüm saatler dakika cinsinden
+    if new_end <= other_start:
+        return other_start - new_end >= min_break
+    if other_end <= new_start:
+        return new_start - other_end >= min_break
+    return True  # Çakışıyorlarsa zaten başka kısıt engeller
+
 def schedule_course_sessions(course, teacher, teacher_days, suitable_time_slots, suitable_classrooms, schedule_entries, db):
     sessions = get_course_sessions(course, db)
     if not sessions:
@@ -262,6 +270,19 @@ def fitness_function(schedule, courses, teachers, classrooms):
     # Hiçbir kısıt ihlali yoksa, programlanan oturum sayısı kadar puan ver
     return len(schedule)
 
+def is_time_overlap(slot1, slot2):
+    s1, e1 = slot1.split('-')
+    s2, e2 = slot2.split('-')
+    sh1, sm1 = map(int, s1.split(':'))
+    eh1, em1 = map(int, e1.split(':'))
+    sh2, sm2 = map(int, s2.split(':'))
+    eh2, em2 = map(int, e2.split(':'))
+    start1 = sh1 * 60 + sm1
+    end1 = eh1 * 60 + em1
+    start2 = sh2 * 60 + sm2
+    end2 = eh2 * 60 + em2
+    return start1 < end2 and start2 < end1
+
 def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200, pop_size=100, mutation_rate=0.05):
     time_slots = [f"{start}-{end}" for start, end in get_time_slots()]
     # --- Her öğretmen için uygun gün+slotları sadece working_hours (JSON) üzerinden hesapla ---
@@ -283,20 +304,18 @@ def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200
     population = []
     for _ in range(pop_size):
         individual = []
+        schedule_entries = []  # Çakışma kontrolü için
         for course in courses:
             teacher = teachers.get(course.teacher_id)
             if not teacher:
                 continue
             for session in get_course_sessions(course, db):
                 available_slots = teacher_available_slots.get(teacher.id, [])
-                # --- Esnek slot bulma: oturumun süresi kadar ardışık slot seç ---
-                # available_slots: [(day, time_slot), ...] -> günlere göre grupla
                 slots_by_day = {}
                 for day, slot in available_slots:
                     slots_by_day.setdefault(day, []).append(slot)
                 found_slot = False
                 for day, slots in slots_by_day.items():
-                    # slot'ları başlama saatine göre sırala
                     slot_starts = sorted([s.split('-')[0] for s in slots])
                     for group in find_flexible_slots(slot_starts, session.hours):
                         slot_start = group[0]
@@ -311,20 +330,61 @@ def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200
                         suitable_classrooms = get_suitable_classrooms(session.type, classrooms, sum([d.student_count for d in course.departments]))
                         if not suitable_classrooms:
                             continue
-                        classroom = np.random.choice(suitable_classrooms)
-                        individual.append({
-                            'day': day,
-                            'time_slot': time_slot,
-                            'teacher_id': teacher.id,
-                            'classroom_id': classroom.id,
-                            'course_id': course.id,
-                            'session_type': session.type,
-                            'session_hours': session.hours,
-                            'departments': [d.department for d in course.departments],
-                            'level': course.level
-                        })
-                        found_slot = True
-                        break
+                        random.shuffle(suitable_classrooms)
+                        for classroom in suitable_classrooms:
+                            # Güçlü çakışma kontrolü (sınıf, öğretmen, bölüm-level + zaman aralığı çakışması)
+                            if any(
+                                e['day'] == day and (
+                                    (is_time_overlap(e['time_slot'], time_slot)) and (
+                                        e['teacher_id'] == teacher.id or
+                                        e['classroom_id'] == classroom.id or
+                                        (set(e['departments']) & set([d.department for d in course.departments]) and e['level'] == course.level)
+                                    )
+                                ) for e in schedule_entries
+                            ):
+                                continue
+                            # --- GÜNLÜK 8 SAAT KISITI ---
+                            total_hours = session.hours
+                            for e in schedule_entries:
+                                if e['day'] == day and e['level'] == course.level and set(e['departments']) & set([d.department for d in course.departments]):
+                                    total_hours += e['session_hours']
+                            if total_hours > 8:
+                                continue
+                            # --- EN AZ 30 DK ARA KISITI ---
+                            new_start_h, new_start_m = map(int, slot_start.split(':'))
+                            new_end_h, new_end_m = h, m
+                            new_start_min = new_start_h * 60 + new_start_m
+                            new_end_min = new_end_h * 60 + new_end_m
+                            min_break_ok = True
+                            for e in schedule_entries:
+                                if e['day'] == day and e['level'] == course.level and set(e['departments']) & set([d.department for d in course.departments]):
+                                    e_start, e_end = e['time_slot'].split('-')
+                                    e_start_h, e_start_m = map(int, e_start.split(':'))
+                                    e_end_h, e_end_m = map(int, e_end.split(':'))
+                                    e_start_min = e_start_h * 60 + e_start_m
+                                    e_end_min = e_end_h * 60 + e_end_m
+                                    if not has_minimum_break(new_start_min, new_end_min, e_start_min, e_end_min, 30):
+                                        min_break_ok = False
+                                        break
+                            if not min_break_ok:
+                                continue
+                            gene = {
+                                'day': day,
+                                'time_slot': time_slot,
+                                'teacher_id': teacher.id,
+                                'classroom_id': classroom.id,
+                                'course_id': course.id,
+                                'session_type': session.type,
+                                'session_hours': session.hours,
+                                'departments': [d.department for d in course.departments],
+                                'level': course.level
+                            }
+                            individual.append(gene)
+                            schedule_entries.append(gene)
+                            found_slot = True
+                            break
+                        if found_slot:
+                            break
                     if found_slot:
                         break
         population.append(individual)
@@ -349,7 +409,7 @@ def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200
             child1 = parent1[:cut] + parent2[cut:]
             child2 = parent2[:cut] + parent1[cut:]
             next_population.extend([child1, child2])
-        # Mutasyon (esnek slot ile)
+        # Mutasyon (esnek slot ile, çakışma kontrolüyle)
         for ind in next_population:
             if np.random.rand() < mutation_rate:
                 if ind:
@@ -373,6 +433,42 @@ def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200
                                 m -= 60
                             slot_end_str = f"{h:02d}:{m:02d}"
                             time_slot = f"{slot_start}-{slot_end_str}"
+                            # Güçlü çakışma kontrolü (sınıf, öğretmen, bölüm-level + zaman aralığı çakışması)
+                            if any(
+                                e is not gene and e['day'] == day and (
+                                    (is_time_overlap(e['time_slot'], time_slot)) and (
+                                        e['teacher_id'] == teacher_id or
+                                        e['classroom_id'] == gene['classroom_id'] or
+                                        (set(e['departments']) & set(gene['departments']) and e['level'] == gene['level'])
+                                    )
+                                ) for e in ind
+                            ):
+                                continue
+                            # --- GÜNLÜK 8 SAAT KISITI (mutasyon) ---
+                            total_hours = session_hours
+                            for e in ind:
+                                if e is not gene and e['day'] == day and e['level'] == gene['level'] and set(e['departments']) & set(gene['departments']):
+                                    total_hours += e['session_hours']
+                            if total_hours > 8:
+                                continue
+                            # --- EN AZ 30 DK ARA KISITI (mutasyon) ---
+                            new_start_h, new_start_m = map(int, slot_start.split(':'))
+                            new_end_h, new_end_m = h, m
+                            new_start_min = new_start_h * 60 + new_start_m
+                            new_end_min = new_end_h * 60 + new_end_m
+                            min_break_ok = True
+                            for e in ind:
+                                if e is not gene and e['day'] == day and e['level'] == gene['level'] and set(e['departments']) & set(gene['departments']):
+                                    e_start, e_end = e['time_slot'].split('-')
+                                    e_start_h, e_start_m = map(int, e_start.split(':'))
+                                    e_end_h, e_end_m = map(int, e_end.split(':'))
+                                    e_start_min = e_start_h * 60 + e_start_m
+                                    e_end_min = e_end_h * 60 + e_end_m
+                                    if not has_minimum_break(new_start_min, new_end_min, e_start_min, e_end_min, 30):
+                                        min_break_ok = False
+                                        break
+                            if not min_break_ok:
+                                continue
                             gene['day'] = day
                             gene['time_slot'] = time_slot
                             found_slot = True
@@ -403,7 +499,11 @@ def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200
     schedule_summary = []
     for entry in new_schedule_db:
         classroom_capacity = entry.classroom.capacity if entry.classroom else 0
-        student_count = entry.course.student_count if entry.course else 0
+        course = entry.course
+        if course and hasattr(course, 'departments') and course.departments:
+            student_count = sum(getattr(dept, 'student_count', 0) for dept in course.departments)
+        else:
+            student_count = getattr(course, 'student_count', 0) if course else 0
         capacity_ratio = (student_count / classroom_capacity * 100) if classroom_capacity > 0 else 0
         duration = calculate_duration(entry.time_range)
         schedule_summary.append({
@@ -452,12 +552,16 @@ def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200
                 found = True
                 break
         if not found:
+            if hasattr(course, 'departments') and course.departments:
+                student_count = sum(getattr(d, 'student_count', 0) for d in course.departments)
+            else:
+                student_count = getattr(course, 'student_count', 0)
             unscheduled_summary.append({
                 "id": course.id,
                 "name": course.name,
                 "code": course.code,
                 "total_hours": session.hours,
-                "student_count": sum([d.student_count for d in course.departments]),
+                "student_count": student_count,
                 "reason": "Oturum programlanamadı (genetik)"
             })
     scheduled_count = len(schedule_summary)
@@ -534,7 +638,11 @@ async def generate_schedule(db: Session = Depends(get_db), method: str = Query("
         schedule_summary = []
         for entry in new_schedule:
             classroom_capacity = entry.classroom.capacity if entry.classroom else 0
-            student_count = entry.course.student_count if entry.course else 0
+            course = entry.course
+            if course and hasattr(course, 'departments') and course.departments:
+                student_count = sum(getattr(dept, 'student_count', 0) for dept in course.departments)
+            else:
+                student_count = getattr(course, 'student_count', 0) if course else 0
             capacity_ratio = (student_count / classroom_capacity * 100) if classroom_capacity > 0 else 0
             duration = calculate_duration(entry.time_range)
             schedule_summary.append({
@@ -560,12 +668,16 @@ async def generate_schedule(db: Session = Depends(get_db), method: str = Query("
             })
         unscheduled_summary = []
         for course, reason in unscheduled_courses:
+            if hasattr(course, 'departments') and course.departments:
+                student_count = sum(getattr(dept, 'student_count', 0) for dept in course.departments)
+            else:
+                student_count = getattr(course, 'student_count', 0)
             unscheduled_summary.append({
                 "id": course.id,
                 "name": course.name,
                 "code": course.code,
                 "total_hours": course.total_hours,
-                "student_count": course.student_count,
+                "student_count": student_count,
                 "reason": reason
             })
         scheduled_count = len(schedule_summary)
