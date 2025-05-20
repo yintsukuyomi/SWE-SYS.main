@@ -171,15 +171,15 @@ const Scheduler = ({ token }) => {
             </div>
             <div className="result-item">
               <span className="result-label">Başarıyla Programlanan:</span>
-              <span className="result-value">{result.scheduled_count} ders</span>
+              <span className="result-value">{Number(result.scheduled_count) || 0} ders</span>
             </div>
             <div className="result-item">
               <span className="result-label">Programlanamayan:</span>
-              <span className="result-value">{result.unscheduled_count} ders</span>
+              <span className="result-value">{Number(result.unscheduled_count) || 0} ders</span>
             </div>
             <div className="result-item">
               <span className="result-label">Başarı Oranı:</span>
-              <span className="result-value">{typeof result.success_rate === 'number' ? result.success_rate + '%' : (result.success_rate || '0%')}</span>
+              <span className="result-value">{Number(result.success_rate) || 0}%</span>
             </div>
           </div>
           
