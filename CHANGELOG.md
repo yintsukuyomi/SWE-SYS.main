@@ -4,7 +4,7 @@ Tüm önemli değişiklikler bu dosyada listelenir.
 
 ---
 
-## [1.2.0] - 2025-05-15
+## [1.2.0] - 2025-05-20
 ### Öne Çıkanlar
 - **Yapay Zeka (Genetik Algoritma) ile Otomatik Program Oluşturma** özelliği eklendi
 - Program oluşturucu arayüzünde iki algoritma seçeneği (klasik & yapay zeka)
