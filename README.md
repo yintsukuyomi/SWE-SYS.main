@@ -32,8 +32,8 @@ uvicorn main:app --reload # Backendi başlatın
 ### Frontend
 ```bash
 cd frontend
-npm install
-npm start
+npm install # Gereksinimleri indirin
+npm start # Frontendi başlatın
 ```
 
 ## 📖 Kullanım
