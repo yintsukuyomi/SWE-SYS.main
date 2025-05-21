@@ -51,7 +51,7 @@ const Dashboard = ({ token }) => {
 
   return (
     <div className="dashboard">
-      <h1>SWE-SYS'e Hoş Geldiniz</h1>
+      <h1>PlanEdu'ya Hoş Geldiniz</h1>
       <p className="dashboard-subtitle">Eğitim Yönetimi Otomasyon Sistemi</p>
       
       {error && <div className="error-message">{error}</div>}

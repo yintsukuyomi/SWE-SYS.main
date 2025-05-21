@@ -283,9 +283,9 @@ def is_time_overlap(slot1, slot2):
     end2 = eh2 * 60 + em2
     return start1 < end2 and start2 < end1
 
+# 200 100 0.05
 def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200, pop_size=100, mutation_rate=0.05):
     time_slots = [f"{start}-{end}" for start, end in get_time_slots()]
-    # --- Her öğretmen için uygun gün+slotları sadece working_hours (JSON) üzerinden hesapla ---
     teacher_available_slots = {}
     for teacher in teachers.values():
         available = set()
@@ -298,13 +298,13 @@ def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200
                     time_slot = f"{slot_start}-{slot_end}"
                     available.add((day.capitalize(), time_slot))
         except Exception:
-            pass  # Eski sistem yok, uygunluk yok sayılır
+            pass
         teacher_available_slots[teacher.id] = list(available)
-    # ---
     population = []
     for _ in range(pop_size):
         individual = []
-        schedule_entries = []  # Çakışma kontrolü için
+        schedule_entries = []
+        course_day_map = {}  # course_id -> set of days used
         for course in courses:
             teacher = teachers.get(course.teacher_id)
             if not teacher:
@@ -316,6 +316,9 @@ def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200
                     slots_by_day.setdefault(day, []).append(slot)
                 found_slot = False
                 for day, slots in slots_by_day.items():
+                    # --- YENİ KISIT: Aynı dersin başka bir oturumu o gün atanmış mı? ---
+                    if course.id in course_day_map and day in course_day_map[course.id]:
+                        continue  # Bu gün bu ders için zaten kullanıldı
                     slot_starts = sorted([s.split('-')[0] for s in slots])
                     for group in find_flexible_slots(slot_starts, session.hours):
                         slot_start = group[0]
@@ -332,7 +335,6 @@ def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200
                             continue
                         random.shuffle(suitable_classrooms)
                         for classroom in suitable_classrooms:
-                            # Güçlü çakışma kontrolü (sınıf, öğretmen, bölüm-level + zaman aralığı çakışması)
                             if any(
                                 e['day'] == day and (
                                     (is_time_overlap(e['time_slot'], time_slot)) and (
@@ -343,14 +345,14 @@ def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200
                                 ) for e in schedule_entries
                             ):
                                 continue
-                            # --- GÜNLÜK 8 SAAT KISITI ---
+                            # GÜNLÜK 8 SAAT KISITI
                             total_hours = session.hours
                             for e in schedule_entries:
                                 if e['day'] == day and e['level'] == course.level and set(e['departments']) & set([d.department for d in course.departments]):
                                     total_hours += e['session_hours']
                             if total_hours > 8:
                                 continue
-                            # --- EN AZ 30 DK ARA KISITI ---
+                            # EN AZ 30 DK ARA KISITI
                             new_start_h, new_start_m = map(int, slot_start.split(':'))
                             new_end_h, new_end_m = h, m
                             new_start_min = new_start_h * 60 + new_start_m
@@ -381,6 +383,10 @@ def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200
                             }
                             individual.append(gene)
                             schedule_entries.append(gene)
+                            # --- GÜNÜ KAYDET ---
+                            if course.id not in course_day_map:
+                                course_day_map[course.id] = set()
+                            course_day_map[course.id].add(day)
                             found_slot = True
                             break
                         if found_slot:
@@ -580,7 +586,7 @@ def generate_schedule_genetic(courses, teachers, classrooms, db, generations=200
     }
 
 @router.post("/generate")
-async def generate_schedule(db: Session = Depends(get_db), method: str = Query("classic", description="Program oluşturma yöntemi: classic veya genetic")):
+async def generate_schedule(db: Session = Depends(get_db)):
     try:
         active_courses = db.query(Course).filter(Course.is_active == True).options(
             joinedload(Course.teacher)
@@ -591,108 +597,7 @@ async def generate_schedule(db: Session = Depends(get_db), method: str = Query("
         classrooms = db.query(Classroom).all()
         if not classrooms:
             return {"message": "Programlama için uygun derslik bulunamadı"}
-        if method == "genetic":
-            return generate_schedule_genetic(active_courses, teachers, classrooms, db)
-        # --- klasik algoritma ---
-        db.query(Schedule).delete()
-        db.commit()
-        prioritized_courses = sorted(
-            active_courses, 
-            key=lambda c: (
-                0 if c.type == "Lab" else 1,  # Lab courses have higher priority
-                -c.ects,
-                -c.total_hours,
-                -c.student_count
-            )
-        )
-        schedule_entries = []
-        unscheduled_courses = []
-        time_slots = get_time_slots()
-        for course in prioritized_courses:
-            teacher = teachers.get(course.teacher_id)
-            if not teacher:
-                unscheduled_courses.append((course, "Derse atanmış öğretmen yok"))
-                continue
-            # Sadece working_hours (JSON) anahtarlarını gün olarak kullan
-            try:
-                wh = json.loads(getattr(teacher, 'working_hours', '{}'))
-                teacher_days = list(wh.keys())
-            except Exception:
-                teacher_days = []
-            if not teacher_days:
-                unscheduled_courses.append((course, "Öğretmenin uygun günü yok (çalışma saatleri tanımsız)"))
-                continue
-            suitable_time_slots = [f"{start}-{end}" for start, end in time_slots]
-            suitable_classrooms = classrooms
-            success, message = schedule_course_sessions(
-                course, teacher, teacher_days, suitable_time_slots, 
-                suitable_classrooms, schedule_entries, db
-            )
-            if not success:
-                unscheduled_courses.append((course, message))
-        db.commit()
-        new_schedule = db.query(Schedule).options(
-            joinedload(Schedule.course),
-            joinedload(Schedule.classroom)
-        ).all()
-        schedule_summary = []
-        for entry in new_schedule:
-            classroom_capacity = entry.classroom.capacity if entry.classroom else 0
-            course = entry.course
-            if course and hasattr(course, 'departments') and course.departments:
-                student_count = sum(getattr(dept, 'student_count', 0) for dept in course.departments)
-            else:
-                student_count = getattr(course, 'student_count', 0) if course else 0
-            capacity_ratio = (student_count / classroom_capacity * 100) if classroom_capacity > 0 else 0
-            duration = calculate_duration(entry.time_range)
-            schedule_summary.append({
-                "id": entry.id,
-                "day": entry.day,
-                "time_range": entry.time_range,
-                "duration": round(duration, 1),
-                "course": {
-                    "id": entry.course.id if entry.course else None,
-                    "name": entry.course.name if entry.course else None,
-                    "code": entry.course.code if entry.course else None,
-                    "teacher_id": entry.course.teacher_id if entry.course else None,
-                    "total_hours": entry.course.total_hours if entry.course else None,
-                    "student_count": student_count
-                },
-                "classroom": {
-                    "id": entry.classroom.id if entry.classroom else None,
-                    "name": entry.classroom.name if entry.classroom else None,
-                    "type": entry.classroom.type if entry.classroom else None,
-                    "capacity": classroom_capacity
-                },
-                "capacity_ratio": round(capacity_ratio, 1)
-            })
-        unscheduled_summary = []
-        for course, reason in unscheduled_courses:
-            if hasattr(course, 'departments') and course.departments:
-                student_count = sum(getattr(dept, 'student_count', 0) for dept in course.departments)
-            else:
-                student_count = getattr(course, 'student_count', 0)
-            unscheduled_summary.append({
-                "id": course.id,
-                "name": course.name,
-                "code": course.code,
-                "total_hours": course.total_hours,
-                "student_count": student_count,
-                "reason": reason
-            })
-        scheduled_count = len(schedule_summary)
-        unscheduled_count = len(unscheduled_summary)
-        total_count = scheduled_count + unscheduled_count
-        success_rate = (scheduled_count / total_count * 100) if total_count > 0 else 0
-        return {
-            "success": True,
-            "message": f"Program oluşturuldu: {scheduled_count} ders programlandı (%{round(success_rate, 1)} başarı oranı)",
-            "scheduled_count": scheduled_count,
-            "unscheduled_count": unscheduled_count,
-            "success_rate": round(success_rate, 1),
-            "schedule": schedule_summary,
-            "unscheduled": unscheduled_summary
-        }
+        return generate_schedule_genetic(active_courses, teachers, classrooms, db)
     except Exception as e:
         import traceback
         print(f"[ERROR] generate_schedule: {e}\n{traceback.format_exc()}")
@@ -702,12 +607,38 @@ async def generate_schedule(db: Session = Depends(get_db), method: str = Query("
 @router.get("/status")
 async def get_schedule_status(db: Session = Depends(get_db)):
     try:
-        total_courses = db.query(Course).filter(Course.is_active == True).count()
-        scheduled_courses = db.query(Schedule).count()
+        active_courses = db.query(Course).filter(Course.is_active == True).all()
+        active_course_ids = [c.id for c in active_courses]
+        total_active_sessions = db.query(CourseSession).filter(CourseSession.course_id.in_(active_course_ids)).count() if active_course_ids else 0
+
+        scheduled_sessions = 0
+        if active_course_ids and total_active_sessions > 0:
+            # Her CourseSession için bir eşleşen Schedule var mı kontrol et
+            sessions = db.query(CourseSession).filter(CourseSession.course_id.in_(active_course_ids)).all()
+            schedules = db.query(Schedule).filter(Schedule.course_id.in_(active_course_ids)).all()
+            for session in sessions:
+                found = False
+                for sched in schedules:
+                    # Schedule'daki time_range'den süreyi hesapla
+                    try:
+                        start, end = sched.time_range.split('-')
+                        sh, sm = map(int, start.split(':'))
+                        eh, em = map(int, end.split(':'))
+                        duration = (eh * 60 + em - sh * 60 - sm) / 60
+                    except Exception:
+                        continue
+                    if sched.course_id == session.course_id and abs(session.hours - duration) < 0.1:
+                        found = True
+                        break
+                if found:
+                    scheduled_sessions += 1
+
+        completion_percentage = round((scheduled_sessions / total_active_sessions * 100) if total_active_sessions > 0 else 0, 2)
         return {
-            "total_active_courses": total_courses,
-            "scheduled_courses": scheduled_courses,
-            "completion_percentage": round((scheduled_courses / total_courses * 100) if total_courses > 0 else 0, 2)
+            "total_active_courses": len(active_courses),
+            "total_active_sessions": total_active_sessions,
+            "scheduled_sessions": scheduled_sessions,
+            "completion_percentage": completion_percentage
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Program durumu alınırken hata: {str(e)}") 

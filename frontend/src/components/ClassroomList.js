@@ -29,6 +29,10 @@ const ClassroomList = ({ token, user }) => {
   const [pendingExcelData, setPendingExcelData] = useState(null);
   const [excelError, setExcelError] = useState(null);
   const [showExcelModal, setShowExcelModal] = useState(false);
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
+  const [overrideAction, setOverrideAction] = useState('skip');
+  const [duplicateClassrooms, setDuplicateClassrooms] = useState([]);
+  const [excelImportData, setExcelImportData] = useState([]);
 
   useEffect(() => {
     fetchClassrooms();
@@ -189,10 +193,76 @@ const ClassroomList = ({ token, user }) => {
         }
         row['Tür'] = mappedType;
       }
+      // Çakışma kontrolü
+      const existingMap = {};
+      classrooms.forEach(c => { existingMap[(c.name + '|' + c.department).toLowerCase()] = c; });
+      const duplicates = filteredData.filter(row => existingMap[((row['Derslik Adı/Numarası'] || row['name']) + '|' + (row['Bölüm'] || row['department'])).toLowerCase()]);
+      if (duplicates.length > 0) {
+        setDuplicateClassrooms(duplicates);
+        setExcelImportData(filteredData);
+        setShowOverrideModal(true);
+        return;
+      }
       setPendingExcelData(filteredData);
       setShowExcelModal(true);
     } catch (err) {
       setExcelError(err.message || 'Derslikler içe aktarılırken bir hata oluştu.');
+    }
+  };
+
+  const handleOverrideConfirm = async () => {
+    setShowOverrideModal(false);
+    setShowExcelModal(false);
+    setLoading(true);
+    setExcelError(null);
+    try {
+      let toCreate = [];
+      let toUpdate = [];
+      const existingMap = {};
+      classrooms.forEach(c => { existingMap[(c.name + '|' + c.department).toLowerCase()] = c; });
+      excelImportData.forEach(row => {
+        const key = ((row['Derslik Adı/Numarası'] || row['name']) + '|' + (row['Bölüm'] || row['department'])).toLowerCase();
+        if (existingMap[key]) {
+          if (overrideAction === 'override') toUpdate.push(row);
+          // skip ise atla
+        } else {
+          toCreate.push(row);
+        }
+      });
+      // CREATE
+      for (const row of toCreate) {
+        const classroomData = {
+          name: row['Derslik Adı/Numarası'] || row['name'],
+          capacity: parseInt(row['Kapasite'] || row['capacity']),
+          type: (row['Tür'] || row['type'] || '').toLowerCase(),
+          faculty: row['Fakülte'] || row['faculty'],
+          department: row['Bölüm'] || row['department']
+        };
+        await createClassroom(classroomData, token);
+      }
+      // UPDATE
+      for (const row of toUpdate) {
+        const key = ((row['Derslik Adı/Numarası'] || row['name']) + '|' + (row['Bölüm'] || row['department'])).toLowerCase();
+        const existing = existingMap[key];
+        if (!existing) continue;
+        const classroomData = {
+          name: row['Derslik Adı/Numarası'] || row['name'],
+          capacity: parseInt(row['Kapasite'] || row['capacity']),
+          type: (row['Tür'] || row['type'] || '').toLowerCase(),
+          faculty: row['Fakülte'] || row['faculty'],
+          department: row['Bölüm'] || row['department']
+        };
+        await updateClassroom(existing.id, classroomData, token);
+      }
+      toast.success('Derslikler başarıyla işlendi.');
+      fetchClassrooms();
+    } catch (err) {
+      setExcelError(err.message || 'Derslikler eklenirken hata oluştu.');
+    } finally {
+      setLoading(false);
+      setPendingExcelData(null);
+      setExcelImportData([]);
+      setDuplicateClassrooms([]);
     }
   };
 
@@ -639,31 +709,35 @@ const ClassroomList = ({ token, user }) => {
             </div>
             <div className="modal-footer">
               <button onClick={() => setShowExcelModal(false)} className="btn-cancel">İptal</button>
-              <button onClick={async () => {
-                setShowExcelModal(false);
-                try {
-                  setLoading(true);
-                  setExcelError(null);
-                  toast.info('Çok sayıda kayıt ekleniyor, lütfen bekleyin...');
-                  for (const row of pendingExcelData) {
-                    const classroomData = {
-                      name: row['Derslik Adı/Numarası'],
-                      capacity: parseInt(row['Kapasite']),
-                      type: (row['Tür'] || '').toLowerCase(),
-                      faculty: row['Fakülte'],
-                      department: row['Bölüm']
-                    };
-                    await createClassroom(classroomData, token);
-                  }
-                  toast.success('Derslikler başarıyla eklendi.');
-                  fetchClassrooms();
-                } catch (err) {
-                  setExcelError(err.message || 'Derslikler eklenirken hata oluştu.');
-                } finally {
-                  setLoading(false);
-                  setPendingExcelData(null);
-                }
-              }} className="btn-submit">Ekle</button>
+              <button onClick={handleOverrideConfirm} className="btn-submit">Ekle</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {showOverrideModal && (
+        <div className="modal-backdrop">
+          <div className="delete-confirmation-modal">
+            <div className="modal-header">
+              <h3>Çakışan Derslikler</h3>
+              <button className="close-button" onClick={() => setShowOverrideModal(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <p>Eklemeye çalıştığınız bazı derslikler mevcut ad ve bölüm ile zaten kayıtlı:</p>
+              <ul>
+                {duplicateClassrooms.map((c, i) => (
+                  <li key={i}>{(c['Derslik Adı/Numarası'] || c['name'])} - {(c['Bölüm'] || c['department'])}</li>
+                ))}
+              </ul>
+              <div style={{marginTop: '10px'}}>
+                <label><input type="radio" checked={overrideAction==='override'} onChange={()=>setOverrideAction('override')} /> Hepsini güncelle (override)</label><br/>
+                <label><input type="radio" checked={overrideAction==='skip'} onChange={()=>setOverrideAction('skip')} /> Hepsini atla (skip)</label><br/>
+                <label><input type="radio" checked={overrideAction==='onlynew'} onChange={()=>setOverrideAction('onlynew')} /> Sadece yenileri ekle</label>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button onClick={()=>setShowOverrideModal(false)} className="btn-cancel">İptal</button>
+              <button onClick={handleOverrideConfirm} className="btn-submit">Devam Et</button>
             </div>
           </div>
         </div>

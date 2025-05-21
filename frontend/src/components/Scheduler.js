@@ -13,7 +13,7 @@ const Scheduler = ({ token }) => {
   const [groupedSchedules, setGroupedSchedules] = useState({});
   const [sortedDays, setSortedDays] = useState([]);
   const [showDetails, setShowDetails] = useState(false);
-  const [lastMethod, setLastMethod] = useState('classic'); // classic veya genetic
+  const [lastMethod, setLastMethod] = useState('genetic'); // genetic
   
   useEffect(() => {
     // Fetch current schedule status when component loads
@@ -58,7 +58,7 @@ const Scheduler = ({ token }) => {
     }
   };
   
-  const handleGenerateSchedule = async (method = 'classic') => {
+  const handleGenerateSchedule = async (method = 'genetic') => {
     setGenerating(true);
     setError(null);
     setResult(null);
@@ -229,20 +229,13 @@ const Scheduler = ({ token }) => {
         </div>
         
         <div className="scheduler-generate">
-          <button 
-            onClick={() => handleGenerateSchedule('classic')} 
-            disabled={generating}
-            className="generate-btn"
-          >
-            {generating && lastMethod === 'classic' ? 'Oluşturuluyor...' : 'Klasik Algoritma ile Oluştur'}
-          </button>
           <button
             onClick={() => handleGenerateSchedule('genetic')}
             disabled={generating}
             className="generate-btn"
-            style={{ marginLeft: 10, background: '#6c63ff' }}
+            style={{ background: '#6c63ff' }}
           >
-            {generating && lastMethod === 'genetic' ? 'Yapay Zeka Çalışıyor...' : 'Yapay Zeka ile Oluştur'}
+            {generating ? 'Yapay Zeka Çalışıyor...' : 'Yapay Zeka ile Oluştur'}
           </button>
           <p className="warning-text">Uyarı: Bu işlem mevcut programın yerini alacaktır!</p>
         </div>
@@ -255,8 +248,8 @@ const Scheduler = ({ token }) => {
             <div className="result-item">
               <span className="result-label">Kullanılan Algoritma:</span>
               <span className="result-value">
-                {lastMethod === 'genetic' ? 'Yapay Zeka (Genetik Algoritma)' : 'Klasik Algoritma'}
-                {result.perfect !== undefined && lastMethod === 'genetic' && (
+                Yapay Zeka (Genetik Algoritma)
+                {result.perfect !== undefined && (
                   result.perfect ? ' (Kusursuz Çözüm)' : ' (Kusursuz Değil)'
                 )}
               </span>

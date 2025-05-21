@@ -28,6 +28,10 @@ const CourseList = ({ token, user }) => {
   const [pendingExcelData, setPendingExcelData] = useState(null);
   const [excelError, setExcelError] = useState(null);
   const [showExcelModal, setShowExcelModal] = useState(false);
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
+  const [overrideAction, setOverrideAction] = useState('skip');
+  const [duplicateCourses, setDuplicateCourses] = useState([]);
+  const [excelImportData, setExcelImportData] = useState([]);
 
   useEffect(() => {
     fetchCourses();
@@ -747,6 +751,21 @@ const CourseList = ({ token, user }) => {
     toast.success('Dersler başarıyla dışa aktarıldı.');
   };
 
+  // Normalizasyon fonksiyonu
+  const normalizeCourse = (row) => ({
+    name: row.name || row['Ders Adı'],
+    code: row.code || row['Ders Kodu'],
+    teacher_id: row.teacher_id,
+    faculty: row.faculty || row['Fakülte'],
+    level: row.level || row['Seviye'] || '',
+    category: row.category || row['Kategori'],
+    semester: row.semester || row['Dönem'],
+    ects: row.ects || parseInt(row['AKTS']),
+    is_active: typeof row.is_active === 'boolean' ? row.is_active : (row['Durum'] || '').toLowerCase() === 'aktif',
+    sessions: Array.isArray(row.sessions) ? row.sessions : [],
+    departments: Array.isArray(row.departments) ? row.departments : [],
+  });
+
   const handleExcelImport = async (data) => {
     const filteredData = data.filter(row =>
       Object.values(row).some(val => val !== null && val !== undefined && String(val).trim() !== '')
@@ -761,10 +780,7 @@ const CourseList = ({ token, user }) => {
         'laboratory': 'lab',
         'laboratuvar': 'lab',
         'uygulama': 'lab',
-        'uygulamalı': 'lab',
-        'uygulamali': 'lab',
-        'uygulamalı ders': 'lab',
-        'uygulamali ders': 'lab'
+        'uygulamalı': 'lab'
       };
       const categoryMap = {
         'zorunlu': 'zorunlu',
@@ -847,10 +863,73 @@ const CourseList = ({ token, user }) => {
         }
       }
       const mergedCourses = Object.values(courseMap);
+      // Çakışma kontrolü
+      const existingCodes = courses.map(c => c.code.toLowerCase());
+      const duplicates = mergedCourses.filter(row => existingCodes.includes((row.code || '').toLowerCase()));
+      if (duplicates.length > 0) {
+        setDuplicateCourses(duplicates);
+        setExcelImportData(mergedCourses);
+        setShowOverrideModal(true);
+        return;
+      }
       setPendingExcelData(mergedCourses);
       setShowExcelModal(true);
     } catch (err) {
       setExcelError(err.message || 'Dersler içe aktarılırken bir hata oluştu.');
+    }
+  };
+
+  // Modal onay fonksiyonu
+  const handleOverrideConfirm = async () => {
+    setShowOverrideModal(false);
+    setShowExcelModal(false);
+    setLoading(true);
+    setExcelError(null);
+    try {
+      let toCreate = [];
+      let toUpdate = [];
+      const existingMap = {};
+      courses.forEach(c => { existingMap[c.code.toLowerCase()] = c; });
+      let missingTeacherRows = [];
+      excelImportData.forEach(row => {
+        const code = (row['Ders Kodu'] || row.code || '').toLowerCase();
+        // teacher_id zorunlu, yoksa atla ve bildir
+        if (!row.teacher_id) {
+          missingTeacherRows.push(row);
+          return;
+        }
+        if (existingMap[code]) {
+          if (overrideAction === 'override') toUpdate.push(row);
+          // skip ise atla
+        } else {
+          toCreate.push(row);
+        }
+      });
+      if (missingTeacherRows.length > 0) {
+        setExcelError('Bazı satırlarda öğretmen bulunamadı veya atanmadı. Lütfen Excel dosyanızda öğretmen adlarını kontrol edin.');
+        setLoading(false);
+        return;
+      }
+      // CREATE
+      for (const row of toCreate) {
+        await createCourse(normalizeCourse(row), token);
+      }
+      // UPDATE
+      for (const row of toUpdate) {
+        const code = (row['Ders Kodu'] || row.code || '').toLowerCase();
+        const existing = existingMap[code];
+        if (!existing) continue;
+        await updateCourse(existing.id, normalizeCourse(row), token);
+      }
+      toast.success('Dersler başarıyla işlendi.');
+      fetchCourses();
+    } catch (err) {
+      setExcelError(err.message || 'Dersler eklenirken hata oluştu.');
+    } finally {
+      setLoading(false);
+      setPendingExcelData(null);
+      setExcelImportData([]);
+      setDuplicateCourses([]);
     }
   };
 
@@ -990,24 +1069,34 @@ const CourseList = ({ token, user }) => {
             </div>
             <div className="modal-footer">
               <button onClick={() => setShowExcelModal(false)} className="btn-cancel">İptal</button>
-              <button onClick={async () => {
-                setShowExcelModal(false);
-                try {
-                  setLoading(true);
-                  setExcelError(null);
-                  toast.info('Çok sayıda kayıt ekleniyor, lütfen bekleyin...');
-                  for (const courseData of pendingExcelData) {
-                    await createCourse(courseData, token);
-                  }
-                  toast.success('Dersler başarıyla eklendi.');
-                  fetchCourses();
-                } catch (err) {
-                  setExcelError(err.message || 'Dersler eklenirken hata oluştu.');
-                } finally {
-                  setLoading(false);
-                  setPendingExcelData(null);
-                }
-              }} className="btn-submit">Ekle</button>
+              <button onClick={handleOverrideConfirm} className="btn-submit">Ekle</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showOverrideModal && (
+        <div className="modal-backdrop">
+          <div className="delete-confirmation-modal">
+            <div className="modal-header">
+              <h3>Çakışan Dersler</h3>
+              <button className="close-button" onClick={() => setShowOverrideModal(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <p>Eklemeye çalıştığınız bazı dersler mevcut kod ile zaten kayıtlı:</p>
+              <ul>
+                {duplicateCourses.map((c, i) => (
+                  <li key={i}>{c.name} - {c.code}</li>
+                ))}
+              </ul>
+              <div style={{marginTop: '10px'}}>
+                <label><input type="radio" checked={overrideAction==='override'} onChange={()=>setOverrideAction('override')} /> Hepsini güncelle (override)</label><br/>
+                <label><input type="radio" checked={overrideAction==='skip'} onChange={()=>setOverrideAction('skip')} /> Hepsini atla (skip)</label><br/>
+                <label><input type="radio" checked={overrideAction==='onlynew'} onChange={()=>setOverrideAction('onlynew')} /> Sadece yenileri ekle</label>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button onClick={()=>setShowOverrideModal(false)} className="btn-cancel">İptal</button>
+              <button onClick={handleOverrideConfirm} className="btn-submit">Devam Et</button>
             </div>
           </div>
         </div>

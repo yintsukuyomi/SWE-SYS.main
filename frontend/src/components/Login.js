@@ -40,8 +40,8 @@ const Login = ({ onLogin }) => {
       <div className="login-card">
         <div className="login-header">
           {/* Logo yerine metin logosu kullanılıyor */}
-          <div className="text-logo">SWE-SYS</div>
-          <h2>SWE-SYS Giriş</h2>
+          <div className="text-logo">PlanEdu</div>
+          <h2>PlanEdu Giriş</h2>
           <p className="login-subtitle">Eğitim Yönetiminde Yeni Nesil Otomasyon</p>
         </div>
         <form onSubmit={handleSubmit}>

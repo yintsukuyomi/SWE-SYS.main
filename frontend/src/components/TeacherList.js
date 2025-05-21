@@ -29,6 +29,10 @@ const TeacherList = ({ token, user }) => {
   const [pendingExcelData, setPendingExcelData] = useState(null);
   const [excelError, setExcelError] = useState(null);
   const [showExcelModal, setShowExcelModal] = useState(false);
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
+  const [overrideAction, setOverrideAction] = useState('skip');
+  const [duplicateTeachers, setDuplicateTeachers] = useState([]);
+  const [excelImportData, setExcelImportData] = useState([]);
 
   useEffect(() => {
     fetchTeachers();
@@ -256,6 +260,15 @@ const TeacherList = ({ token, user }) => {
         row['Çarşamba'] = parseHours(row['Çarşamba']);
         row['Perşembe'] = parseHours(row['Perşembe']);
         row['Cuma'] = parseHours(row['Cuma']);
+      }
+      // Çakışma kontrolü
+      const existingEmails = teachers.map(t => t.email.toLowerCase());
+      const duplicates = filteredData.filter(row => existingEmails.includes((row['E-posta'] || row['Eposta'] || row['E-Mail'] || row['Email'] || '').toLowerCase()));
+      if (duplicates.length > 0) {
+        setDuplicateTeachers(duplicates);
+        setExcelImportData(filteredData);
+        setShowOverrideModal(true);
+        return;
       }
       setPendingExcelData(filteredData);
       setShowExcelModal(true);
@@ -657,6 +670,97 @@ const TeacherList = ({ token, user }) => {
     return renderFacultiesPage();
   };
 
+  const handleOverrideConfirm = async () => {
+    setShowOverrideModal(false);
+    setShowExcelModal(false);
+    setLoading(true);
+    setExcelError(null);
+    try {
+      let toCreate = [];
+      let toUpdate = [];
+      const existingMap = {};
+      teachers.forEach(t => { existingMap[t.email.toLowerCase()] = t; });
+      excelImportData.forEach(row => {
+        const email = (row['E-posta'] || row['Eposta'] || row['E-Mail'] || row['Email'] || '').toLowerCase();
+        if (existingMap[email]) {
+          if (overrideAction === 'override') toUpdate.push(row);
+          // skip ise atla
+        } else {
+          toCreate.push(row);
+        }
+      });
+      // Yardımcı fonksiyonlar:
+      function expandTimeRange(range) {
+        if (!range) return [];
+        if (!range.includes('-')) return [range.trim()];
+        const [start, end] = range.split('-').map(s => s.trim());
+        const slots = [];
+        let [h, m] = start.split(':').map(Number);
+        const [endH, endM] = end.split(':').map(Number);
+        while (h < endH || (h === endH && m <= endM)) {
+          slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+          m += 30;
+          if (m >= 60) { h++; m = 0; }
+          if (h > endH || (h === endH && m > endM)) break;
+        }
+        return slots;
+      }
+      const parseHours = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val;
+        return val.split(',').flatMap(s => expandTimeRange(s.trim()));
+      };
+      // CREATE
+      for (const row of toCreate) {
+        const working_hours_obj = {
+          monday: parseHours(row['Pazartesi']),
+          tuesday: parseHours(row['Salı']),
+          wednesday: parseHours(row['Çarşamba']),
+          thursday: parseHours(row['Perşembe']),
+          friday: parseHours(row['Cuma'])
+        };
+        const teacherData = {
+          name: (row['Ad'] || row['Ad Soyad'] || row['Name'] || row['Adı Soyadı'] || '').trim(),
+          email: (row['E-posta'] || row['Eposta'] || row['E-Mail'] || row['Email'] || '').trim(),
+          faculty: (row['Fakülte'] || row['Fakulte'] || row['Faculty'] || '').trim(),
+          department: (row['Bölüm'] || row['Bolum'] || row['Department'] || '').trim(),
+          working_hours: JSON.stringify(working_hours_obj)
+        };
+        await createTeacher(teacherData, token);
+      }
+      // UPDATE
+      for (const row of toUpdate) {
+        const email = (row['E-posta'] || row['Eposta'] || row['E-Mail'] || row['Email'] || '').toLowerCase();
+        const existing = existingMap[email];
+        if (!existing) continue;
+        const working_hours_obj = {
+          monday: parseHours(row['Pazartesi']),
+          tuesday: parseHours(row['Salı']),
+          wednesday: parseHours(row['Çarşamba']),
+          thursday: parseHours(row['Perşembe']),
+          friday: parseHours(row['Cuma'])
+        };
+        const teacherData = {
+          name: (row['Ad'] || row['Ad Soyad'] || row['Name'] || row['Adı Soyadı'] || '').trim(),
+          email: (row['E-posta'] || row['Eposta'] || row['E-Mail'] || row['Email'] || '').trim(),
+          faculty: (row['Fakülte'] || row['Fakulte'] || row['Faculty'] || '').trim(),
+          department: (row['Bölüm'] || row['Bolum'] || row['Department'] || '').trim(),
+          working_hours: JSON.stringify(working_hours_obj)
+        };
+        await updateTeacher(existing.id, teacherData, token);
+      }
+      toast.success('Öğretmenler başarıyla işlendi.');
+      fetchTeachers();
+    } catch (err) {
+      setExcelError(err.message || 'Öğretmenler eklenirken hata oluştu.');
+    } finally {
+      setLoading(false);
+      setPendingExcelData(null);
+      setExcelImportData([]);
+      setDuplicateTeachers([]);
+    }
+  };
+
   return (
     <div className="teachers-container">
       {deleteConfirm.show && (
@@ -745,43 +849,35 @@ const TeacherList = ({ token, user }) => {
             </div>
             <div className="modal-footer">
               <button onClick={() => setShowExcelModal(false)} className="btn-cancel">İptal</button>
-              <button onClick={async () => {
-                setShowExcelModal(false);
-                try {
-                  setLoading(true);
-                  setExcelError(null);
-                  toast.info('Çok sayıda kayıt ekleniyor, lütfen bekleyin...');
-                  for (const row of pendingExcelData) {
-                    const parseHours = (val) => {
-                      if (!val) return [];
-                      if (Array.isArray(val)) return val;
-                      return val.split(',').map(s => s.trim()).filter(Boolean);
-                    };
-                    const working_hours_obj = {
-                      monday: parseHours(row['Pazartesi']),
-                      tuesday: parseHours(row['Salı']),
-                      wednesday: parseHours(row['Çarşamba']),
-                      thursday: parseHours(row['Perşembe']),
-                      friday: parseHours(row['Cuma'])
-                    };
-                    const teacherData = {
-                      name: (row['Ad'] || row['Ad Soyad'] || row['Name'] || row['Adı Soyadı'] || '').trim(),
-                      email: (row['E-posta'] || row['Eposta'] || row['E-Mail'] || row['Email'] || '').trim(),
-                      faculty: (row['Fakülte'] || row['Fakulte'] || row['Faculty'] || '').trim(),
-                      department: (row['Bölüm'] || row['Bolum'] || row['Department'] || '').trim(),
-                      working_hours: JSON.stringify(working_hours_obj)
-                    };
-                    await createTeacher(teacherData, token);
-                  }
-                  toast.success('Öğretmenler başarıyla eklendi.');
-                  fetchTeachers();
-                } catch (err) {
-                  setExcelError(err.message || 'Öğretmenler eklenirken hata oluştu.');
-                } finally {
-                  setLoading(false);
-                  setPendingExcelData(null);
-                }
-              }} className="btn-submit">Ekle</button>
+              <button onClick={handleOverrideConfirm} className="btn-submit">Ekle</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {showOverrideModal && (
+        <div className="modal-backdrop">
+          <div className="delete-confirmation-modal">
+            <div className="modal-header">
+              <h3>Çakışan Öğretmenler</h3>
+              <button className="close-button" onClick={() => setShowOverrideModal(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <p>Eklemeye çalıştığınız bazı öğretmenler mevcut e-posta ile zaten kayıtlı:</p>
+              <ul>
+                {duplicateTeachers.map((t, i) => (
+                  <li key={i}>{t['Ad'] || t['Ad Soyad'] || t['Name'] || t['Adı Soyadı']} - {t['E-posta'] || t['Eposta'] || t['E-Mail'] || t['Email']}</li>
+                ))}
+              </ul>
+              <div style={{marginTop: '10px'}}>
+                <label><input type="radio" checked={overrideAction==='override'} onChange={()=>setOverrideAction('override')} /> Hepsini güncelle (override)</label><br/>
+                <label><input type="radio" checked={overrideAction==='skip'} onChange={()=>setOverrideAction('skip')} /> Hepsini atla (skip)</label><br/>
+                <label><input type="radio" checked={overrideAction==='onlynew'} onChange={()=>setOverrideAction('onlynew')} /> Sadece yenileri ekle</label>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button onClick={()=>setShowOverrideModal(false)} className="btn-cancel">İptal</button>
+              <button onClick={handleOverrideConfirm} className="btn-submit">Devam Et</button>
             </div>
           </div>
         </div>
