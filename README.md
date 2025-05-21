@@ -26,14 +26,14 @@ source venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 cp .env.example .env  # .env dosyasını düzenleyin
 db migrasyon: alembic upgrade head
-uvicorn main:app --reload
+uvicorn main:app --reload # Backendi başlatın
 ```
 
 ### Frontend
 ```bash
 cd frontend
-npm install
-npm start
+npm install # Gereksinimleri indirin
+npm start # Frontendi başlatın
 ```
 
 ## 📖 Kullanım
