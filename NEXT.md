@@ -1,1 +1,1 @@
-
+- Genetik algoritma için çoklu session desteği eklenecek
