@@ -791,88 +791,69 @@ const CourseList = ({ token, user }) => {
         'elective': 'secmeli',
         'electives': 'secmeli'
       };
-      const courseMap = {};
+      const errors = [];
+      const validRows = [];
       for (let i = 0; i < filteredData.length; i++) {
         const row = filteredData[i];
+        // Zorunlu alan kontrolü
         if (!row['Ders Adı'] || !row['Ders Kodu'] || !row['Fakülte'] || !row['Kategori'] || !row['Dönem'] || !row['AKTS']) {
-          setExcelError(`Satır ${i + 2}: Eksik zorunlu alan. (Ders Adı, Ders Kodu, Fakülte, Kategori, Dönem, AKTS)`);
-          return;
+          errors.push(`Satır ${i + 2}: Eksik zorunlu alan. (Ders Adı, Ders Kodu, Fakülte, Kategori, Dönem, AKTS)`);
+          continue;
         }
-        let teacherId;
+        // Öğretmen adı eşleşmesi (daha esnek)
+        let teacherId = null;
         if (row['Öğretmen Adı']) {
           const found = teachers.find(t => t.name.trim().toLowerCase() === row['Öğretmen Adı'].trim().toLowerCase());
           if (!found) {
-            setExcelError(`Satır ${i + 2}: Öğretmen bulunamadı: "${row['Öğretmen Adı']}"`);
-            return;
+            errors.push(`Satır ${i + 2}: Öğretmen bulunamadı: "${row['Öğretmen Adı']}"`);
+            continue;
           }
           teacherId = found.id;
         }
-        // Kullanıcı dostu: 'Tür' boşsa 'Oturum Türü'nden al
+        // Tür kontrolü
         let rawType = (row['Tür'] || row['Oturum Türü'] || '').toLowerCase();
         const mappedType = typeMap[rawType];
         if (!mappedType) {
-          setExcelError(`Satır ${i + 2}: Geçersiz ders türü "${row['Tür'] ? row['Tür'] : row['Oturum Türü'] ? row['Oturum Türü'] : 'boş'}". Tür "teorik" veya "lab" olmalıdır.`);
-          return;
+          errors.push(`Satır ${i + 2}: Geçersiz ders türü "${row['Tür'] ? row['Tür'] : row['Oturum Türü'] ? row['Oturum Türü'] : 'boş'}". Tür "teorik" veya "lab" olmalıdır.`);
+          continue;
         }
         row['Tür'] = mappedType;
+        // Kategori kontrolü
         const rawCategory = (row['Kategori'] || '').toLowerCase();
         const mappedCategory = categoryMap[rawCategory];
         if (!mappedCategory) {
-          setExcelError(`Satır ${i + 2}: Geçersiz kategori "${row['Kategori'] ? row['Kategori'] : 'boş'}". Kategori "zorunlu" veya "secmeli" olmalıdır.`);
-          return;
+          errors.push(`Satır ${i + 2}: Geçersiz kategori "${row['Kategori'] ? row['Kategori'] : 'boş'}". Kategori "zorunlu" veya "secmeli" olmalıdır.`);
+          continue;
         }
         row['Kategori'] = mappedCategory;
-        const key = `${row['Ders Kodu']}|${row['Ders Adı']}`;
-        if (!courseMap[key]) {
-          courseMap[key] = {
-            name: row['Ders Adı'],
-            code: row['Ders Kodu'],
-            teacher_id: teacherId,
-            faculty: row['Fakülte'],
-            level: row['Seviye'] || '',
-            type: mappedType,
-            category: mappedCategory,
-            semester: row['Dönem'],
-            ects: parseInt(row['AKTS']),
-            is_active: (row['Durum'] || '').toLowerCase() === 'aktif',
-            departments: [],
-            sessions: []
-          };
-        }
+        // Oturum ve bölüm işlemleri
+        const courseObj = {
+          ...row,
+          teacher_id: teacherId,
+          type: mappedType,
+          category: mappedCategory,
+          sessions: [],
+          departments: []
+        };
         if (row['Bölüm']) {
-          // Aynı bölüm daha önce eklendi mi kontrol et
-          if (!courseMap[key].departments.some(
-            d => d.department === row['Bölüm'] && d.student_count === (row['Öğrenci Sayısı'] ? parseInt(row['Öğrenci Sayısı']) : 0)
-          )) {
-            courseMap[key].departments.push({
-              department: row['Bölüm'],
-              student_count: row['Öğrenci Sayısı'] ? parseInt(row['Öğrenci Sayısı']) : 0
-            });
-          }
+          courseObj.departments.push({
+            department: row['Bölüm'],
+            student_count: row['Öğrenci Sayısı'] ? parseInt(row['Öğrenci Sayısı']) : 0
+          });
         }
         if (row['Oturum Türü'] && row['Oturum Saati']) {
-          // Aynı oturum daha önce eklendi mi kontrol et
-          if (!courseMap[key].sessions.some(
-            s => s.type === (row['Oturum Türü'] || '').toLowerCase() && s.hours === parseInt(row['Oturum Saati'])
-          )) {
-            courseMap[key].sessions.push({
-              type: (row['Oturum Türü'] || '').toLowerCase(),
-              hours: parseInt(row['Oturum Saati'])
-            });
-          }
+          courseObj.sessions.push({
+            type: (row['Oturum Türü'] || '').toLowerCase(),
+            hours: parseInt(row['Oturum Saati'])
+          });
         }
+        validRows.push(courseObj);
       }
-      const mergedCourses = Object.values(courseMap);
-      // Çakışma kontrolü
-      const existingCodes = courses.map(c => c.code.toLowerCase());
-      const duplicates = mergedCourses.filter(row => existingCodes.includes((row.code || '').toLowerCase()));
-      if (duplicates.length > 0) {
-        setDuplicateCourses(duplicates);
-        setExcelImportData(mergedCourses);
-        setShowOverrideModal(true);
+      if (validRows.length === 0) {
+        setExcelError("Hiçbir satır eklenemedi:\n" + errors.join("\n"));
         return;
       }
-      setPendingExcelData(mergedCourses);
+      setPendingExcelData(validRows);
       setShowExcelModal(true);
     } catch (err) {
       setExcelError(err.message || 'Dersler içe aktarılırken bir hata oluştu.');
@@ -886,42 +867,24 @@ const CourseList = ({ token, user }) => {
     setLoading(true);
     setExcelError(null);
     try {
-      let toCreate = [];
-      let toUpdate = [];
-      const existingMap = {};
-      courses.forEach(c => { existingMap[c.code.toLowerCase()] = c; });
-      let missingTeacherRows = [];
-      excelImportData.forEach(row => {
-        const code = (row['Ders Kodu'] || row.code || '').toLowerCase();
-        // teacher_id zorunlu, yoksa atla ve bildir
-        if (!row.teacher_id) {
-          missingTeacherRows.push(row);
-          return;
-        }
-        if (existingMap[code]) {
-          if (overrideAction === 'override') toUpdate.push(row);
-          // skip ise atla
-        } else {
-          toCreate.push(row);
-        }
-      });
-      if (missingTeacherRows.length > 0) {
-        setExcelError('Bazı satırlarda öğretmen bulunamadı veya atanmadı. Lütfen Excel dosyanızda öğretmen adlarını kontrol edin.');
+      let errors = [];
+      let successCount = 0;
+      if (!pendingExcelData || pendingExcelData.length === 0) {
+        setExcelError('Yüklenecek ders verisi bulunamadı.');
         setLoading(false);
         return;
       }
-      // CREATE
-      for (const row of toCreate) {
-        await createCourse(normalizeCourse(row), token);
+      for (const row of pendingExcelData) {
+        try {
+          await createCourse(normalizeCourse(row), token);
+          successCount++;
+        } catch (err) {
+          errors.push(`Ders eklenemedi: ${row['Ders Adı']} (${row['Ders Kodu']}) - ${err?.response?.data?.detail || err.message}`);
+        }
       }
-      // UPDATE
-      for (const row of toUpdate) {
-        const code = (row['Ders Kodu'] || row.code || '').toLowerCase();
-        const existing = existingMap[code];
-        if (!existing) continue;
-        await updateCourse(existing.id, normalizeCourse(row), token);
-      }
-      toast.success('Dersler başarıyla işlendi.');
+      let msg = `${successCount} ders başarıyla eklendi.`;
+      if (errors.length > 0) msg += "\nEklenemeyenler:\n" + errors.join("\n");
+      toast.success(msg);
       fetchCourses();
     } catch (err) {
       setExcelError(err.message || 'Dersler eklenirken hata oluştu.');
@@ -1054,12 +1017,16 @@ const CourseList = ({ token, user }) => {
                   <tbody>
                     {pendingExcelData.map((course, idx) => (
                       <tr key={idx}>
-                        <td>{course.name}</td>
-                        <td>{course.code}</td>
-                        <td>{course.type}</td>
-                        <td>{course.faculty}</td>
-                        <td>{course.departments && course.departments.length > 0 ? course.departments.map(d => d.department).join(', ') : '-'}</td>
-                        <td>{course.sessions && course.sessions.length > 0 ? course.sessions.map(s => `${s.type} (${s.hours} saat)`).join(', ') : '-'}</td>
+                        <td>{course.name || course['Ders Adı']}</td>
+                        <td>{course.code || course['Ders Kodu']}</td>
+                        <td>{course.type || course['Tür']}</td>
+                        <td>{course.faculty || course['Fakülte']}</td>
+                        <td>{(course.departments && course.departments.length > 0)
+                              ? course.departments.map(d => d.department || d['Bölüm']).join(', ')
+                              : (course['Bölüm'] || '-')}</td>
+                        <td>{(course.sessions && course.sessions.length > 0)
+                              ? course.sessions.map(s => `${s.type || s['Oturum Türü']} (${s.hours || s['Oturum Saati']} saat)`).join(', ')
+                              : ((course['Oturum Türü'] && course['Oturum Saati']) ? `${course['Oturum Türü']} (${course['Oturum Saati']} saat)` : '-')}</td>
                       </tr>
                     ))}
                   </tbody>
