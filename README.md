@@ -25,7 +25,6 @@ venv\Scripts\activate  # Windows
 source venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 cp .env.example .env  # .env dosyasını düzenleyin
-db migrasyon: alembic upgrade head
 uvicorn main:app --reload # Backendi başlatın
 ```
 
